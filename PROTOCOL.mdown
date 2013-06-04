@@ -46,7 +46,7 @@ It is created using `pake setup` command.
 #### Sub-repository
 
 This repository contains one project.
-It is created using `pake init` command in .
+It is created using `pake init`. 
 
     ./.pake/
         meta.json 
@@ -146,4 +146,80 @@ by reading it `pake` can recreate your environment.
 
 ----
 
-Protocol version: 0.0.1-alpha.0+20130604
+##### Files ot the package
+
+This files are placed in sub-repository.
+
+###### `meta.json`
+
+It is the same as in `meta.json` file for the node -- most important file.
+If it does not contain required keys the package is considered broken.
+
+Example file:
+
+    {
+        'name':'foo',
+        'version':'0.0.1',
+        'license':'GNU GPL v2+/GNU GPL v3+',
+        'url':'http://pake.example.com',
+        'dependencies':[],
+    }
+
+Every element in `dependencies` is a dict:
+    
+    {
+        'name':'foo',
+        'min':'0.3.16', // optional
+        'max':'0.5.0', // optional
+        'url':'http://pake.example.com/', // optional but SHOULD be present, if is not found pake will try to determine its url
+    }
+
+Optional keys are:
+
+*   `author` - if it is not found `pake` will take author of the repository as the author of the package,
+*   `keywords` - list of keywords used by search feature; if not found keywords are extracted from `name` and `description`,
+*   `description` - description of the package,
+*   `module-name` - if different from package name (you are discouraged from designing such packages),
+
+----
+
+###### `foo-0.0.1.tar.xz`
+
+Archieve containg `INSTALL` and `REMOVE` scripts and package files.
+
+
+----
+
+
+## Packages
+
+##### Installing
+
+You can search for packages using `pake search keyword...` feature.
+Installation is done via `pake install PACKAGE...` command.
+
+Algorythm:
+
+0.  `pake` will determine main url for every package in transaction,
+1.  `pake` will try to find mirrors for every pakcage in transaction,
+2.  `pake` will list all dependencies required for transaction,
+3.  if dependencies cannot be satisfied because of version issues abort with a message informing about it,
+4.  if dependencies cannot be satisfied because they were not found in network abort and suggest using repo discovery
+    feature,
+5.  check if dependencies match set filters (like license, max version or whaterver will be implemented),
+5.  repeat steps `0.` through `5.` until all dependencies are satisfied,
+6.  inform about all packages installed, size of the download, licenses etc.,
+7.  ask for a confirmation,
+8.  if user cancelled the transaction - abort,
+9.  if not - download all packages,
+10. define order of installation,
+11. extract first package to `~/.pakenode/installing/`,
+12. run `INSTALL` script,
+13. clean `~/.pakenode/installing/`,
+14. repeat setps `11.` through `13.` for all packages,
+15. exit.
+
+
+----
+
+Protocol version: 0.0.1-alpha.1+20130604
