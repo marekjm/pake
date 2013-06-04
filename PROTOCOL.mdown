@@ -1,0 +1,149 @@
+## Definitions
+
+* `global repository` - local repository which contains node metadata, subdirectories for projects,
+    list of all known nodes etc.,
+* `sub-repository` - repository for single project containing its metadata and archieves,
+* `node` - global repository uploaded to server,
+
+
+----
+
+## Repositories
+
+#### Global repository
+
+This repository is uploaded onto the server and acts as a *node*. 
+It is created using `pake setup` command.
+
+    ~/.pakenode/
+        meta.json
+        nodes.json
+        packages.json
+        installed.json
+        
+        db/
+            *directory to which `packages.json` files from nodes are downloaded*
+            
+        downloaded/
+            *directory to which archieves are downloaded*
+            
+        installing/
+            *directory to which contents of archieves are extracted before installing*
+        
+        packages/
+            foo/
+                meta.json
+                *this directory reflects contents of `versions/` subdirectory of a project*
+                foo-0.0.1.json
+                foo-0.0.1.tar.xz
+                foo-0.0.2.json
+                foo-0.0.2.tar.xz
+
+
+----
+
+
+#### Sub-repository
+
+This repository contains one project.
+It is created using `pake init` command in .
+
+    ./.pake/
+        meta.json 
+            *this meta contains name of the project e.g. `foo` which is used as a name for subdirectory in $GLOBAL_REPO/packages/,
+             is also a meta for newest version*
+             
+        versions/
+            foo-0.0.1.json
+            foo-0.0.1.tar.xz
+            foo-0.0.2.json
+            foo-0.0.2.tar.xz
+
+
+----
+
+
+## Setup
+
+#### Node setup
+
+To set up a node you have to own a server on which the node can be uploaded. 
+No special environment is needed as in `pake` everything is done locally and 
+servers on the Internet are used only for storage.
+
+This requires proper setup from the very beginning.
+
+----
+
+##### Files of the node
+
+
+###### `meta.json`
+
+Most important file in EVERY node is `meta.json` -- if this cannot be downloaded a node is considered dead to rest of the network. 
+If `meta.json` is present but incomplete (which means it does not contains all required keys) node is also considered dead.
+
+Minimal contents of `meta.json` of a *living* node are:
+
+    {
+        'author':'Joe Example',
+        'contact':'email [at] example [dot] com',
+        'url':'http://pake.example.com/',
+        'mirrors':[],
+    }
+
+`author` key is used to store authors name or nick. 
+`contact` is necessary for contacting author is something is wrong with the node. 
+`url` is main URL of the node,
+`mirrors` is list of URLs for mirrors of the node.
+
+>   **Detail**: if you set up a mirror for your node do not put its URL in `url` field -- leave it in `mirrors`.
+>   This way `pake` can determine if it is using a mirror or not.
+
+----
+
+###### `nodes.json`
+
+This file contains a list. Every element of the list is a `meta.json` file for a different node. 
+Example `nodes.json` file:
+
+    [
+        {
+            'author':'Joe Example',
+            'contact':'email [at] example [dot] com',
+            'url':'http://pake.example.com/',
+            'mirrors':[],
+        },
+        {
+            'author':'Bill Przykladsky',
+            'contact':'bill [at] przykladsky [dot] net',
+            'url':'http://pake.przykladsky.net/',
+            'mirrors':['http://pake.przykladsky.com'],
+        }
+    ]
+
+If the file cannot be downloaded from the node it is assumed that the file is empty list (so the node cannot be used for node discovery).
+
+----
+
+###### `packages.json`
+
+This file contains a list. Every element of the list is a `meta.json` file for a different package.
+
+If the file cannot be downloaded from the node it is assumed that the file is empty list (so the node has no packages of itself). 
+Such nodes can be set up by people who are not distributing any content but are providing a *discovery-nodes* for the network -- 
+then they should contain as many nodes as possible for they are as valuable as their node lists.
+
+----
+
+###### `installed.json`
+
+Is a list of all packages installed via `pake` (is very similar to `packages.json` in its contents). 
+Uploading this file to the net is *optional* because it can be useful for crackers who 
+might want to know what stuff do you have installed on your system but at the same time can be used for backups -- 
+by reading it `pake` can recreate your environment.
+
+
+----
+
+Protocol version: 0.0.1-alpha.0+20130604
