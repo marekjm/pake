@@ -198,6 +198,21 @@ Archieve containg `INSTALL` and `REMOVE` scripts and package files.
 You can search for packages using `pake search keyword...` feature.
 Installation is done via `pake install PACKAGE...` command.
 
+>   **Detail:** transactions could be represented `Transaction()` objects,
+>   then they can be exported to JSON and stored, repeated, undo-ed and so on,
+>   we can even have history of transactions,
+
+    Transaction():
+        packages = [{'name':'', 'url':'', 'mirrors':[], 'dependencies':[]}]
+        type = ''
+        
+        commit(): commits the transaction
+        resolve(): checks dependencies
+        order(): set packages in order of dependencies
+        download():
+        install(): run `INSTALL` script
+        size(): returns size of transaction
+
 Algorythm:
 
 0.  `pake` will determine main url for every package in transaction,
