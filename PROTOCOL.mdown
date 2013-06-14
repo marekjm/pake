@@ -231,10 +231,11 @@ Algorythm:
 11. extract first package to `~/.pakenode/installing/`,
 12. run `INSTALL` script,
 13. clean `~/.pakenode/installing/`,
-14. repeat setps `11.` through `13.` for all packages,
-15. exit.
+14. remove first item from list of packages to install,
+15. repeat setps `11.` through `14.` for all packages,
+16. exit.
 
 
 ----
 
-Protocol version: 0.0.1-alpha.1+20130604
+Protocol version: 0.0.1-alpha.3+20130614
