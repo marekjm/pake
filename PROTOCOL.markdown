@@ -10,6 +10,15 @@
 
 ## Repositories
 
+`pake` has two types of repository -- global (located in the user's home directory) and 
+local (located in any directory the user wants). 
+
+These repositories are created using different commands (as discused below) and have different characteristics.
+
+Before you create any local repository you must create a global one because when a local repository is created 
+it makes a special directory for itself in `~/.pakenode` and therefore it must exist.
+
+
 #### Global repository
 
 This repository is uploaded onto the server and acts as a *node*. 
@@ -20,20 +29,28 @@ It is created using `pake setup` command.
         nodes.json
         packages.json
         installed.json
+        prepared.json   # this file is a list of transactions prepared offline and 
+                            # not yet commited
         
         db/
-            *directory to which `packages.json` files from nodes are downloaded*
+            * directory to which `packages.json` files from nodes are downloaded
+            * they are stored here so transactions can be prepared offline and 
+            * commited when a connection to the Internet is available
             
         downloaded/
-            *directory to which archieves are downloaded*
+            * directory to which archieves are downloaded*
             
         installing/
-            *directory to which contents of archieves are extracted before installing*
+            * directory to which contents of archieves are extracted before installing*
+
+        prepared/
+            [hash].json     # this is file describing a transaction prepared offline and 
+                            # waiting for being commited
         
         packages/
             foo/
                 meta.json
-                *this directory reflects contents of `versions/` subdirectory of a project*
+                * this directory reflects contents of `versions/` subdirectory of a project*
                 foo-0.0.1.json
                 foo-0.0.1.tar.xz
                 foo-0.0.2.json
@@ -50,7 +67,7 @@ It is created using `pake init`.
 
     ./.pake/
         meta.json 
-            *this meta contains name of the project e.g. `foo` which is used as a name for subdirectory in $GLOBAL_REPO/packages/,
+            *this meta contains name of the project e.g. `foo` which is used as a name for subdirectory in ~/.pakenode/packages/,
              is also a meta for newest version*
              
         versions/
@@ -69,7 +86,8 @@ It is created using `pake init`.
 
 To set up a node you have to own a server on which the node can be uploaded. 
 No special environment is needed as in `pake` everything is done locally and 
-servers on the Internet are used only for storage.
+servers on the Internet are used only for storage and create a network (but clients 
+run only on users' computers).
 
 This requires proper setup from the very beginning.
 
@@ -98,7 +116,7 @@ Minimal contents of `meta.json` of a *living* node are:
 `mirrors` is list of URLs for mirrors of the node.
 
 >   **Detail**: if you set up a mirror for your node do not put its URL in `url` field -- leave it in `mirrors`.
->   This way `pake` can determine if it is using a mirror or not.
+>   This way `pake` can determine if it is using a mirror or the original repository.
 
 ----
 
@@ -122,7 +140,8 @@ Example `nodes.json` file:
         }
     ]
 
-If the file cannot be downloaded from the node it is assumed that the file is empty list (so the node cannot be used for node discovery).
+If the file cannot be downloaded from the node it is assumed that the file is empty list 
+(so the node cannot be used for node discovery) and is a dead end of the network.
 
 ----
 
@@ -146,7 +165,7 @@ by reading it `pake` can recreate your environment.
 
 ----
 
-##### Files ot the package
+##### Files of the package
 
 This files are placed in sub-repository.
 
@@ -238,4 +257,4 @@ Algorythm:
 
 ----
 
-Protocol version: 0.0.1-alpha.3+20130614
+Protocol version: 0.0.2+20130615
