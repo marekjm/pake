@@ -1,2 +1,2 @@
-from pake import repository
+from pake import node
 from pake import package

@@ -4,7 +4,7 @@ import json
 import os
 import shutil
 
-from pake import repository
+from pake import node
 
 
 """This module contains objects responsible for:
@@ -18,9 +18,9 @@ from pake import repository
 """
 
 
-def init(name, root):
+def init(root):
     """Initializes new package repo and package subdir in main repo.
-    Root directory of main repo is the directory in which `.pake` subdir is
+    Root directory of main repo is the directory in which `.pakenode` subdir is
     located.
 
     :param name: name of package
@@ -29,14 +29,17 @@ def init(name, root):
     :type root: str
     """
     root = os.path.abspath(os.path.join(root, '.pake'))
-    packdir = os.path.join(root, 'packages', name)
-    curr = os.path.abspath(os.path.join('.', '.pake'))
-
-    os.mkdir(curr)
-    os.mkdir(packdir)
+    if os.path.isdir(root): shutil.rmtree(root)
+    os.mkdir(root)
 
 
-def setconfig(name, root):
+def register(name):
+    """Registers the package in node.
+    """
+    pass
+
+
+def setconfig(root, name):
     """Initializes empty package config in ocal repo and
     package subdir in main repo.
     Root directory of main repo is the directory in which `.pake` subdir is
@@ -47,16 +50,16 @@ def setconfig(name, root):
     :param root: absolute path to the root directory for main repo
     :type root: str
     """
+    root = os.path.join(root, '.pake')
     empty = {   'name': name,
                 'version': '0.0.0',
                 'description': '',
-                'author': repository.Meta().get('author'),
+                'author': node.Meta().get('author'),
                 'license': 'GNU GPL v3+ / GNU GPL v2+',
-                'url': repository.Meta.get('url'),
-                'mirrors': repository.Meta.get('mirrors'),
+                'url': node.Meta.get('url'),
+                'mirrors': node.Meta.get('mirrors'),
                 'dependencies': [],
                 }
-    meta = open(os.path.join(curr, 'meta.json'), 'w')
+    meta = open(os.path.join(root, 'meta.json'), 'w')
     meta.write(json.dumps(empty))
     meta.close()
-    shutil.copy(os.path.join(curr, 'meta.json'), os.path.join(root, '{0}.json'.format(name)))

@@ -15,11 +15,10 @@ local (located in any directory the user wants).
 
 These repositories are created using different commands (as discused below) and have different characteristics.
 
-Before you create any local repository you must create a global one because when a local repository is created 
-it makes a special directory for itself in `~/.pakenode` and therefore it must exist.
-
 
 #### Global repository
+
+This repository MUST BE located in user's home directory in `~/.pakenode` subdirectory.
 
 This repository is uploaded onto the server and acts as a *node*. 
 It is created using `pake setup` command.
@@ -29,7 +28,7 @@ It is created using `pake setup` command.
         nodes.json
         packages.json
         installed.json
-        prepared.json   # this file is a list of transactions prepared offline and 
+        prepared.json       # this file is a list of transactions prepared offline and 
                             # not yet commited
         
         db/
@@ -61,6 +60,8 @@ It is created using `pake setup` command.
 
 
 #### Sub-repository
+
+This repository can be located in ANY directory in `.pake` subdirectory.
 
 This repository contains one project.
 It is created using `pake init`. 
@@ -165,9 +166,14 @@ by reading it `pake` can recreate your environment.
 
 ----
 
-##### Files of the package
+#### Sub-repository initialization
 
-This files are placed in sub-repository.
+
+##### Files of the sub-directory
+
+This files are placed in sub-repository (one that name is `.pake`).
+
+----
 
 ###### `meta.json`
 
@@ -184,6 +190,22 @@ Example file:
         'dependencies':[],
     }
 
+Explanations:
+
+*   `name` - name of the package,
+*   `version` - version of the package, must be valid semver string,
+*   `license` - (can be left blank but must be present) name of the license used for this package,
+*   `url` - main url from where the package can be downloaded,
+*   `dependencies` - list of dependencies the package requires,
+
+Optional keys are:
+
+*   `author` - if it is not found `pake` will take author of the repository as the author of the package,
+*   `keywords` - list of keywords used by search feature; if not found keywords are extracted from `name` and `description`,
+*   `description` - description of the package,
+*   `module-name` - if different from package name (you are discouraged from designing such packages),
+
+
 Every element in `dependencies` is a dict:
     
     {
@@ -193,26 +215,76 @@ Every element in `dependencies` is a dict:
         'url':'http://pake.example.com/', // optional but SHOULD be present, if is not found pake will try to determine its url
     }
 
-Optional keys are:
+----
 
-*   `author` - if it is not found `pake` will take author of the repository as the author of the package,
-*   `keywords` - list of keywords used by search feature; if not found keywords are extracted from `name` and `description`,
-*   `description` - description of the package,
-*   `module-name` - if different from package name (you are discouraged from designing such packages),
+###### `INSTALL`
+
+This is install script which is interpreted by a pake installer. 
+We don't use shell scripts because they can contain malicious code. 
+Installer, however, have very small set of rules which can be used (see: Installing: Rules).
 
 ----
 
 ###### `foo-0.0.1.tar.xz`
 
 Archieve containg `INSTALL` and `REMOVE` scripts and package files.
-
+Filename explained: `[package name]-[version].tar.xz`
 
 ----
 
 
 ## Packages
 
-##### Installing
+#### Installing
+
+Process of installation is controlled by `INSTALL` script. 
+If the script is empty (or not found) all contents of `installing` directory are 
+copied to `site-packages` subdirectory named after the package.
+
+##### Rules
+
+Rules that can be used in installation scripts are:
+
+*   `MKDIR`
+*   `CP`
+*   `ECHO`
+
+Install environment is closed by what I mean that no file operations can be done except 
+copying files and making directories and these actions may only take 
+place in current working directory and `site-packages` directory.
+
+Few examples:
+
+    MKDIR $/foo
+    CP __init__.py $/foo/__init__.py
+
+This would make directory `foo` in `site-packages` directory and copy `__init__.py` from 
+current working directory (`.`) to it.
+`$` character means *`site-packages` directory*.
+
+
+Algorythm:
+
+0.  `pake` will define base for transaction,
+1.  `pake` will list all dependencies required for transaction,
+2.  if dependencies cannot be satisfied because of version issues abort with a message informing about it,
+3.  if dependencies cannot be satisfied because they were not found in network abort and suggest using repo discovery,
+4.  repeat steps `1.` through `3.` until all dependencies are satisfied,
+5.  check if dependencies match set filters (like license, max version or whaterver will be implemented),
+6.  `pake` will try to find mirrors for every pakcage in transaction,
+7.  `pake` will determine main url for every package in transaction,
+8.  download all packages,
+9.  define order of installation,
+10. extract first package to `~/.pakenode/installing/`,
+11. run `INSTALL` script,
+12. clean `~/.pakenode/installing/`,
+13. remove first item from list of packages to install,
+14. repeat setps `11.` through `14.` for all packages,
+
+
+----
+
+#### Searching
 
 You can search for packages using `pake search keyword...` feature.
 Installation is done via `pake install PACKAGE...` command.
@@ -232,29 +304,7 @@ Installation is done via `pake install PACKAGE...` command.
         install(): run `INSTALL` script
         size(): returns size of transaction
 
-Algorythm:
-
-0.  `pake` will determine main url for every package in transaction,
-1.  `pake` will try to find mirrors for every pakcage in transaction,
-2.  `pake` will list all dependencies required for transaction,
-3.  if dependencies cannot be satisfied because of version issues abort with a message informing about it,
-4.  if dependencies cannot be satisfied because they were not found in network abort and suggest using repo discovery
-    feature,
-5.  check if dependencies match set filters (like license, max version or whaterver will be implemented),
-5.  repeat steps `0.` through `5.` until all dependencies are satisfied,
-6.  inform about all packages installed, size of the download, licenses etc.,
-7.  ask for a confirmation,
-8.  if user cancelled the transaction - abort,
-9.  if not - download all packages,
-10. define order of installation,
-11. extract first package to `~/.pakenode/installing/`,
-12. run `INSTALL` script,
-13. clean `~/.pakenode/installing/`,
-14. remove first item from list of packages to install,
-15. repeat setps `11.` through `14.` for all packages,
-16. exit.
-
 
 ----
 
-Protocol version: 0.0.2+20130615
+Protocol version: 0.0.3+20130624
