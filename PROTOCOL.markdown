@@ -108,16 +108,30 @@ Minimal contents of `meta.json` of a *living* node are:
         'author':'Joe Example',
         'contact':'email [at] example [dot] com',
         'url':'http://pake.example.com/',
-        'mirrors':[],
     }
 
 `author` key is used to store authors name or nick. 
 `contact` is necessary for contacting author is something is wrong with the node. 
 `url` is main URL of the node,
-`mirrors` is list of URLs for mirrors of the node.
 
 >   **Detail**: if you set up a mirror for your node do not put its URL in `url` field -- leave it in `mirrors`.
 >   This way `pake` can determine if it is using a mirror or the original repository.
+
+----
+
+###### `mirrors.json`
+
+This file lists all mirrors for the node.
+
+Example contents:
+
+        [
+            'http://pake.example.com',
+            'https://pakenode.foo.net',
+            'ftp://pake.bar.net',
+        ]
+
+Every element of the list MUST BE a URL.
 
 ----
 
@@ -307,4 +321,4 @@ Installation is done via `pake install PACKAGE...` command.
 
 ----
 
-Protocol version: 0.0.3+20130624
+Protocol version: 0.0.4+20130624
