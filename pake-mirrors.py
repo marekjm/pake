@@ -7,7 +7,12 @@ import clap
 import pake
 
 
-mode = sys.argv[1]
+try:
+    mode = sys.argv[1]
+except IndexError:
+    mode = ''
+finally:
+    pass
 
 formater = clap.formater.Formater(sys.argv[2:])
 formater.format()
@@ -49,3 +54,5 @@ def echo():
 if mode == 'add': [add(url) for url in options.arguments]
 elif mode == 'rm': [remove(url) for url in options.arguments]
 elif mode == 'print': echo()
+elif mode == '--help' or mode == '': print('available modes are: add, rm, print')
+else: print('pake: fatal: unknown mode: {0}'.format(mode))

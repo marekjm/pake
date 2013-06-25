@@ -137,7 +137,9 @@ Every element of the list MUST BE a URL.
 
 ###### `nodes.json`
 
-This file contains a list. Every element of the list is a `meta.json` file for a different node. 
+This file contains a list. Every element of the list is a `meta.json` file with 
+additional key `mirrors` (which is created from `mirrors.json` file) for a different node. 
+
 Example `nodes.json` file:
 
     [

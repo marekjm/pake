@@ -10,7 +10,6 @@ import clap
 
 name = sys.argv[sys.argv.index('--name')+1]
 
-
 root = '.'
 
 reinit = ''

@@ -69,6 +69,14 @@ def setup(root):
     makeconfig(root)
 
 
+class NodeError(Exception):
+    pass
+
+
+class DuplicateError(Exception):
+    pass
+
+
 class Config():
     """Base object for config files.
     Provides functionality for reading and writing these files.
@@ -149,7 +157,12 @@ class Meta(Config):
 
 
 class Mirrors(Config):
+    """Interface to mirrors.json file.
+    """
     name = 'mirrors.json'
+
+    def __list__(self):
+        return self.content
 
     def add(self, url):
         """Adds URL to mirrors list.
@@ -164,3 +177,54 @@ class Mirrors(Config):
         """
         self.content.remove(url)
         self.write()
+
+
+class Nodes(Config):
+    """Interface to nodes.json file.
+    """
+    name = 'nodes.json'
+
+    def __list__(self):
+        return self.content
+
+    def __contains__(self, url):
+        """Checks if nodes.json file contain node of given URL.
+
+        :param node: URL of the node
+        :type node: str
+        """
+        result = False
+        for i in self.content:
+            if i['url'] == url:
+                result = True
+                break
+        return result
+
+    def valid(self, node):
+        """Checks if given node dict contains all required fields.
+        """
+        author = 'author' in node
+        url = 'url' in node
+        contact = 'contact' in node
+        return author and url and contact and type(node) is dict
+
+    def missing(self, node):
+        """Returns list of missing keys.
+        If dict is not passed to the method the internal dict is
+        checked.
+        """
+        missing = []
+        required = ['author', 'url', 'contact']
+        for key in required:
+            if key not in node: missing.append(key)
+        return missing
+
+    def add(self, node):
+        """Adds new node.
+        Duplicates are checked by comparing URLs.
+        If you want to update node metadata use update() method.
+        """
+        if type(node) is not dict: raise TypeError('expected {0} but got: {1}'.format(dict, type(node)))
+        if node['url'] not in self and self.valid(node): self.content.append(node)
+        elif node['url'] in self and self.valid(node): raise DuplicateError('cannot duplicate node')
+        else: raise NodeError('node is not valid: missing keys: {0}'.format(', '.join(self.missing(node))))
