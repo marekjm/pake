@@ -44,7 +44,7 @@ if '--verbose' in options: verbose = True
 else: verbose = False
 
 
-node = pake.node.Meta(root).get('url')
+node = pake.node.Meta(root).get('push-url')
 
 
 if '--use-auth' in options:
@@ -55,8 +55,14 @@ if '--use-auth' in options:
     authfile.close()
     if '--verbose' in options: print('pake: authentication data loaded')
 else:
-    username = input('Username for {0}: '.format(node))
-    password = getpass.getpass('Password {0}@{1}: '.format(username, node))
+    try:
+        username = input("Username for '{0}': ".format(node))
+        password = getpass.getpass("Password '{0}@{1}': ".format(username, node))
+    except (KeyboardInterrupt, EOFError):
+        go_ahead = False
+        print()
+    finally:
+        if not go_ahead: exit()
 
 if '-s' in options:
     authfile = open(os.path.join(root, '.authfile'), 'w')
