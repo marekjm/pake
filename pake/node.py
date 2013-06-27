@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 
+import ftplib
 import json
 import os
 import shutil
+
+
+from pake import errors
+from pake import models
 
 
 """This modue is responsible for creating global pake repository and managing it.
@@ -10,7 +15,7 @@ It also provides interface to `meta.json` file -- which is metadata of the repos
 """
 
 
-def makedirs(root):
+def makedirs(root=''):
     """Creates node directory structure in given root.
     If the .pakenode directory is already in root it will be deleted and
     new one will be created.
@@ -30,7 +35,7 @@ def makedirs(root):
         os.mkdir(os.path.join(root, name))
 
 
-def makeconfig(root):
+def makeconfig(root=''):
     """Creates empty pake config files in given root directory.
     Root defaults to home directory and should not be overridden
     unless for testing purposes.
@@ -39,42 +44,49 @@ def makeconfig(root):
     :type root: str
     """
     root = os.path.join(root, '.pakenode')
-    meta = open(os.path.join(root, 'meta.json'), 'w')
-    meta.write(json.dumps({'author':'', 'contact':'', 'description':'', 'url':''}))
-    meta.close()
-
-    mirrors = open(os.path.join(root, 'mirrors.json'), 'w')
-    mirrors.write(json.dumps([]))
-    mirrors.close()
-
-    packages = open(os.path.join(root, 'packages.json'), 'w')
-    packages.write('[]')
-    packages.close()
-
-    remotes = open(os.path.join(root, 'remotes.json'), 'w')
-    remotes.write('[]')
-    remotes.close()
-
-    installed = open(os.path.join(root, 'installed.json'), 'w')
-    installed.write('[]')
-    installed.close()
+    Meta(root).reset()
+    Mirrors(root).reset()
+    Nodes(root).reset()
+    Installed(root).reset()
+    Packages(root).reset()
 
 
-def setup(root):
-    """Runs node setup process in given root directory.
-    Unless you are testing the software root MUST be user's
-    home directory.
+def upload(root, username, password, cwd='', installed=False, fallback=False, callback=None):
+    """Uploads node to a main URL.
     """
-    makedirs(root)
-    makeconfig(root)
+    node = Meta(root).get('push-url')
+    remote = ftplib.FTP(node)
+    remote.login(username, password)
+    if cwd: remote.cwd(cwd)
+    files = ['meta.json', 'packages.json', 'nodes.json', 'mirrors.json']
+    if installed: files.append('installed.json')
+    for name in files:
+        try:
+            if fallback: remote.rename(name, 'fallback.{0}'.format(name))
+            else: remote.delete(name)
+        except ftplib.error_perm:
+            pass
+        finally:
+            remote.storbinary('STOR {0}'.format(name), open(os.path.join(root, name), 'rb'), callback=callback)
+    if 'packages' not in [name for name, data in list(remote.mlsd())]: remote.mkd('packages')
+    remote.cwd('./packages')
+    packages = os.listdir(os.path.join(root, 'packages'))
+    for pack in packages:
+        if pack not in [name for name, data in list(remote.mlsd())]: remote.mkd(pack)
+        remote.cwd(pack)
+        contents = os.listdir(os.path.join(root, 'packages', pack))
+        try:
+            if fallback: remote.rename('meta.json', 'fallback.meta.json')
+            else: remote.delete('meta.json')
+        except ftplib.error_perm:
+            pass
+        finally:
+            for item in contents:
+                if item not in remote.mlsd():
+                    remote.storbinary('STOR {}'.format(item), open(os.path.join(root, 'packages', pack, item), 'rb'))
+        remote.cwd('..')
+    remote.close()
 
-
-class NodeError(Exception):
-    pass
-
-
-class DuplicateError(Exception):
-    pass
 
 
 class Config():
@@ -82,6 +94,7 @@ class Config():
     Provides functionality for reading and writing these files.
     """
     name = 'blank.json'
+    default = None
     content = None
 
     def __init__(self, root):
@@ -94,12 +107,23 @@ class Config():
     def __iter__(self):
         return iter(self.content)
 
+    def reset(self):
+        """Resets config file to it's default value.
+        """
+        self.content = self.default
+        self.write()
+
     def read(self):
         """Reads JSON from config file.
         """
-        ifstream = open(os.path.join(self.root, self.name))
-        self.content = json.loads(ifstream.read())
-        ifstream.close()
+        try:
+            ifstream = open(os.path.join(self.root, self.name))
+            content = json.loads(ifstream.read())
+            ifstream.close()
+        except FileNotFoundError:
+            content = self.default
+        finally:
+            self.content = content
 
     def write(self):
         """Stores changes made to config file.
@@ -136,6 +160,7 @@ class Meta(Config):
     Thank you for your cooperation.
     """
     name = 'meta.json'
+    default = {'author':'', 'contact':'', 'description':'', 'url':'', 'push-url':''}
     content = {}
 
     def set(self, key, value):
@@ -155,11 +180,23 @@ class Meta(Config):
         del self.content[key]
         self.write()
 
+    def missing(self):
+        """Returns list of missing or unset but required keys in meta.json file.
+        """
+        missing = []
+        required = ['author', 'url', 'contact']
+        for i in required:
+            if i not in self.content: missing.append(i)
+            elif i in self.content and self.content[i] == '': missing.append('{} (empty)'.format(i))
+        return missing
+
 
 class Mirrors(Config):
     """Interface to mirrors.json file.
     """
     name = 'mirrors.json'
+    default = []
+    content = []
 
     def __list__(self):
         return self.content
@@ -183,6 +220,8 @@ class Nodes(Config):
     """Interface to nodes.json file.
     """
     name = 'nodes.json'
+    default = []
+    content = []
 
     def __list__(self):
         return self.content
@@ -200,31 +239,52 @@ class Nodes(Config):
                 break
         return result
 
-    def valid(self, node):
-        """Checks if given node dict contains all required fields.
-        """
-        author = 'author' in node
-        url = 'url' in node
-        contact = 'contact' in node
-        return author and url and contact and type(node) is dict
-
-    def missing(self, node):
-        """Returns list of missing keys.
-        If dict is not passed to the method the internal dict is
-        checked.
-        """
-        missing = []
-        required = ['author', 'url', 'contact']
-        for key in required:
-            if key not in node: missing.append(key)
-        return missing
-
     def add(self, node):
         """Adds new node.
         Duplicates are checked by comparing URLs.
         If you want to update node metadata use update() method.
         """
-        if type(node) is not dict: raise TypeError('expected {0} but got: {1}'.format(dict, type(node)))
-        if node['url'] not in self and self.valid(node): self.content.append(node)
-        elif node['url'] in self and self.valid(node): raise DuplicateError('cannot duplicate node')
+        if type(node) is not models.Node: raise TypeError('expected {0} but got: {1}'.format(models.Node, type(node)))
+        if node['url'] not in self and node.valid(): self.content.append(dict(node))
+        elif node['url'] in self and node.valid(): raise DuplicateError('cannot duplicate node')
         else: raise NodeError('node is not valid: missing keys: {0}'.format(', '.join(self.missing(node))))
+        self.write()
+
+
+class Installed(Config):
+    """Interface to installed.json file.
+    """
+    name = 'installed.json'
+    default = []
+    content = []
+
+    def __contains__(self, package):
+        """Checks if given package is installed.
+        """
+        result = False
+        if type(package) is str: package = {'name': package}
+        for i in self.content:
+            if package['name'] == i['name']:
+                result = True
+                break
+        return result
+
+    def add(self, package):
+        """Appends package to list of installed packages.
+        """
+        if type(package) is not models.Package: raise TypeError('expected {0} but got: {1}'.format(dict, type(package)))
+        if not package.valid(): raise PackageError('meta.json: missing keys: {}'.format(', '.join(package.missing())))
+        index = -1
+        for i in self.content:
+            if package['name'] == i['name']:
+                index = i
+                break
+        if index == -1: self.content.append(package)
+        else: self.content[index] = package
+        self.write()
+
+
+class Packages(Installed):
+    """Interface to packages.json file.
+    """
+    name = 'packages.json'

@@ -17,7 +17,7 @@ def set(key, value):
     if verbose: print('pake: key \'{0}\' set to value \'{1}\''.format(key, value))
 
 def get(key):
-    return pake.node.Meta(root).get(key, value)
+    print(pake.node.Meta(root).get(key))
 
 def remove(key):
     pake.node.Meta(root).remove(key)
@@ -38,6 +38,7 @@ options.add(long='set')
 options.add(long='rm')
 options.add(long='print')
 options.add(long='verbose')
+options.add(long='missing')
 
 try:
     options.check()
@@ -55,3 +56,11 @@ if '--get' in options: get(options.arguments[0])
 elif '--set' in options: set(options.arguments[0], options.arguments[1])
 elif '--rm' in options: remove(options.arguments[0])
 elif '--print' in options: echo()
+elif '--missing' in options:
+    message = '{0}'
+    if verbose: message = 'pake: meta.json: missing keys: {0}'
+    missing = pake.node.Meta(root).missing()
+    if missing: print(message.format(', '.join(pake.node.Meta(root).missing())))
+    elif not missing and verbose: print('pake: meta.json: all required keys are in place')
+    else: pass
+else: pass

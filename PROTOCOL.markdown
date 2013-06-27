@@ -6,6 +6,47 @@
 * `node` - global repository uploaded to server,
 
 
+## Quick guide to usage
+
+Basic tools are already available. 
+One thing you can do is to create a node. 
+Since no official, unified interface has been created you have to use 
+scripts written for testing.
+
+    python3 pake-setup.py --verbose
+    python3 pake-meta.py --missing --verbose
+
+The second call will give you an overview of keys you must set.
+
+    python3 pake-meta.py --set author "Joe"
+    python3 pake-meta.py --set url http://pake.example.com
+    python3 pake-meta.py --set push-url example.com
+    python3 pake-meta.py --set contact "joe [at] example [dot] com"
+
+If everything went OK you can push your node.
+
+    python3 pake-push.py
+
+If you have to change directory after logging in to the server use `-R` option.
+
+    python3 pake-push.py --verbose -R "/domains/example.com/public_html/pake"
+
+If you want to store your authentication data (**warning!**: this data are stored in plaintext 
+in the `~/.pakenode/.authfile` file on you computer, the `pake` will not ever do anything with them 
+except for reading and writing them to this file on login so if your machine is protected you can use the switches).
+To store auth data you can use either `--store-auth` or `-s` options, to use stored data use `--use-auth` or `-u`.
+
+    python3 pake-push.py --verbose --store-auth
+
+After first push you can create fallback files, just in case the future uploads will encounter some problems. 
+This is enabled with `--create-fallback` option.
+What I would recommend is:
+
+    python3 pake-push.py --verbose --store-auth --dont-push
+    python3 pake-push.py --verbose --use-auth -R "/your/path"
+    python3 pake-push.py --verbose -u -R "/your/path" --create-fallback
+
+
 ----
 
 ## Repositories
@@ -97,6 +138,12 @@ This requires proper setup from the very beginning.
 ##### Files of the node
 
 
+These files should always be available on the node's server. 
+If they are not, `fallback.*` files should be checked. 
+Fallback files are not always present, they are created when a user does runs 
+`python pake-push.py` with either `--create-fallback` or `-F` options.
+
+
 ###### `meta.json`
 
 Most important file in EVERY node is `meta.json` -- if this cannot be downloaded a node is considered dead to rest of the network. 
@@ -108,11 +155,13 @@ Minimal contents of `meta.json` of a *living* node are:
         'author':'Joe Example',
         'contact':'email [at] example [dot] com',
         'url':'http://pake.example.com/',
+        'push-url':'example.com',
     }
 
 `author` key is used to store authors name or nick. 
 `contact` is necessary for contacting author is something is wrong with the node. 
 `url` is main URL of the node,
+`push-url` is the URL used to push data to the node,
 
 >   **Detail**: if you set up a mirror for your node do not put its URL in `url` field -- leave it in `mirrors`.
 >   This way `pake` can determine if it is using a mirror or the original repository.
@@ -323,4 +372,4 @@ Installation is done via `pake install PACKAGE...` command.
 
 ----
 
-Protocol version: 0.0.4+20130624
+Protocol version: 0.0.5+20130627
