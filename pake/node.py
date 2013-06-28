@@ -46,15 +46,27 @@ def makeconfig(root=''):
     root = os.path.join(root, '.pakenode')
     Meta(root).reset()
     Mirrors(root).reset()
+    Pushers(root).reset()
     Nodes(root).reset()
     Installed(root).reset()
     Packages(root).reset()
 
 
-def upload(root, username, password, cwd='', installed=False, fallback=False, callback=None):
+def pushmain(root, username, password, cwd='', installed=False, fallback=False, callback=None):
+    """Pushes to main node.
+    """
+    upload(root, Meta(root).get('push-url'), username, password, cwd, installed, fallback, callback)
+
+def pushmirrors(root, username, password, cwd, installed=False, fallback=False, callback=None):
+    """Pushes to mirrors.
+    """
+    for mirror in Mirrors(root):
+        upload(root, mirror['push-url'], username, password, mirror['cwd'], installed, fallback, callback)
+
+
+def upload(root, node, username, password, cwd='', installed=False, fallback=False, callback=None):
     """Uploads node to a main URL.
     """
-    node = Meta(root).get('push-url')
     remote = ftplib.FTP(node)
     remote.login(username, password)
     if cwd: remote.cwd(cwd)
@@ -116,12 +128,13 @@ class Config():
     def read(self):
         """Reads JSON from config file.
         """
+        content = self.default
         try:
             ifstream = open(os.path.join(self.root, self.name))
             content = json.loads(ifstream.read())
             ifstream.close()
         except FileNotFoundError:
-            content = self.default
+            pass
         finally:
             self.content = content
 
@@ -184,7 +197,7 @@ class Meta(Config):
         """Returns list of missing or unset but required keys in meta.json file.
         """
         missing = []
-        required = ['author', 'url', 'contact']
+        required = [key for key in self.default]
         for i in required:
             if i not in self.content: missing.append(i)
             elif i in self.content and self.content[i] == '': missing.append('{} (empty)'.format(i))
@@ -197,6 +210,9 @@ class Mirrors(Config):
     name = 'mirrors.json'
     default = []
     content = []
+
+    def __iter__(self):
+        return iter(self.content)
 
     def __list__(self):
         return self.content
@@ -212,7 +228,45 @@ class Mirrors(Config):
     def remove(self, url):
         """Removes URL from list of mirrors.
         """
-        self.content.remove(url)
+        index = -1
+        for i, mirrot in enumerate(self.content):
+            if mirror == url:
+                index = i
+                break
+        if index > -1: self.content.pop(index)
+        self.write()
+
+
+class Pushers(Config):
+    """Interface to push.json file.
+    """
+    name = 'push.json'
+    default = []
+    content = []
+
+    def __iter__(self):
+        return iter(self.content)
+
+    def __list__(self):
+        return self.content
+
+    def add(self, url, push_url, cwd=''):
+        """Adds pusher to push.json list.
+        """
+        pusher = {'url': url, 'push-url': push_url, 'cwd': cwd}
+        if pusher not in self.content:
+            self.content.append(pusher)
+            self.write()
+
+    def remove(self, url):
+        """Removes URL from list of pushers.
+        """
+        index = -1
+        for i, mirrot in enumerate(self.content):
+            if mirror == url:
+                index = i
+                break
+        if index > -1: self.content.pop(index)
         self.write()
 
 

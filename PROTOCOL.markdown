@@ -13,38 +13,38 @@ One thing you can do is to create a node.
 Since no official, unified interface has been created you have to use 
 scripts written for testing.
 
-    python3 pake-setup.py --verbose
-    python3 pake-meta.py --missing --verbose
+    python3 pakenode-init.py --verbose
+    python3 pakenode-meta.py --missing --verbose
 
 The second call will give you an overview of keys you must set.
 
-    python3 pake-meta.py --set author "Joe"
-    python3 pake-meta.py --set url http://pake.example.com
-    python3 pake-meta.py --set push-url example.com
-    python3 pake-meta.py --set contact "joe [at] example [dot] com"
+    python3 pakenode-meta.py --set author "Joe"
+    python3 pakenode-meta.py --set url http://pake.example.com
+    python3 pakenode-meta.py --set push-url example.com
+    python3 pakenode-meta.py --set contact "joe [at] example [dot] com"
 
 If everything went OK you can push your node.
 
-    python3 pake-push.py
+    python3 pakenode-push.py
 
 If you have to change directory after logging in to the server use `-R` option.
 
-    python3 pake-push.py --verbose -R "/domains/example.com/public_html/pake"
+    python3 pakenode-push.py --verbose -R "/domains/example.com/public_html/pake"
 
 If you want to store your authentication data (**warning!**: this data are stored in plaintext 
 in the `~/.pakenode/.authfile` file on you computer, the `pake` will not ever do anything with them 
 except for reading and writing them to this file on login so if your machine is protected you can use the switches).
 To store auth data you can use either `--store-auth` or `-s` options, to use stored data use `--use-auth` or `-u`.
 
-    python3 pake-push.py --verbose --store-auth
+    python3 pakenode-push.py --verbose --store-auth
 
 After first push you can create fallback files, just in case the future uploads will encounter some problems. 
 This is enabled with `--create-fallback` option.
 What I would recommend is:
 
-    python3 pake-push.py --verbose --store-auth --dont-push
-    python3 pake-push.py --verbose --use-auth -R "/your/path"
-    python3 pake-push.py --verbose -u -R "/your/path" --create-fallback
+    python3 pakenode-push.py --verbose --store-auth --dont-push
+    python3 pakenode-push.py --verbose --use-auth -R "/your/path"
+    python3 pakenode-push.py --verbose -u -R "/your/path" --create-fallback
 
 
 ----
@@ -141,7 +141,7 @@ This requires proper setup from the very beginning.
 These files should always be available on the node's server. 
 If they are not, `fallback.*` files should be checked. 
 Fallback files are not always present, they are created when a user does runs 
-`python pake-push.py` with either `--create-fallback` or `-F` options.
+`python3 pakenode-push.py` with either `--create-fallback` or `-F` options.
 
 
 ###### `meta.json`
@@ -181,6 +181,23 @@ Example contents:
         ]
 
 Every element of the list MUST BE a URL.
+
+----
+
+###### `push.json`
+
+This file IS NOT uploaded to server.
+
+It contains *pushers* - data used by `pake` to push to mirrors. 
+These are local representations of them.
+
+Example pusher:
+
+    {
+        'url': 'http://pake.example.com',
+        'push-url': 'example.com',
+        'cwd': '/domains/example.com/public_html/pake'
+    }
 
 ----
 
@@ -372,4 +389,4 @@ Installation is done via `pake install PACKAGE...` command.
 
 ----
 
-Protocol version: 0.0.5+20130627
+Protocol version: 0.0.6+20130629

@@ -58,13 +58,14 @@ else:
     try:
         username = input("Username for '{0}': ".format(node))
         password = getpass.getpass("Password '{0}@{1}': ".format(username, node))
+        go_ahead = True
     except (KeyboardInterrupt, EOFError):
         go_ahead = False
         print()
     finally:
         if not go_ahead: exit()
 
-if '-s' in options:
+if '--store-auth' in options:
     authfile = open(os.path.join(root, '.authfile'), 'w')
     authfile.write('{0}\n{1}'.format(username, password))
     authfile.close()
@@ -86,7 +87,12 @@ else:
     fallback = False
 
 
-if '--dont-push' not in options:
+if '--dont-push' not in options or '--only-mirrors' in options:
     if verbose: print('pake: uploading...\t', end='\t')
-    pake.node.upload(root, username=username, password=password, cwd=cwd, fallback=fallback)
+    pake.node.pushmain(root, username=username, password=password, cwd=cwd, fallback=fallback)
+    if verbose: print('[  OK  ]')
+
+if '--mirrors' in options or '--only-mirrors' in options:
+    if verbose: print('pake: uploading mirrors...', end='\t')
+    pake.node.pushmirrors(root, username=username, password=password, cwd=cwd, fallback=fallback)
     if verbose: print('[  OK  ]')

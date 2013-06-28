@@ -19,7 +19,10 @@ formater.format()
 
 options = clap.parser.Parser(list(formater))
 options.add(long='verbose')
-options.add(long='root')
+options.add(long='root', type=str)
+options.add(long='url', type=str)
+options.add(long='push-url', type=str)
+options.add(long='cwd', type=str)
 
 try:
     options.check()
@@ -36,14 +39,18 @@ if '--verbose' in options: verbose = True
 else: verbose = False
 
 
-def add(url):
+def add(url, push_url, cwd):
     pake.node.Mirrors(root).add(url)
     if verbose: print('pake: added URL to mirrors: {0}'.format(url))
+    pake.node.Pushers(root).add(url, push_url, cwd)
+    if verbose: print('pake: added new pusher: {0}'.format(url))
 
 
 def remove(url):
     pake.node.Mirrors(root).remove(url)
     if verbose: print('pake: removed URL from mirrors: {0}'.format(url))
+    pake.node.Pushers(root).remove(url)
+    if verbose: print('pake: removed pusher: {0}'.format(url))
 
 
 def echo():
@@ -51,8 +58,7 @@ def echo():
     for url in mirrors.content: print(url)
 
 
-if mode == 'add': [add(url) for url in options.arguments]
+if mode == 'add': add(options.get('--url'), options.get('--push-url'), options.get('--cwd'))
 elif mode == 'rm': [remove(url) for url in options.arguments]
 elif mode == 'print': echo()
-elif mode == '--help' or mode == '': print('available modes are: add, rm, print')
 else: print('pake: fatal: unknown mode: {0}'.format(mode))

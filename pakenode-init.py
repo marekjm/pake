@@ -36,7 +36,8 @@ elif os.path.isdir(os.path.join(root, '.pakenode')) and '--re' not in options:
 
 
 if run:
-    pake.node.setup(root)
+    pake.node.makedirs(root)
+    pake.node.makeconfig(root)
     message = 'pake: repository {0}initialized in {1}'.format(reinit, os.path.join(root, '.pakenode'))
 
 
