@@ -15,10 +15,11 @@ formater.format()
 options = clap.parser.Parser(list(formater))
 options.add(short='v', long='verbose')
 options.add(long='root', type=str)
-options.add(long='mirrors')
+options.add(short='m', long='mirrors')
+options.add(short='O', long='only-mirrors')
 options.add(short='R', long='remote', type=str)
 options.add(short='F', long='create-fallback')
-options.add(long='dont-push')
+options.add(short='d', long='dont-push')
 options.add(short='s', long='store-auth')
 options.add(short='u', long='use-auth')
 
@@ -44,9 +45,6 @@ if '--verbose' in options: verbose = True
 else: verbose = False
 
 
-node = pake.node.Meta(root).get('push-url')
-
-
 if '--use-auth' in options:
     authfile = open(os.path.join(root, '.authfile'))
     data = authfile.readlines()
@@ -56,6 +54,7 @@ if '--use-auth' in options:
     if '--verbose' in options: print('pake: authentication data loaded')
 else:
     try:
+        node = pake.node.Meta(root).get('push-url')
         username = input("Username for '{0}': ".format(node))
         password = getpass.getpass("Password '{0}@{1}': ".format(username, node))
         go_ahead = True
@@ -87,12 +86,39 @@ else:
     fallback = False
 
 
-if '--dont-push' not in options or '--only-mirrors' in options:
-    if verbose: print('pake: uploading...\t', end='\t')
-    pake.node.pushmain(root, username=username, password=password, cwd=cwd, fallback=fallback)
-    if verbose: print('[  OK  ]')
+fail = False
+if '--dont-push' not in options and '--only-mirrors' not in options:
+    if verbose:
+        print('pake: uploading...\t', end='\t')
+    try:
+        pake.node.pushmain(root, username=username, password=password, cwd=cwd, fallback=fallback)
+        message = '[  OK  ]'
+    except (Exception) as e:
+        message = '[ FAIL ]: {0}'.format(e)
+        fail = True
+    finally:
+        pass
+    if verbose: print(message)
 
-if '--mirrors' in options or '--only-mirrors' in options:
+if fail and verbose: print('pake: fail: push to main node failed')
+
+if fail and '--mirrors' not in options:
+    print('pake: fatal: push was not successful')
+    exit()
+
+fail = False
+if '--mirrors' in options or '--only-mirrors' in options and '--dont-push' not in options:
     if verbose: print('pake: uploading mirrors...', end='\t')
-    pake.node.pushmirrors(root, username=username, password=password, cwd=cwd, fallback=fallback)
-    if verbose: print('[  OK  ]')
+    try:
+        pake.node.pushmirrors(root, username=username, password=password, cwd=cwd, fallback=fallback)
+        message = '[  OK  ]'
+    except (Exception) as e:
+        message = '[ FAIL ]: {0}'.format(e)
+        fail = True
+    finally:
+        pass
+    if verbose: print(message)
+
+if fail and verbose: print('pake: fail: push to mirrors failed')
+
+if fail: print('pake: fatal: push was not successful')
