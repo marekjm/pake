@@ -33,12 +33,15 @@ def echo():
 formater = clap.formater.Formater(sys.argv[1:])
 formater.format()
 options = clap.parser.Parser(list(formater))
+options.add(short='v', long='version')
+options.add(short='h', long='help')
 options.add(long='get')
 options.add(long='set')
 options.add(long='rm')
 options.add(long='print')
-options.add(long='verbose')
+options.add(short='V', long='verbose')
 options.add(long='missing')
+options.add(short='R', long='root', type=str, hint='alternative root, warning: *only* for testing purposes')
 
 try:
     options.check()
@@ -47,6 +50,14 @@ except clap.errors.UnrecognizedOptionError as e:
     exit()
 
 options.parse()
+if '--help' in options:
+    options.help()
+    exit()
+if '--version' in options:
+    if '--verbose' in options: print('pake: version: {0}'.format(pake.__version__))
+    else: print(pake.__version__)
+    exit()
+
 
 if '--root' in options: root = options.get('--root')
 if '--verbose' in options: verbose = True

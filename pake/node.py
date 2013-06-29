@@ -106,8 +106,8 @@ class Config():
     Provides functionality for reading and writing these files.
     """
     name = 'blank.json'
-    default = None
-    content = None
+    default = {}
+    content = {}
 
     def __init__(self, root):
         self.root = root
@@ -115,6 +115,9 @@ class Config():
 
     def __contains__(self, key):
         return key in self.content
+
+    def __getitem__(self, item):
+        return self.content[item]
 
     def __iter__(self):
         return iter(self.content)
@@ -237,15 +240,24 @@ class Mirrors(Config):
         self.write()
 
 
-class Pushers(Config):
+class NodePusher(Config):
     """Interface to push.json file.
     """
     name = 'push.json'
+    default = {'url': '', 'push-url': '', 'cwd': ''}
+    content = {}
+
+    def __setitem__(self, key, value):
+        self.content[key] = value
+        self.write()
+
+
+class Pushers(Config):
+    """Interface to pushers.json file.
+    """
+    name = 'pushers.json'
     default = []
     content = []
-
-    def __iter__(self):
-        return iter(self.content)
 
     def __list__(self):
         return self.content

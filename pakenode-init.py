@@ -12,11 +12,20 @@ import pake
 formater = clap.formater.Formater(sys.argv[1:])
 formater.format()
 options = clap.parser.Parser(list(formater))
-options.add(long='re')
-options.add(long='root')
+options.add(short='v', long='version')
+options.add(short='h', long='help')
+options.add(long='re', hint='required when reinitializing, it tells pake that it should remove old repository and create new')
+options.add(short='R', long='root', type=str, hint='alternative root, warning: *only* for testing purposes')
 options.add(long='verbose', short='v')
 options.check()
 options.parse()
+if '--help' in options:
+    options.help()
+    exit()
+if '--version' in options:
+    if '--verbose' in options: print('pake: version: {0}'.format(pake.__version__))
+    else: print(pake.__version__)
+    exit()
 
 root = os.path.abspath(os.path.expanduser('~'))
 if '--root' in options: root = options.get('--root')

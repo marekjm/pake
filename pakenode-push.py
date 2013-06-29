@@ -13,15 +13,18 @@ formater = clap.formater.Formater(sys.argv[1:])
 formater.format()
 
 options = clap.parser.Parser(list(formater))
-options.add(short='v', long='verbose')
-options.add(long='root', type=str)
-options.add(short='m', long='mirrors')
-options.add(short='O', long='only-mirrors')
-options.add(short='R', long='remote', type=str)
-options.add(short='F', long='create-fallback')
-options.add(short='d', long='dont-push')
-options.add(short='s', long='store-auth')
-options.add(short='u', long='use-auth')
+options.add(short='h', long='help', hint='show this help')
+options.add(short='v', long='version')
+options.add(short='V', long='verbose')
+options.add(short='R', long='root', type=str, hint='alternative root, warning: *only* for testing purposes')
+# options for this interface
+options.add(short='m', long='mirrors', hint='upload mirrors too')
+options.add(short='O', long='only-mirrors', hint='upload only mirrors and NOT main node')
+options.add(short='C', long='cwd', type=str, hint='change to this drectory when uploading main node')
+options.add(short='F', long='create-fallback', hint='create fallback files, use only when pushing second time or later')
+options.add(short='d', long='dont-push', hint='do not push anything, handy when updating .authfile')
+options.add(short='s', long='store-auth', hint='save username and password for main node in ~/.pakenode/.authfile')
+options.add(short='u', long='use-auth', hint='load data stored in .authfile, pake will not ask for authorization data')
 
 try:
     options.check()
@@ -30,6 +33,14 @@ except clap.errors.UnrecognizedOptionError as e:
     exit(1)
 
 options.parse()
+if '--help' in options:
+    options.help()
+    exit()
+if '--version' in options:
+    if '--verbose' in options: print('pake: version: {0}'.format(pake.__version__))
+    else: print(pake.__version__)
+    exit()
+
 
 
 if '--store-auth' not in options and '--dont-push' in options:

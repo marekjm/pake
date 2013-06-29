@@ -1,9 +1,13 @@
 ## Definitions
 
-* `global repository` - local repository which contains node metadata, subdirectories for projects,
+* `global repository` - repository on user's machine which contains node metadata, subdirectories for projects,
     list of all known nodes etc.,
 * `sub-repository` - repository for single project containing its metadata and archieves,
 * `node` - global repository uploaded to server,
+* `pusher` - dictionary which contains a `url`, `push-url` and `cwd` for a mirror,
+* `url` - URL from which data can be downloaded eg. `http://pake.example.com/repo`
+* `push-url` - URL which is used to connect to FTP server eg. `example.com`
+* `cwd` - *current working directory* is a directory to which `pake` will go to upload data after logging in to a server,
 
 
 ## Quick guide to usage
@@ -62,14 +66,30 @@ These repositories are created using different commands (as discused below) and 
 This repository MUST BE located in user's home directory in `~/.pakenode` subdirectory.
 
 This repository is uploaded onto the server and acts as a *node*. 
-It is created using `pake setup` command.
+It is created using `pakenode-init.py` script.
+
+When file is *public* it means that pushing the node will upload this file, *private* files are not uploaded.
+All files in `packages` directory are considered *public*.
+
+Files in `db/`, `prepared/` and `installing/` are not available for pushing through the default interface. 
+However, you should be able to push your `downloaded/` contents - in case somebody's else node goes down with 
+all their mirrors your `downloaded/` can be searched for the lost packages.
 
     ~/.pakenode/
-        meta.json
-        nodes.json
-        packages.json
-        installed.json
-        prepared.json       # this file is a list of transactions prepared offline and 
+        meta.json           # public
+        push.json           # private
+
+        mirrors.json        # public
+        pushers.json        # private
+
+        nodes.json          # public
+
+        packages.json       # public
+
+        installed.json      # private/public
+
+        prepared.json       # private
+                            # this file is a list of transactions prepared offline and 
                             # not yet commited
         
         db/
@@ -105,7 +125,7 @@ It is created using `pake setup` command.
 This repository can be located in ANY directory in `.pake` subdirectory.
 
 This repository contains one project.
-It is created using `pake init`. 
+It is created using `pake-init.py` script. 
 
     ./.pake/
         meta.json 
@@ -155,22 +175,37 @@ Minimal contents of `meta.json` of a *living* node are:
         'author':'Joe Example',
         'contact':'email [at] example [dot] com',
         'url':'http://pake.example.com/',
-        'push-url':'example.com',
     }
 
 `author` key is used to store authors name or nick. 
 `contact` is necessary for contacting author is something is wrong with the node. 
 `url` is main URL of the node,
-`push-url` is the URL used to push data to the node,
 
 >   **Detail**: if you set up a mirror for your node do not put its URL in `url` field -- leave it in `mirrors`.
 >   This way `pake` can determine if it is using a mirror or the original repository.
 
 ----
 
+###### `push.json`
+
+This file IS NOT uploaded to server.
+
+It contains a *pusher* for main node. 
+
+Example pusher:
+
+    {
+        'url': 'http://pake.example.com',
+        'push-url': 'example.com',
+        'cwd': '/domains/example.com/public_html/pake',
+    }
+
+
+----
+
 ###### `mirrors.json`
 
-This file lists all mirrors for the node.
+This file lists all mirrors of the node.
 
 Example contents:
 
@@ -184,20 +219,11 @@ Every element of the list MUST BE a URL.
 
 ----
 
-###### `push.json`
+###### `pushers.json`
 
 This file IS NOT uploaded to server.
 
-It contains *pushers* - data used by `pake` to push to mirrors. 
-These are local representations of them.
-
-Example pusher:
-
-    {
-        'url': 'http://pake.example.com',
-        'push-url': 'example.com',
-        'cwd': '/domains/example.com/public_html/pake'
-    }
+It contains a *pusher* for every mirror of the node. 
 
 ----
 
