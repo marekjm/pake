@@ -15,7 +15,6 @@ Syntax is simple:
 
     python3 pakenode-ui.py [global options] [MODE [mode options]]
 
-
 --------
 
 
@@ -36,12 +35,12 @@ Global options:
 Mode options:
 
 init:
-    This mode is used for initializing a node repository in user's home directory. 
-    If you want to just check if you can initialize option --dry is for you. 
-    By default, if you are trying to reinitialize pake will exit with error message saying 
-    that you cannot because old repository is found.
-    This is to prevent you from accidentally overwriting your repository as a reinitialization 
-    process is dumb and just removes the node and creates a fresh one.
+This mode is used for initializing a node repository in user's home directory. 
+If you want to just check if you can initialize option --dry is for you. 
+By default, if you are trying to reinitialize pake will exit with error message saying 
+that you cannot because old repository is found.
+This is to prevent you from accidentally overwriting your repository as a reinitialization 
+process is dumb and just removes the node and creates a fresh one.
 
 
     -d, --dry           - do a "dry run", just check if init would be successful
@@ -84,7 +83,7 @@ import pake
 #   >>> import pake
 #   >>> pake.__version__
 #
-__version__ = '0.0.2'
+__version__ = '0.0.3-alpha.1'
 
 
 formater = clap.formater.Formater(sys.argv[1:])
