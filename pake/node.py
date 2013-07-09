@@ -15,7 +15,7 @@ It also provides interface to `meta.json` file -- which is metadata of the repos
 """
 
 
-def makedirs(root=''):
+def makedirs(root):
     """Creates node directory structure in given root.
     If the .pakenode directory is already in root it will be deleted and
     new one will be created.
@@ -23,7 +23,6 @@ def makedirs(root=''):
     :param root: root directory in which files will be written
     :type root: str
     """
-    root = os.path.join(root, '.pakenode')
     subdirectories = [  'db',
                         'downloaded',
                         'installing',
@@ -35,7 +34,7 @@ def makedirs(root=''):
         os.mkdir(os.path.join(root, name))
 
 
-def makeconfig(root=''):
+def makeconfig(root):
     """Creates empty pake config files in given root directory.
     Root defaults to home directory and should not be overridden
     unless for testing purposes.
@@ -43,7 +42,6 @@ def makeconfig(root=''):
     :param root: root directory in which files will be written
     :type root: str
     """
-    root = os.path.join(root, '.pakenode')
     Meta(root).reset()
     Mirrors(root).reset()
     Pushers(root).reset()

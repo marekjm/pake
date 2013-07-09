@@ -4,4 +4,4 @@ from pake import errors
 from pake import models
 
 
-__version__ = '0.0.2-alpha.1'
+__version__ = '0.0.2-alpha.2'
