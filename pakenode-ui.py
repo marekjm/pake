@@ -46,6 +46,7 @@ process is dumb and just removes the node and creates a fresh one.
     -d, --dry           - do a "dry run", just check if init would be successful
     -r, --re            - tell pakenode you are reinitializing and it should remove old node
                           directory if found, otherwise an exception will be raised
+    -p, --preserve      - preserves config files during reinitialization
 
 ----
 
@@ -83,8 +84,7 @@ import pake
 #   >>> import pake
 #   >>> pake.__version__
 #
-__version__ = '0.0.4'
-
+__version__ = '0.0.5'
 
 formater = clap.formater.Formater(sys.argv[1:])
 formater.format()
@@ -92,6 +92,7 @@ formater.format()
 init = clap.parser.Parser()
 init.add(short='r', long='re')
 init.add(short='d', long='dry')
+init.add(short='p', long='preserve', requires=['--re'])
 
 meta = clap.parser.Parser()
 meta.add(short='s', long='set', conflicts=['-r', '-g', '-m', '-l'])
@@ -199,6 +200,13 @@ if str(options) == 'init':
         success = True
     except FileExistsError:
         if '--re' in options:
+            if '--preserve' in options:
+                meta = pake.node.Meta(root)
+                mirrors = pake.node.Mirrors(root)
+                nodes = pake.node.Nodes(root)
+                pushers = pake.node.Pushers(root)
+                node_pusher = pake.node.NodePusher(root)
+                installed = pake.node.Installed(root)
             if '--dry' not in options:
                 shutil.rmtree(root)
                 pake.node.makedirs(root)
@@ -212,7 +220,16 @@ if str(options) == 'init':
         if '--verbose' in options: print('pakenode: fail: {0}'.format(e))
         success = False
     finally:
-        if success and '--dry' not in options: pake.node.makeconfig(root)
+        if success and '--dry' not in options:
+            if '--preserve' in options:
+                meta.write()
+                mirrors.write()
+                nodes.write()
+                pushers.write()
+                node_pusher.write()
+                installed.write()
+            else:
+                pake.node.makeconfig(root)
     if success: message = 'pakenode: {0}initialized node in {1}'.format(reinit, root)
     else: message = 'pakenode: fatal: cannot initialize repository in {0}'.format(root)
 elif str(options) == 'meta':

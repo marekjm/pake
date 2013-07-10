@@ -174,7 +174,7 @@ class Meta(Config):
     Thank you for your cooperation.
     """
     name = 'meta.json'
-    default = {'author':'', 'contact':'', 'description':'', 'url':'', 'push-url':''}
+    default = {'author':'', 'contact':'', 'description':'', 'url':''}
     content = {}
 
     def set(self, key, value):

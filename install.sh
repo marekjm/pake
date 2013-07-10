@@ -14,8 +14,4 @@ if [ $1 == '']; then
 else
     make clean
     cp -Rv ./pake/ /usr/lib/python$1/site-packages/
-
-    INSTALL_DIR=~/.local/bin
-    mkdir $INSTALL_DIR
-    #cp -v ./pakenode-ui.py $INSTALL_DIR/pakenode
 fi
