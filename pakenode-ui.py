@@ -83,7 +83,7 @@ import pake
 #   >>> import pake
 #   >>> pake.__version__
 #
-__version__ = '0.0.3-alpha.1'
+__version__ = '0.0.4'
 
 
 formater = clap.formater.Formater(sys.argv[1:])
@@ -158,16 +158,17 @@ def getmodehelp(mode):
     return string.rstrip()
 
 if '--version' in options:
+    version = 'pake {0}'.format(pake.__version__)
+    if '--verbose' in options:
+        version += ' (ui: {0})'.format(__version__)
     if '--component' in options:
         component = options.get('--component')
         if component == 'backend': version = pake.__version__
         elif component == 'ui': version = __version__
         else:
-            print('pakenode: fatal: no such component: {0}'.format(component))
+            print('pakenode: fail: no such component: {0}'.format(component))
             version = ''
-    if '--verbose' in options:
-        version = 'pake {0} (ui: {1})'.format(pake.__version__, __version__)
-    print(version)
+    if version: print(version)
     exit()
 
 if '--help' in options:
