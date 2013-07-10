@@ -181,8 +181,12 @@ Minimal contents of `meta.json` of a *living* node are:
 `contact` is necessary for contacting author is something is wrong with the node. 
 `url` is main URL of the node,
 
->   **Detail**: if you set up a mirror for your node do not put its URL in `url` field -- leave it in `mirrors`.
->   This way `pake` can determine if it is using a mirror or the original repository.
+If you run this command:
+
+    pakenode meta --missing
+
+you will get `description` as missing.
+It is nice to include one but not neccessary.
 
 ----
 
@@ -199,7 +203,6 @@ Example pusher:
         'push-url': 'example.com',
         'cwd': '/domains/example.com/public_html/pake',
     }
-
 
 ----
 
@@ -224,6 +227,9 @@ Every element of the list MUST BE a URL.
 This file IS NOT uploaded to server.
 
 It contains a *pusher* for every mirror of the node. 
+
+If you want you can add `username` and `password` fields. 
+This way you will not be asked for them when pushing to a mirror.
 
 ----
 
@@ -415,4 +421,4 @@ Installation is done via `pake install PACKAGE...` command.
 
 ----
 
-Protocol version: 0.0.6+20130629
+Protocol version: 0.0.7+20130710
