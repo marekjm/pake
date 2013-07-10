@@ -198,7 +198,7 @@ class Meta(Config):
         """Returns list of missing or unset but required keys in meta.json file.
         """
         missing = []
-        required = [key for key in self.default]
+        required = list( self.default.keys())
         for i in required:
             if i not in self.content: missing.append(i)
             elif i in self.content and self.content[i] == '': missing.append('{} (empty)'.format(i))

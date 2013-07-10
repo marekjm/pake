@@ -84,7 +84,7 @@ import pake
 #   >>> import pake
 #   >>> pake.__version__
 #
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 
 formater = clap.formater.Formater(sys.argv[1:])
 formater.format()
