@@ -206,6 +206,7 @@ if str(options) == 'init':
                 nodes = pake.node.Nodes(root)
                 pushers = pake.node.Pushers(root)
                 node_pusher = pake.node.NodePusher(root)
+                packages = pake.node.Packages(root)
                 installed = pake.node.Installed(root)
             if '--dry' not in options:
                 shutil.rmtree(root)
@@ -227,6 +228,7 @@ if str(options) == 'init':
                 nodes.write()
                 pushers.write()
                 node_pusher.write()
+                packages.write()
                 installed.write()
             else:
                 pake.node.makeconfig(root)
