@@ -245,7 +245,7 @@ class NodePusher(Config):
     default = {'url': '', 'push-url': '', 'cwd': ''}
     content = {}
 
-    def __setitem__(self, key, value):
+    def set(self, key, value):
         self.content[key] = value
         self.write()
 

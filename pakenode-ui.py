@@ -63,6 +63,40 @@ the network.
 
 ----
 
+mirrors:
+This mode is used to manipulate `mirrors.json` file of the node.
+
+These option define what to do. They conflict with each other. 
+
+        --add           - add new mirror
+        --edit          - edit a mirror, URL defines what mirror is edited
+        --remove        - removes mirror which has given URL
+
+All options in this mode (except --remove) are accompanied by these ones. Again, 
+there is one exception: --edit may be accompanied by only one of them depending on
+what you want to edit.
+
+    -u, --url STR       - url from which other users fetch data
+    -p, --push-url STR  - url which is used to connect to node server
+    -c, --cwd STR       - directory to which pake should go after connecting to server
+
+----
+
+push:
+This mode is not yet implemented.
+
+----
+
+packages:
+This mode is not yet implemented.
+
+----
+
+nodes:
+This mode is not yet implemented.
+
+----
+
 
 This script is published under GNU GPL v3 or any later version of this license. 
 Text of the license can be found at: https://gnu.org/licenses/gpl.html
@@ -84,7 +118,7 @@ import pake
 #   >>> import pake
 #   >>> pake.__version__
 #
-__version__ = '0.0.6'
+__version__ = '0.0.7'
 
 formater = clap.formater.Formater(sys.argv[1:])
 formater.format()
@@ -101,12 +135,24 @@ meta.add(short='g', long='get', argument=str, conflicts=['-s', '-r', '-m', '-l']
 meta.add(short='m', long='missing', conflicts=['-s', '-r', '-g'])
 meta.add(short='l', long='list', conflicts=['-s', '-r', '-g'])
 
+mirrors = clap.parser.Parser()
+mirrors.add(long='main', needs=['--add', '--edit', '--remove'])
+mirrors.add(long='add', requires=['-u', '-p', '-c'], conflicts=['--main', '--edit', '--remove'])
+mirrors.add(long='edit', argument=str, needs=['--url', '--push-url', '--cwd'], conflicts=['--main', '--add', '--remove'])
+mirrors.add(long='remove', argument=str, requires=['--url'], conflicts=['--main', '--add', '--edit'])
+mirrors.add(short='u', long='url', argument=str)
+mirrors.add(short='p', long='push-url', argument=str)
+mirrors.add(short='c', long='cwd', argument=str)
+
+push = clap.parser.Parser()
+
 options = clap.modes.Modes(list(formater))
 options.addMode('init', init)
 options.addMode('meta', meta)
+options.addMode('mirrors', mirrors)
 options.addOption(short='h', long='help')
 options.addOption(short='v', long='version')
-options.addOption(long='component', argument=str, requires=['--version'])
+options.addOption(short='C', long='component', argument=str, requires=['--version'])
 options.addOption(short='V', long='verbose', conflicts=['--quiet'])
 options.addOption(short='Q', long='quiet', conflicts=['--verbose'])
 options.addOption(short='R', long='root', argument=str)
@@ -166,6 +212,7 @@ if '--version' in options:
         component = options.get('--component')
         if component == 'backend': version = pake.__version__
         elif component == 'ui': version = __version__
+        elif component == 'clap': version = clap.__version__
         else:
             print('pakenode: fail: no such component: {0}'.format(component))
             version = ''
@@ -186,6 +233,7 @@ root = os.path.join(root, '.pakenode')
 if '--verbose' in options: print('pakenode: root set to {0}'.format(root))
 
 
+message = ''
 if str(options) == 'init':
     if '--dry' in options: print('pakenode: performing dry run')
     reinit = ''
@@ -275,7 +323,23 @@ elif str(options) == 'meta':
             char = '\n'
         else: char = ', '
         message = char.join(c)
-else:
-    message = ''
+elif str(options) == 'mirrors':
+    if '--add' in options:
+        url = options.get('--url')
+        push_url = options.get('--push-url')
+        cwd = options.get('--cwd')
+        message = 'pakenode: mirror added'
+        if '--verbose' in options:
+            message += ': {0} -> {1}{2}'.format(url, push_url, cwd))
+     elif '--edit' in options:
+         message = 'pakenode: fail: not implemented'
+     elif '--remove' in options:
+         message = 'pakenode: fail: not implemented'
+elif str(options) == 'push':
+    message = 'pakenode: fatal: push mode is not yet implemented'
+elif str(options) == 'packages':
+    message = 'pakenode: fatal: packages mode is not yet implemented'
+elif str(options) == 'nodes':
+    message = 'pakenode: fatal: nodes mode is not yet implemented'
 
 if message: print(message)
