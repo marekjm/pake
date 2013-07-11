@@ -22,6 +22,7 @@ clean:
 	rm -rv ./{pake/,}__pycache__/
 
 ui:
+	python3 pakenode-ui.py
 	cp ./pakenode-ui.py ./pakenode
 	chmod +x ./pakenode
 

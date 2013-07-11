@@ -83,7 +83,15 @@ what you want to edit.
 ----
 
 push:
-This mode is not yet implemented.
+**This mode is not yet implemented.**
+
+This mode is used for pushing to mirrors. Before every push you will be asked for username and 
+password used for logging in to the remote server.
+
+    -m, --main          - if passed pushes to main mirror
+    -M, --mirrors       - if passed pushes to mirrors
+        --store-auth    - if passed logins and passwords will be stored in .authfile
+        --use-auth      - if passed logins and passwords will be taken from .authfile
 
 ----
 
@@ -139,7 +147,7 @@ mirrors = clap.parser.Parser()
 mirrors.add(long='main', needs=['--add', '--edit', '--remove'])
 mirrors.add(long='add', requires=['-u', '-p', '-c'], conflicts=['--main', '--edit', '--remove'])
 mirrors.add(long='edit', argument=str, needs=['--url', '--push-url', '--cwd'], conflicts=['--main', '--add', '--remove'])
-mirrors.add(long='remove', argument=str, requires=['--url'], conflicts=['--main', '--add', '--edit'])
+mirrors.add(long='remove', argument=str, conflicts=['--main', '--add', '--edit'])
 mirrors.add(short='u', long='url', argument=str)
 mirrors.add(short='p', long='push-url', argument=str)
 mirrors.add(short='c', long='cwd', argument=str)
@@ -328,13 +336,24 @@ elif str(options) == 'mirrors':
         url = options.get('--url')
         push_url = options.get('--push-url')
         cwd = options.get('--cwd')
+        pake.node.Pushers(root).add(url=url, push_url=push_url, cwd=cwd)
+        pake.node.Mirrors(root).add(url)
         message = 'pakenode: mirror added'
-        if '--verbose' in options:
-            message += ': {0} -> {1}{2}'.format(url, push_url, cwd))
-     elif '--edit' in options:
-         message = 'pakenode: fail: not implemented'
-     elif '--remove' in options:
-         message = 'pakenode: fail: not implemented'
+        if '--verbose' in options: message += ': {0} -> {1}{2}'.format(url, push_url, cwd)
+    elif '--edit' in options:
+        message = 'pakenode: fail: not implemented'
+    elif '--remove' in options:
+        url = options.get('--remove')
+        fail = False
+        if pake.node.Pushers(root).remove(url) == -1:
+            if '--verbose' in options: print('pakenode: fail: {0} not found in pushers'.format(url))
+            fail = True
+        if pake.node.Mirrors(root).remove(url) == -1:
+            if '--verbose' in options: print('pakenode: fail: {0} not found in mirrors'.format(url))
+            fail = True
+        if fail: message = 'pakenode: fatal: mirror not removed'
+        else: message = 'pakenode: mirror removed'
+        if '--verbose' in options: message += ': {0}'.format(url)
 elif str(options) == 'push':
     message = 'pakenode: fatal: push mode is not yet implemented'
 elif str(options) == 'packages':

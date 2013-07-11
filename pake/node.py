@@ -150,20 +150,10 @@ class Mirrors(Config):
             if mirror == url:
                 index = i
                 break
-        if index > -1: self.content.pop(index)
-        self.write()
-
-
-class NodePusher(Config):
-    """Interface to push.json file.
-    """
-    name = 'push.json'
-    default = {'url': '', 'push-url': '', 'cwd': ''}
-    content = {}
-
-    def set(self, key, value):
-        self.content[key] = value
-        self.write()
+        if index > -1:
+            self.content.pop(index)
+            self.write()
+        return index
 
 
 class Pushers(Config):
@@ -206,21 +196,10 @@ class Pushers(Config):
             if mirror == url:
                 index = i
                 break
-        if index > -1: self.content.pop(index)
-        self.write()
-
-    def getCredentials(self, url):
-        """Returns two-tuple: (username, password).
-        Raises KeyError when they are not available for given URL.
-        """
-        credentials = ()
-        for p in self:
-            if p['url'] == url:
-                username = p['username']
-                password = p['password']
-                credentials = (username, password)
-                break
-        return credentials
+        if index > -1:
+            self.content.pop(index)
+            self.write()
+        return index
 
 
 class Nodes(Config):
