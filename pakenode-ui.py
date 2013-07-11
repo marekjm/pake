@@ -243,6 +243,9 @@ if '--verbose' in options: print('pakenode: root set to {0}'.format(root))
 
 message = ''
 if str(options) == 'init':
+    """Logic for `init` mode.
+    """
+
     if '--dry' in options: print('pakenode: performing dry run')
     reinit = ''
     try:
@@ -291,6 +294,9 @@ if str(options) == 'init':
     if success: message = 'pakenode: {0}initialized node in {1}'.format(reinit, root)
     else: message = 'pakenode: fatal: cannot initialize repository in {0}'.format(root)
 elif str(options) == 'meta':
+    """Logic for `meta` mode.
+    """
+
     if '--set' in options:
         try:
             k = options.arguments[0]
@@ -332,6 +338,9 @@ elif str(options) == 'meta':
         else: char = ', '
         message = char.join(c)
 elif str(options) == 'mirrors':
+    """Logic for `mirrors` mode.
+    """
+
     if '--add' in options:
         url = options.get('--url')
         push_url = options.get('--push-url')
@@ -355,10 +364,19 @@ elif str(options) == 'mirrors':
         else: message = 'pakenode: mirror removed'
         if '--verbose' in options: message += ': {0}'.format(url)
 elif str(options) == 'push':
+    """Logic for `push` mode.
+    """
+
     message = 'pakenode: fatal: push mode is not yet implemented'
 elif str(options) == 'packages':
+    """Logic for `packages` mode.
+    """
+
     message = 'pakenode: fatal: packages mode is not yet implemented'
 elif str(options) == 'nodes':
+    """Logic for `nodes` mode.
+    """
+
     message = 'pakenode: fatal: nodes mode is not yet implemented'
 
 if message: print(message)
