@@ -190,25 +190,15 @@ It is nice to include one but not neccessary.
 
 ----
 
-###### `push.json`
-
-This file IS NOT uploaded to server.
-
-It contains a *pusher* for main node. 
-
-Example pusher:
-
-    {
-        'url': 'http://pake.example.com',
-        'push-url': 'example.com',
-        'cwd': '/domains/example.com/public_html/pake',
-    }
-
-----
-
 ###### `mirrors.json`
 
 This file lists all mirrors of the node.
+
+This file's data is *connected* with data in `pushers.json`. 
+When you are creating new mirror you must specify `url`, `push-url` and 
+`cwd`. `mirrors.json` saves only `url` filed while `pushers.json` saves all 
+entered data. This is because other users do not need to see the exact 
+push data -- all they need is a URL from which they can fetch data.
 
 Example contents:
 
@@ -227,9 +217,14 @@ Every element of the list MUST BE a URL.
 This file IS NOT uploaded to server.
 
 It contains a *pusher* for every mirror of the node. 
+Example pusher:
 
-If you want you can add `username` and `password` fields. 
-This way you will not be asked for them when pushing to a mirror.
+    {
+        'url': 'http://pake.example.com',
+        'push-url': 'example.com',
+        'cwd': '/domains/example.com/public_html/pake',
+    }
+
 
 ----
 
@@ -421,4 +416,4 @@ Installation is done via `pake install PACKAGE...` command.
 
 ----
 
-Protocol version: 0.0.7+20130710
+Protocol version: 0.0.8+20130711
