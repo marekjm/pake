@@ -27,7 +27,7 @@ Global options:
     -v, --version       - display version information
         --component STR - choose component (ui, backend) which version should be displayed (only with --version)
     -V, --verbose       - print more messages, conflicts with: --quiet
-    -Q, --quiet         - print less messages, conflicts with: --verbose
+    -Q, --quiet         - print less messages, conflicts with: --verbose (doesn't really do anything)
     -R, --root          - specify alternative root directory for initialization (default: ~);
 
 **Warning:** use --root option only for testing!
@@ -66,7 +66,7 @@ the network.
 mirrors:
 This mode is used to manipulate `mirrors.json` file of the node.
 
-These option define what to do. They conflict with each other. 
+These options define what to do. They conflict with each other. 
 
         --add           - add new mirror
         --edit          - edit a mirror, URL defines what mirror is edited
@@ -246,11 +246,18 @@ if str(options) == 'init':
     """Logic for `init` mode.
     """
 
-    if '--dry' in options: print('pakenode: performing dry run')
+    #   if we are running in --dry mode pake will actually not do anything
+    if '--dry' in options and '--quiet' not in options: print('pakenode: performing dry run')
+
+    #   this is empty, if the --re option is passed this string will adjusted later
     reinit = ''
     try:
+        #   first try to create directories required by pake to create a node
         if '--dry' in options:
-            if os.path.isdir(root): raise FileExistsError(root)
+            #   if it's a dry run...
+            if os.path.isdir(root):
+                #   check if file is there
+                raise FileExistsError(root)
             else:
                 pake.node.makedirs(root)
                 shutil.rmtree(root)
