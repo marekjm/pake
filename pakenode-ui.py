@@ -215,8 +215,8 @@ finally:
 #
 #   `fail` alert is printed when something goes wrong during program execution and
 #   we want to notify the user that something bad happened.
-#   `fatal` and `message` alerts are final types. They are used for final messages
-#   printed after some step is completed or program finished its execution.
+#   `fatal` is used when something REALY bad happend and we can't reocver. 
+#   `message` is printed when there is a need to notify user about something.
 
 
 def getmodehelp(mode):
@@ -384,13 +384,18 @@ elif str(options) == 'meta':
             if '--verbose': print('pakenode: fail: two arguments are required')
             success = False
         except Exception as e:
+            #   when an unhandled exception is caught print it's message
+            #   and set success flag to False
             if '--verbose': print('pakenode: fail: {0}'.format(e))
             success = False
         finally:
             if success:
+                #   if everything went OK print appropriate message
                 message = 'pakenode: meta.json: key stored'
                 if '--verbose' in options: message += ': {0} = {1}'.format(k, v)
             else:
+                #   if there were any errors during execution print
+                #   fatal message
                 message = 'pakenode: fatal: meta.json: key was not stored'
     elif '--remove' in options:
         pake.node.Meta(root).remove(options.get('--remove'))
@@ -419,41 +424,50 @@ elif str(options) == 'mirrors':
     """
 
     if '--add' in options:
+        #   adds new mirror to node's list of mirrors
+        #
+        #   set every needed variable
         url = options.get('--url')
         push_url = options.get('--push-url')
         cwd = options.get('--cwd')
+        #   create pusher
         pake.node.Pushers(root).add(url=url, push_url=push_url, cwd=cwd)
+        #   add mirror to list
         pake.node.Mirrors(root).add(url)
+        #   set appropriate message
         message = 'pakenode: mirror added'
         if '--verbose' in options: message += ': {0} -> {1}{2}'.format(url, push_url, cwd)
     elif '--edit' in options:
         message = 'pakenode: fail: not implemented'
     elif '--remove' in options:
+        #   get URL which user wants to remove
+        #   failure may be misleading because it may be a misspelling from
+        #   the user so read messages carefully
         url = options.get('--remove')
         fail = False
         if pake.node.Pushers(root).remove(url) == -1:
+            #   print fail alert that URL was not found in pushers
             if '--verbose' in options: print('pakenode: fail: {0} not found in pushers'.format(url))
             fail = True
         if pake.node.Mirrors(root).remove(url) == -1:
+            #   print fail alert that URL was not found in mirrors
             if '--verbose' in options: print('pakenode: fail: {0} not found in mirrors'.format(url))
             fail = True
-        if fail: message = 'pakenode: fatal: mirror not removed'
+        #   set appropriate message
+        if fail: message = 'pakenode: fail: errors occured during execution, '
         else: message = 'pakenode: mirror removed'
         if '--verbose' in options: message += ': {0}'.format(url)
 elif str(options) == 'push':
     """Logic for `push` mode.
     """
-
     message = 'pakenode: fatal: push mode is not yet implemented'
 elif str(options) == 'packages':
     """Logic for `packages` mode.
     """
-
     message = 'pakenode: fatal: packages mode is not yet implemented'
 elif str(options) == 'nodes':
     """Logic for `nodes` mode.
     """
-
     message = 'pakenode: fatal: nodes mode is not yet implemented'
 
 if message and '--quiet' not in options: print(message)
