@@ -192,6 +192,33 @@ finally:
 
 #### Actual program logic begins here
 
+#   Alert messages
+#
+#   When we want to notify the user that something happened we can use
+#   following types of alert:
+#   *   fail:       normally not printed, can be enabled with --verbose option,
+#   *   fatal:      normally printed, can be disabled with --quiet option,
+#   *   message:    normally printed, can be disabled with --quiet option,
+#
+#   When you run the program and it does not accomplish the task you set for it and
+#   just finish saying: `pakenode: fatal: ...` you can usually rerun the program with
+#   the same options and arguments but add --verbose option on the beginning and
+#   it will show you why it fatal'ed (will print you `fail` messages).
+#   
+#   All these types print messages of specific format:
+#
+#   *   fail:       pakenode: fail: MESSAGE
+#   *   fatal:      pakenode: fatal: MESSAGE
+#   *   message:    pakenode: MESSAGE
+#
+#   When they are printed
+#
+#   `fail` alert is printed when something goes wrong during program execution and
+#   we want to notify the user that something bad happened.
+#   `fatal` and `message` alerts are final types. They are used for final messages
+#   printed after some step is completed or program finished its execution.
+
+
 def getmodehelp(mode):
     """Returns help just for given mode.
     """
@@ -213,16 +240,29 @@ def getmodehelp(mode):
     return string.rstrip()
 
 if '--version' in options:
+    """Prints version information.
+
+    By default it's version of pake backend but user can
+    specify component which version he/she wants to print.
+
+    Components are only libraries not found in standard Python 3
+    library. Currently valid --component arguments are:
+    *   backend:    backend version,
+    *   ui:         version of node ui,
+    *   clap:       version of CLAP library (used to build user interface),
+    """
     version = 'pake {0}'.format(pake.__version__)
     if '--verbose' in options:
+        #   if --verbose if passed print also UI version
         version += ' (ui: {0})'.format(__version__)
     if '--component' in options:
+        #   if --component is passed print specified component's version
         component = options.get('--component')
         if component == 'backend': version = pake.__version__
         elif component == 'ui': version = __version__
         elif component == 'clap': version = clap.__version__
         else:
-            print('pakenode: fail: no such component: {0}'.format(component))
+            print('pakenode: fatal: no such component: {0}'.format(component))
             version = ''
     if version: print(version)
     exit()
@@ -244,6 +284,10 @@ if '--verbose' in options: print('pakenode: root set to {0}'.format(root))
 message = ''
 if str(options) == 'init':
     """Logic for `init` mode.
+
+    This mode has two reasons to be used:
+    *   initialization of a new node,
+    *   reinitialization of a node.
     """
 
     #   if we are running in --dry mode pake will actually not do anything
@@ -266,29 +310,41 @@ if str(options) == 'init':
         success = True
     except FileExistsError:
         if '--re' in options:
+            #   if file exists and --re option was passed we're reinitializing
             if '--preserve' in options:
+                #   if --preserve option was passed user wants to store his config and
+                #   recreate it after reinitialization,
+                #   here are all config files
                 meta = pake.node.Meta(root)
                 mirrors = pake.node.Mirrors(root)
                 nodes = pake.node.Nodes(root)
                 pushers = pake.node.Pushers(root)
-                node_pusher = pake.node.NodePusher(root)
                 packages = pake.node.Packages(root)
                 installed = pake.node.Installed(root)
             if '--dry' not in options:
+                #   if it's not a dry run remove old tree and create brand new one
                 shutil.rmtree(root)
                 pake.node.makedirs(root)
             if '--verbose' in options: print('pakenode: removed old node repository')
             reinit = 're'
             success = True
         else:
+            #   if --re option was not passed FileExistsError means that we shouldn't continue
+            #   print message if --verbose and set success flag to False (don't do anyhting from this point)
             if '--verbose' in options: print('pakenode: fail: node repository found in {0}'.format(root))
             success = False
     except Exception as e:
-        if '--verbose' in options: print('pakenode: fail: {0}'.format(e))
+        #   an unhandled exception was raised we notify the user even if not --verbose and
+        #   set success flag to False
+        print('pakenode: fatal: unhandled exception: {0}'.format(e))
         success = False
     finally:
         if success and '--dry' not in options:
+            #   if all previous actions ended with success and this is not a dry run we
+            #   want to create configuration files for the user
             if '--preserve' in options:
+                #   if --preserve was passed it means that config files were read before and
+                #   we should just write them now (it means that this is a reinitialization)
                 meta.write()
                 mirrors.write()
                 nodes.write()
@@ -297,7 +353,10 @@ if str(options) == 'init':
                 packages.write()
                 installed.write()
             else:
+                #   if no --preserve was passed then create new config files with
+                #   default values
                 pake.node.makeconfig(root)
+    #   set final messages
     if success: message = 'pakenode: {0}initialized node in {1}'.format(reinit, root)
     else: message = 'pakenode: fatal: cannot initialize repository in {0}'.format(root)
 elif str(options) == 'meta':
@@ -305,16 +364,27 @@ elif str(options) == 'meta':
     """
 
     if '--set' in options:
+        #   With this option user can add new key to meta or
+        #   overwrite old value of some key with new one.
         try:
+            #   This mode requires two non-option arguments to be passed:
+            #   key and value. Example:
+            #
+            #       pakenode meta --set foo 'Bar Baz'
+            #
+            #   If two arguments were passed we set given `key` to given `value` and
+            #   set success flag to True.
             k = options.arguments[0]
             v = options.arguments[1]
             pake.node.Meta(root).set(key=k, value=v)
             success = True
         except IndexError as e:
-            print('pakenode: fail: two arguments are required')
+            #   This error means that only one or no arguments were passed.
+            #   Notify the user and set success flag to False.
+            if '--verbose': print('pakenode: fail: two arguments are required')
             success = False
         except Exception as e:
-            if '--verbose' in options: print('pakenode: fail: {0}'.format(e))
+            if '--verbose': print('pakenode: fail: {0}'.format(e))
             success = False
         finally:
             if success:
@@ -386,4 +456,4 @@ elif str(options) == 'nodes':
 
     message = 'pakenode: fatal: nodes mode is not yet implemented'
 
-if message: print(message)
+if message and '--quiet' not in options: print(message)
