@@ -118,7 +118,7 @@ import pake
 #   >>> import pake
 #   >>> pake.__version__
 #
-__version__ = '0.0.9'
+__version__ = '0.0.10'
 
 formater = clap.formater.Formater(sys.argv[1:])
 formater.format()
@@ -296,7 +296,7 @@ if str(options) == 'init':
         if '--dry' in options:
             #   if it's a dry run...
             if os.path.isdir(root):
-                #   check if file is there
+                #   check if node is already there
                 raise FileExistsError(root)
             else:
                 pake.node.makedirs(root)
@@ -306,17 +306,17 @@ if str(options) == 'init':
         success = True
     except FileExistsError:
         if '--re' in options:
-            #   if file exists and --re option was passed we're reinitializing
+            #   if node exists and --re option was passed we're reinitializing
             if '--preserve' in options:
                 #   if --preserve option was passed user wants to store his config and
                 #   recreate it after reinitialization,
                 #   here are all config files
-                meta = pake.node.Meta(root)
-                mirrors = pake.node.Mirrors(root)
-                nodes = pake.node.Nodes(root)
-                pushers = pake.node.Pushers(root)
-                packages = pake.node.Packages(root)
-                installed = pake.node.Installed(root)
+                meta = pake.config.node.Meta(root)
+                mirrors = pake.config.node.Mirrors(root)
+                nodes = pake.config.node.Nodes(root)
+                pushers = pake.config.node.Pushers(root)
+                packages = pake.config.node.Packages(root)
+                installed = pake.config.node.Installed(root)
             if '--dry' not in options:
                 #   if it's not a dry run remove old tree and create brand new one
                 shutil.rmtree(root)
@@ -372,7 +372,7 @@ elif str(options) == 'meta':
             #   set success flag to True.
             k = options.arguments[0]
             v = options.arguments[1]
-            pake.node.Meta(root).set(key=k, value=v)
+            pake.config.node.Meta(root).set(key=k, value=v)
             success = True
         except IndexError as e:
             #   This error means that only one or no arguments were passed.
@@ -393,21 +393,21 @@ elif str(options) == 'meta':
                 #   fatal message
                 message = 'pakenode: fatal: meta.json: key was not stored'
     elif '--remove' in options:
-        pake.node.Meta(root).remove(options.get('--remove'))
+        pake.config.node.Meta(root).remove(options.get('--remove'))
         if '--verbose' in options: message = 'pakenode: meta.json: key removed'
     elif '--get' in options:
         try:
-            value = pake.node.Meta(root).get(options.get('--get'))
+            value = pake.config.node.Meta(root).get(options.get('--get'))
         except KeyError as e:
-            if '--verbose' in options: print('pakenode: fatal: meta.json: key {0} not found'.format(e))
+            if '--verbose' in options: print('pakenode: fail: meta.json: key {0} not found'.format(e))
             value = ''
         finally:
             message = value
     elif '--missing' in options:
-        missing = pake.node.Meta(root).missing()
+        missing = pake.config.node.Meta(root).missing()
         message = ', '.join(missing)
     elif '--list' in options:
-        meta = pake.node.Meta(root)
+        meta = pake.config.node.Meta(root)
         c = sorted(list(meta.content.keys()))
         if '--verbose' in options:
             c = ['{0}: {1}'.format(k, meta[k]) for k in c]
@@ -425,8 +425,8 @@ elif str(options) == 'mirrors':
         url = options.get('--url')
         push_url = options.get('--push-url')
         cwd = options.get('--cwd')
-        pushers = pake.node.Pushers(root)
-        mirrors = pake.node.Mirrors(root)
+        pushers = pake.config.node.Pushers(root)
+        mirrors = pake.config.node.Mirrors(root)
         #   create pusher
         if not pushers.hasurl(url):
             pushers.add(url=url, push_url=push_url, cwd=cwd)
@@ -435,7 +435,7 @@ elif str(options) == 'mirrors':
             success = False
             if '--verbose' in options: print('pakenode: fail: cannot add two pushers with the same url')
         #   add mirror to list
-        pake.node.Mirrors(root).add(url)
+        pake.config.node.Mirrors(root).add(url)
         #   set appropriate message
         if success:
             message = 'pakenode: mirror added'
@@ -443,7 +443,7 @@ elif str(options) == 'mirrors':
         else:
             message = 'pakenode: fatal: cannot add duplicate mirror'
         if '--main' in options:
-            pake.node.Meta(root).set('url', url)
+            pake.config.node.Meta(root).set('url', url)
             if '--quiet' not in options: print('pakenode: main url is now: {0}'.format(url))
     elif '--edit' in options:
         message = 'pakenode: fail: not implemented'
@@ -453,11 +453,11 @@ elif str(options) == 'mirrors':
         #   the user so read messages carefully
         url = options.get('--remove')
         fail = False
-        if pake.node.Pushers(root).remove(url) == -1:
+        if pake.config.node.Pushers(root).remove(url) == -1:
             #   print fail alert that URL was not found in pushers
             if '--verbose' in options: print('pakenode: fail: {0} not found in pushers'.format(url))
             fail = True
-        if pake.node.Mirrors(root).remove(url) == -1:
+        if pake.config.node.Mirrors(root).remove(url) == -1:
             #   print fail alert that URL was not found in mirrors
             if '--verbose' in options: print('pakenode: fail: {0} not found in mirrors'.format(url))
             fail = True
@@ -472,7 +472,7 @@ elif str(options) == 'push':
         """Returns two-tuple (username, password) for given URL.
         """
         username = input('Username for {0}: '.format(url))
-        password = getpass.getpass('Password for {0}@{1}: '.format(username, pake.node.Pushers(root).get(url)['push-url']))
+        password = getpass.getpass('Password for {0}@{1}: '.format(username, pake.config.node.Pushers(root).get(url)['push-url']))
         return (username, password)
 
     if '--only-main' in options:
@@ -488,7 +488,7 @@ elif str(options) == 'push':
             urls = []
     else:
         #   this means that we are pushing to all mirrors (default)
-        urls = list(pake.node.Mirrors(root))
+        urls = list(pake.config.node.Mirrors(root))
     for url in urls:
         try:
             username, password = getcredentials()
