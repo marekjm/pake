@@ -89,7 +89,7 @@ if '--version' in options:
     *   ui:         version of UI,
     *   clap:       version of CLAP library (used to build user interface),
     """
-    version = 'pakeui {0}'.format(__version__)
+    version = 'pakemanager {0}'.format(__version__)
     if '--verbose' in options:
         #   if --verbose if passed print also backend version
         version += ' (pake backend: {0})'.format(pake.__version__)
