@@ -18,55 +18,7 @@ As for PAKE version 0.0.7 these files are:
 from pake.config import base
 
 
-class Config():
-    """Base object for config files.
-    Provides functionality for reading and writing these files.
-    """
-    name = 'blank.json'
-    default = {}
-    content = {}
-
-    def __init__(self, root):
-        self.root = root
-        self.read()
-
-    def __contains__(self, key):
-        return key in self.content
-
-    def __getitem__(self, item):
-        return self.content[item]
-
-    def __iter__(self):
-        return iter(self.content)
-
-    def reset(self):
-        """Resets config file to it's default value.
-        """
-        self.content = self.default
-        self.write()
-
-    def read(self):
-        """Reads JSON from config file.
-        """
-        content = self.default
-        try:
-            ifstream = open(os.path.join(self.root, self.name))
-            content = json.loads(ifstream.read())
-            ifstream.close()
-        except FileNotFoundError:
-            pass
-        finally:
-            self.content = content
-
-    def write(self):
-        """Stores changes made to config file.
-        """
-        ofstream = open(os.path.join(self.root, self.name), 'w')
-        ofstream.write(json.dumps(self.content))
-        ofstream.close()
-
-
-class Meta(Config):
+class Meta(base.Config):
     """Object representing repository metadata.
     Values are added, removed or overwritten immediately after
     calling the right method (it means 'when you remove something we write
@@ -124,7 +76,7 @@ class Meta(Config):
         return missing
 
 
-class Mirrors(Config):
+class Mirrors(base.Config):
     """Interface to mirrors.json file.
     """
     name = 'mirrors.json'
@@ -159,7 +111,7 @@ class Mirrors(Config):
         return index
 
 
-class Pushers(Config):
+class Pushers(base.Config):
     """Interface to pushers.json file.
     """
     name = 'pushers.json'
@@ -216,7 +168,7 @@ class Pushers(Config):
         return index
 
 
-class Nodes(Config):
+class Nodes(base.Config):
     """Interface to nodes.json file.
     """
     name = 'nodes.json'
@@ -251,7 +203,7 @@ class Nodes(Config):
         self.write()
 
 
-class Installed(Config):
+class Installed(base.Config):
     """Interface to installed.json file.
     """
     name = 'installed.json'
