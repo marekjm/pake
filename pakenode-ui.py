@@ -53,6 +53,7 @@ the network.
     -g, --get KEY       - prints value of given KEY, if KEY is not found returs empty string
     -m, --missing       - prints key missing in meta.json
     -l, --list          - prints comma separated list of keys in meta.json
+    -p, --pretty        - enable pretty formating of `meta.json` file
 
 ----
 
@@ -118,7 +119,7 @@ import pake
 #   >>> import pake
 #   >>> pake.__version__
 #
-__version__ = '0.0.10'
+__version__ = '0.0.12'
 
 formater = clap.formater.Formater(sys.argv[1:])
 formater.format()
@@ -134,6 +135,7 @@ meta.add(short='r', long='remove', argument=str, conflicts=['-s', '-g', '-m', '-
 meta.add(short='g', long='get', argument=str, conflicts=['-s', '-r', '-m', '-l'])
 meta.add(short='m', long='missing', conflicts=['-s', '-r', '-g'])
 meta.add(short='l', long='list', conflicts=['-s', '-r', '-g'])
+meta.add(short='p', long='pretty')
 
 mirrors = clap.parser.Parser()
 mirrors.add(long='add', requires=['-u', '-p', '-c'], conflicts=['--edit', '--remove'])
@@ -164,15 +166,17 @@ options.addOption(short='R', long='root', argument=str)
 
 
 try:
+    message = ''
     options.define()
     options.check()
-    message = ''
 except clap.errors.UnrecognizedModeError as e: 
     message = 'unrecognized mode: {0}'.format(e)
 except clap.errors.UnrecognizedOptionError as e:
     message = 'unrecognized option found: {0}'.format(e)
 except clap.errors.RequiredOptionNotFoundError as e:
     message = 'required option not found: {0}'.format(e)
+except clap.errors.NeededOptionNotFoundError as e:
+    message = 'needed option not found: {0}'.format(e)
 except clap.errors.MissingArgumentError as e:
     message = 'missing argument for option: {0}'.format(e)
 except clap.errors.InvalidArgumentTypeError as e:
@@ -359,6 +363,7 @@ elif str(options) == 'meta':
     """Logic for `meta` mode.
     """
 
+    
     if '--set' in options:
         #   With this option user can add new key to meta or
         #   overwrite old value of some key with new one.
@@ -414,6 +419,7 @@ elif str(options) == 'meta':
             char = '\n'
         else: char = ', '
         message = char.join(c)
+    if '--pretty' in options: pake.config.node.Meta(root).write(pretty=True)
 elif str(options) == 'mirrors':
     """Logic for `mirrors` mode.
     """

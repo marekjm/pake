@@ -38,7 +38,7 @@ import pake
 import clap
 
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 
 formater = clap.formater.Formater(sys.argv[1:])
@@ -62,6 +62,8 @@ except clap.errors.UnrecognizedOptionError as e:
     message = 'unrecognized option found: {0}'.format(e)
 except clap.errors.RequiredOptionNotFoundError as e:
     message = 'required option not found: {0}'.format(e)
+except clap.errors.NeededOptionNotFoundError as e:
+    message = 'needed option not found: {0}'.format(e)
 except clap.errors.MissingArgumentError as e:
     message = 'missing argument for option: {0}'.format(e)
 except clap.errors.InvalidArgumentTypeError as e:
