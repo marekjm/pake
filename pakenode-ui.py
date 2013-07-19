@@ -259,12 +259,15 @@ if '--version' in options:
     if '--component' in options:
         #   if --component is passed print specified component's version
         component = options.get('--component')
-        if component == 'backend': version = pake.__version__
+        if component in ['backend', 'pake']:
+            version = pake.__version__
+            component = 'pake'
         elif component == 'ui': version = __version__
         elif component == 'clap': version = clap.__version__
         else:
             print('pake: fatal: no such component: {0}'.format(component))
             version = ''
+        if '--verbose' in options and version: version = '{0} {1}'.format(component, version)
     if version: print(version)
     exit()
 

@@ -28,15 +28,15 @@ ui:
 	python3 pakerepo-ui.py
 	cp pakerepo-ui.py pakerepo
 	chmod +x pakerepo
-	python3 pake-ui.py
-	cp pake-ui.py pakeui
-	chmod +x pakeui
+	python3 pakemanager-ui.py
+	cp pakemanager-ui.py pakemanager
+	chmod +x pakemanager
 
 local-ui-install:
 	make ui
 	mv ./pakenode ${LOCAL_BIN}/pakenode
 	mv ./pakerepo ${LOCAL_BIN}/pakerepo
-	mv ./pakeui ${LOCAL_BIN}/pake
+	mv ./pakemanager ${LOCAL_BIN}/pakemanager
 
 install:
 	./install.sh
