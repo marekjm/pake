@@ -6,7 +6,7 @@ import warnings
 """
 
 
-class Node():
+class Remote():
     """Object representing a remote node.
     """
     url = ''
