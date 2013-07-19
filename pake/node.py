@@ -169,6 +169,16 @@ class Pushers(Config):
     def __list__(self):
         return self.content
 
+    def hasurl(self, url):
+        """Returns True if pushers.json already has pusher with given url.
+        """
+        result = False
+        for p in self:
+            if p['url'] == url:
+                result = True
+                break
+        return result
+
     def add(self, url, push_url, cwd=''):
         """Adds pusher to push.json list.
         """
@@ -176,6 +186,7 @@ class Pushers(Config):
         if pusher not in self.content:
             self.content.append(pusher)
             self.write()
+
 
     def get(self, url):
         """Returns pusher for given URL.
@@ -311,10 +322,10 @@ def makeconfig(root):
     Packages(root).reset()
 
 
-def _upload(root, url, username, password, cwd='', installed=False, fallback=False):
+def push(root, url, username, password, cwd='', installed=False, fallback=False):
     """Uploads node data to given url.
     """
-    remote = ftplib.FTP(node)
+    remote = ftplib.FTP(url)
     remote.login(username, password)
     if cwd: remote.cwd(cwd)
     files = ['meta.json', 'packages.json', 'nodes.json', 'mirrors.json']
@@ -358,4 +369,5 @@ def pushurl(root, url, username, password, installed=False, fallback=False):
     :param fallback: create fallback files (fallback.*.json)
     """
     pusher = Pushers(root).get(url)
-    pushurl(root, url=pusher['push-url'], username=username, password=password, cwd=pusher['cwd'], installed=installed, fallback=fallback)
+    if pusher is None: raise Exception('no pusher found for URL: {0}'.format(url))
+    push(root, url=pusher['push-url'], username=username, password=password, cwd=pusher['cwd'], installed=installed, fallback=fallback)

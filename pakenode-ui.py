@@ -72,26 +72,27 @@ These options define what to do. They conflict with each other.
         --edit          - edit a mirror, URL defines what mirror is edited
         --remove        - removes mirror which has given URL
 
-All options in this mode (except --remove) are accompanied by these ones. Again, 
-there is one exception: --edit may be accompanied by only one of them depending on
-what you want to edit.
+These options add details.
 
     -u, --url STR       - url from which other users fetch data
     -p, --push-url STR  - url which is used to connect to node server
     -c, --cwd STR       - directory to which pake should go after connecting to server
+    -m, --main          - if this option is passed with a mirror, it will be set as main in meta.json
 
 ----
 
 push:
-**This mode is not yet implemented.**
+*Warning: only partially implemented*
 
 This mode is used for pushing to mirrors. Before every push you will be asked for username and 
-password used for logging in to the remote server.
+password used for logging in to the remote server. By default push goes to every mirror.
 
-    -m, --main          - if passed pushes to main mirror
-    -M, --mirrors       - if passed pushes to mirrors
-        --store-auth    - if passed logins and passwords will be stored in .authfile
-        --use-auth      - if passed logins and passwords will be taken from .authfile
+    -m, --only-main     - if passed pushes only to main mirror
+    -f, --fallback      - create fallback files
+    -d, --dont-push     - don't actually push anything, useful for updating credentials
+    -D, --dont-force    - if push to one node fails don't continue with the others
+        --store-auth    - if passed logins and passwords will be stored in .authfile (not implemented)
+        --use-auth      - if passed logins and passwords will be taken from .authfile (not implemented)
 
 ----
 
@@ -112,6 +113,7 @@ Text of the license can be found at: https://gnu.org/licenses/gpl.html
 Copyright Marek Marecki (c) 2013"""
 
 
+import getpass
 import os
 import shutil
 import sys
@@ -144,20 +146,27 @@ meta.add(short='m', long='missing', conflicts=['-s', '-r', '-g'])
 meta.add(short='l', long='list', conflicts=['-s', '-r', '-g'])
 
 mirrors = clap.parser.Parser()
-mirrors.add(long='main', needs=['--add', '--edit', '--remove'])
-mirrors.add(long='add', requires=['-u', '-p', '-c'], conflicts=['--main', '--edit', '--remove'])
-mirrors.add(long='edit', argument=str, needs=['--url', '--push-url', '--cwd'], conflicts=['--main', '--add', '--remove'])
-mirrors.add(long='remove', argument=str, conflicts=['--main', '--add', '--edit'])
+mirrors.add(long='add', requires=['-u', '-p', '-c'], conflicts=['--edit', '--remove'])
+mirrors.add(long='edit', argument=str, needs=['--url', '--push-url', '--cwd'], conflicts=['--add', '--remove'])
+mirrors.add(long='remove', argument=str, conflicts=['--add', '--edit'])
+mirrors.add(long='main')
 mirrors.add(short='u', long='url', argument=str)
 mirrors.add(short='p', long='push-url', argument=str)
 mirrors.add(short='c', long='cwd', argument=str)
 
 push = clap.parser.Parser()
+push.add(short='m', long='only-main')
+push.add(short='f', long='fallback')
+push.add(short='d', long='dont-push')
+push.add(short='D', long='dont-force')
+push.add(long='store-auth')
+push.add(long='use-auth')
 
-options = clap.modes.Modes(list(formater))
+options = clap.modes.Parser(list(formater))
 options.addMode('init', init)
 options.addMode('meta', meta)
 options.addMode('mirrors', mirrors)
+options.addMode('push', push)
 options.addOption(short='h', long='help')
 options.addOption(short='v', long='version')
 options.addOption(short='C', long='component', argument=str, requires=['--version'])
@@ -215,7 +224,7 @@ finally:
 #
 #   `fail` alert is printed when something goes wrong during program execution and
 #   we want to notify the user that something bad happened.
-#   `fatal` is used when something REALY bad happend and we can't reocver. 
+#   `fatal` is used when something REALY bad happend and we can't recover. 
 #   `message` is printed when there is a need to notify user about something.
 
 
@@ -391,8 +400,7 @@ elif str(options) == 'meta':
         finally:
             if success:
                 #   if everything went OK print appropriate message
-                message = 'pakenode: meta.json: key stored'
-                if '--verbose' in options: message += ': {0} = {1}'.format(k, v)
+                if '--verbose' in options: message = 'pakenode: meta.json: key stored'
             else:
                 #   if there were any errors during execution print
                 #   fatal message
@@ -430,13 +438,26 @@ elif str(options) == 'mirrors':
         url = options.get('--url')
         push_url = options.get('--push-url')
         cwd = options.get('--cwd')
+        pushers = pake.node.Pushers(root)
+        mirrors = pake.node.Mirrors(root)
         #   create pusher
-        pake.node.Pushers(root).add(url=url, push_url=push_url, cwd=cwd)
+        if not pushers.hasurl(url):
+            pushers.add(url=url, push_url=push_url, cwd=cwd)
+            success = True
+        else:
+            success = False
+            if '--verbose' in options: print('pakenode: fail: cannot add two pushers with the same url')
         #   add mirror to list
         pake.node.Mirrors(root).add(url)
         #   set appropriate message
-        message = 'pakenode: mirror added'
-        if '--verbose' in options: message += ': {0} -> {1}{2}'.format(url, push_url, cwd)
+        if success:
+            message = 'pakenode: mirror added'
+            if '--verbose' in options: message += ': {0} -> {1}{2}'.format(url, push_url, cwd)
+        else:
+            message = 'pakenode: fatal: cannot add duplicate mirror'
+        if '--main' in options:
+            pake.node.Meta(root).set('url', url)
+            if '--quiet' not in options: print('pakenode: main url is now: {0}'.format(url))
     elif '--edit' in options:
         message = 'pakenode: fail: not implemented'
     elif '--remove' in options:
@@ -460,7 +481,38 @@ elif str(options) == 'mirrors':
 elif str(options) == 'push':
     """Logic for `push` mode.
     """
-    message = 'pakenode: fatal: push mode is not yet implemented'
+    if '--only-main' in options and '--dont-push' not in options:
+        #   this means that we will push only to main mirror
+        url = pake.node.Meta(root).get('url')
+        if url == '':
+            #   this means that no main url is set in meta.json
+            #   user should check his/hers meta.json
+            #   print appropriate message
+            if '--verbose' in options: print('pakenode: fail: no url set for main mirror: check your meta.json file')
+            message = 'pakenode: fatal: push could not be initialized'
+        success = url != ''
+        if success:
+            username = input('Username for {0}: '.format(url))
+            password = getpass.getpass('Password for {0}@{1}: '.format(username, url))
+            pake.node.pushurl(root=root, url=url, username=username, password=password)
+    elif '--dont-push' not in options:
+        #   this means that we are pushing to all mirrors (default)
+        mirrors = pake.node.Mirrors(root)
+        for url in mirrors:
+            try:
+                username = input('Username for {0}: '.format(url))
+                password = getpass.getpass('Password for {0}@{1}: '.format(username, url))
+                pake.node.pushurl(root=root, url=url, username=username, password=password)
+            except (KeyboardInterrupt, EOFError):
+                print()
+                break
+            except Exception as e:
+                print('pakenode: fail: push failed: {0}'.format(e))
+            finally:
+                if '--dont-force' in options:
+                    break
+                else:
+                    pass
 elif str(options) == 'packages':
     """Logic for `packages` mode.
     """
