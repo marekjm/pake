@@ -40,7 +40,6 @@ class Config():
     def read(self):
         """Reads JSON from config file.
         """
-        content = self.default
         try:
             ifstream = open(os.path.join(self.root, self.name))
             content = json.loads(ifstream.read())
@@ -50,9 +49,11 @@ class Config():
         finally:
             self.content = content
 
-    def write(self):
+    def write(self, pretty=False):
         """Stores changes made to config file.
         """
         ofstream = open(os.path.join(self.root, self.name), 'w')
-        ofstream.write(json.dumps(self.content))
+        if pretty: encoded = json.dumps(self.content, sort_keys=True, indent=4, separators=(',', ': '))
+        else: encoded = json.dumps(self.content)
+        ofstream.write(encoded)
         ofstream.close()
