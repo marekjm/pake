@@ -1,6 +1,21 @@
 #!/usr/bin/env python3
 
-import json
+
+"""This module contains interfaces to node configuration files.
+As for PAKE version 0.0.7 these files are:
+
+    *   `meta.json`:        contains basic metadata for the node,
+    *   `mirrors.json`:     list of mirrors for user's node,
+    *   `pushers.json`:     list of pushers for every mirror of user's node,
+    *   `nodes.json`:       list of known other nodes,
+    *   `installed.json`:   list of all installed packages with brief
+                            information about their status,
+    *   `packages.json`:    list of packages this node provides.
+
+"""
+
+
+from pake.config import base
 
 
 class Config():
@@ -254,11 +269,12 @@ class Installed(Config):
                 break
         return result
 
-    def add(self, package):
+    def add(self, package, dependency=False):
         """Appends package to list of installed packages.
+
+        :param dependency: whether package was installed independently or as a dependency
         """
-        if type(package) is not models.Package: raise TypeError('expected {0} but got: {1}'.format(dict, type(package)))
-        if not package.valid(): raise PackageError('meta.json: missing keys: {}'.format(', '.join(package.missing())))
+        package['dependency'] = dependency
         index = -1
         for i in self.content:
             if package['name'] == i['name']:
