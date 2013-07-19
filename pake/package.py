@@ -4,7 +4,8 @@ import json
 import os
 import shutil
 
-from pake import node
+from pake import models
+from pake import errors
 
 
 """This module contains objects responsible for:

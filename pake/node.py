@@ -10,7 +10,7 @@ from pake import errors
 from pake import models
 
 
-"""This modue is responsible for creating global pake repository and managing it.
+"""This module is responsible for creating global pake repository and managing it.
 It also provides interface to `meta.json` file -- which is metadata of the repository.
 """
 
