@@ -2,6 +2,7 @@
 !.gitignore
 
 *~
+*.pyc
+*.swp
 
-*__pycache/
-*/__pycache__/
+__pycache__/

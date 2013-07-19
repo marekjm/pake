@@ -19,7 +19,7 @@ test:
 	python3 -m unittest --catch --failfast --verbose tests.py
 
 clean:
-	rm -rv ./{pake/,}__pycache__/
+	rm -rv ./{pake/,pake/config/,}__pycache__/
 
 ui:
 	python3 pakenode-ui.py

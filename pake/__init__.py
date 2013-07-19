@@ -1,8 +1,8 @@
 from pake import node
-from pake import package
-from pake import errors
-from pake import models
+from pake import repository
 from pake import config
+from pake import models
+from pake import errors
 
 
-__version__ = '0.0.5'
+__version__ = '0.0.7'

@@ -45,6 +45,7 @@ def setconfig(root, name):
     :param root: absolute path to the root directory for main repo
     :type root: str
     """
+    config.package.Meta(root).reset()
     root = os.path.join(root, '.pake')
     empty = {   'name': name,
                 'version': '0.0.0',
