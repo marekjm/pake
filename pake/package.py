@@ -8,7 +8,7 @@ from pake import node
 
 
 """This module contains objects responsible for:
-    * creating new package-repos (repos for single package, not located in users home dir),
+    * creating new package-repos (repos for single package),
     * creating package directories in main repo,
     * managing package metadata,
 
@@ -33,12 +33,6 @@ def init(root):
     os.mkdir(root)
 
 
-def register(name):
-    """Registers the package in node.
-    """
-    pass
-
-
 def setconfig(root, name):
     """Initializes empty package config in ocal repo and
     package subdir in main repo.
@@ -55,7 +49,7 @@ def setconfig(root, name):
                 'version': '0.0.0',
                 'description': '',
                 'author': node.Meta().get('author'),
-                'license': 'GNU GPL v3+ / GNU GPL v2+',
+                'license': '',
                 'url': node.Meta.get('url'),
                 'mirrors': node.Meta.get('mirrors'),
                 'dependencies': [],
@@ -63,3 +57,4 @@ def setconfig(root, name):
     meta = open(os.path.join(root, 'meta.json'), 'w')
     meta.write(json.dumps(empty))
     meta.close()
+

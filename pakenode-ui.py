@@ -1,25 +1,18 @@
 #!/usr/bin/env python3
 
 
-"""This is interface to Pake node (the `~/.pakenode` directory).
+"""This is the interface to PAKE node (the `~/.pakenode` directory).
 
-It provides methods for:
+Currently, it provides methods for:
 
-*   (re)initializing the node,
-*   uploading it to server,
-*   editing `*.json` config files,
-*   registering new Pake repositories,
-*   and possibly more.
+    *   (re)initializing the node,
+    *   uploading it to server,
+    *   editing `*.json` config files,
+    *   registering new PAKE repositories,
 
-Syntax is simple:
+Syntax:
 
-    python3 pakenode-ui.py [global options] [MODE [mode options]]
-
---------
-
-
-pakenode-ui options vary depending on mode used. Below there is a listing of available 
-modes and their options.
+    pakenode [global options] [MODE [mode options]]
 
 
 Global options:
@@ -252,13 +245,13 @@ if '--version' in options:
     Components are only libraries not found in standard Python 3
     library. Currently valid --component arguments are:
     *   backend:    backend version,
-    *   ui:         version of node ui,
+    *   ui:         version of UI,
     *   clap:       version of CLAP library (used to build user interface),
     """
-    version = 'pake {0}'.format(pake.__version__)
+    version = 'pakenode {0}'.format(__version__)
     if '--verbose' in options:
-        #   if --verbose if passed print also UI version
-        version += ' (ui: {0})'.format(__version__)
+        #   if --verbose if passed print also backend version
+        version += ' (pake backend: {0})'.format(pake.__version__)
     if '--component' in options:
         #   if --component is passed print specified component's version
         component = options.get('--component')
@@ -266,7 +259,7 @@ if '--version' in options:
         elif component == 'ui': version = __version__
         elif component == 'clap': version = clap.__version__
         else:
-            print('pakenode: fatal: no such component: {0}'.format(component))
+            print('pake: fatal: no such component: {0}'.format(component))
             version = ''
     if version: print(version)
     exit()
