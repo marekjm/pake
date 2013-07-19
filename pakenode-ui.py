@@ -69,8 +69,8 @@ This mode is used to manipulate `mirrors.json` file of the node.
 These options define what to do. They conflict with each other. 
 
         --add           - add new mirror
-        --edit          - edit a mirror, URL defines what mirror is edited
-        --remove        - removes mirror which has given URL
+        --edit URL      - edit a mirror, URL defines what mirror is edited
+        --remove URL    - removes mirror which has given URL
 
 These options add details.
 
@@ -82,7 +82,6 @@ These options add details.
 ----
 
 push:
-*Warning: only partially implemented*
 
 This mode is used for pushing to mirrors. Before every push you will be asked for username and 
 password used for logging in to the remote server. By default push goes to every mirror.
@@ -91,8 +90,6 @@ password used for logging in to the remote server. By default push goes to every
     -f, --fallback      - create fallback files
     -d, --dont-push     - don't actually push anything, useful for updating credentials
     -D, --dont-force    - if push to one node fails don't continue with the others
-        --store-auth    - if passed logins and passwords will be stored in .authfile (not implemented)
-        --use-auth      - if passed logins and passwords will be taken from .authfile (not implemented)
 
 ----
 
@@ -128,7 +125,7 @@ import pake
 #   >>> import pake
 #   >>> pake.__version__
 #
-__version__ = '0.0.7'
+__version__ = '0.0.9'
 
 formater = clap.formater.Formater(sys.argv[1:])
 formater.format()
@@ -159,8 +156,6 @@ push.add(short='m', long='only-main')
 push.add(short='f', long='fallback')
 push.add(short='d', long='dont-push')
 push.add(short='D', long='dont-force')
-push.add(long='store-auth')
-push.add(long='use-auth')
 
 options = clap.modes.Parser(list(formater))
 options.addMode('init', init)
@@ -288,7 +283,6 @@ root = os.path.expanduser('~')
 if '--root' in options: root = options.get('--root')
 root = os.path.join(root, '.pakenode')
 if '--verbose' in options: print('pakenode: root set to {0}'.format(root))
-
 
 message = ''
 if str(options) == 'init':
@@ -475,44 +469,44 @@ elif str(options) == 'mirrors':
             if '--verbose' in options: print('pakenode: fail: {0} not found in mirrors'.format(url))
             fail = True
         #   set appropriate message
-        if fail: message = 'pakenode: fail: errors occured during execution, '
+        if fail: message = 'pakenode: fatal: errors occured during execution'
         else: message = 'pakenode: mirror removed'
         if '--verbose' in options: message += ': {0}'.format(url)
 elif str(options) == 'push':
     """Logic for `push` mode.
     """
-    if '--only-main' in options and '--dont-push' not in options:
+    def getcredentials(url):
+        """Returns two-tuple (username, password) for given URL.
+        """
+        username = input('Username for {0}: '.format(url))
+        password = getpass.getpass('Password for {0}@{1}: '.format(username, pake.node.Pushers(root).get(url)['push-url']))
+        return (username, password)
+
+    if '--only-main' in options:
         #   this means that we will push only to main mirror
         url = pake.node.Meta(root).get('url')
-        if url == '':
+        if url != '': urls = [url]
+        else:
             #   this means that no main url is set in meta.json
             #   user should check his/hers meta.json
             #   print appropriate message
             if '--verbose' in options: print('pakenode: fail: no url set for main mirror: check your meta.json file')
             message = 'pakenode: fatal: push could not be initialized'
-        success = url != ''
-        if success:
-            username = input('Username for {0}: '.format(url))
-            password = getpass.getpass('Password for {0}@{1}: '.format(username, url))
-            pake.node.pushurl(root=root, url=url, username=username, password=password)
-    elif '--dont-push' not in options:
+            urls = []
+    else:
         #   this means that we are pushing to all mirrors (default)
-        mirrors = pake.node.Mirrors(root)
-        for url in mirrors:
-            try:
-                username = input('Username for {0}: '.format(url))
-                password = getpass.getpass('Password for {0}@{1}: '.format(username, url))
-                pake.node.pushurl(root=root, url=url, username=username, password=password)
-            except (KeyboardInterrupt, EOFError):
-                print()
+        urls = list(pake.node.Mirrors(root))
+    for url in urls:
+        try:
+            username, password = getcredentials()
+            pake.node.pushurl(root=root, url=url, username=username, password=password)
+        except (KeyboardInterrupt, EOFError): print()
+        except Exception as e: print('pakenode: fail: push failed: {0}'.format(e))
+        finally:
+            if '--dont-force' in options:
                 break
-            except Exception as e:
-                print('pakenode: fail: push failed: {0}'.format(e))
-            finally:
-                if '--dont-force' in options:
-                    break
-                else:
-                    pass
+            else:
+                pass
 elif str(options) == 'packages':
     """Logic for `packages` mode.
     """
