@@ -6,8 +6,8 @@ import os
 import shutil
 
 
+from pake import config
 from pake import errors
-from pake import models
 
 
 """This module is responsible for creating global pake repository and managing it.
@@ -99,3 +99,18 @@ def pushurl(root, url, username, password, installed=False, fallback=False):
     pusher = Pushers(root).get(url)
     if pusher is None: raise Exception('no pusher found for URL: {0}'.format(url))
     push(root, url=pusher['push-url'], username=username, password=password, cwd=pusher['cwd'], installed=installed, fallback=fallback)
+
+
+def register(root, repository):
+    """Register PAKE repository in the node. This will allow to
+    push the package provided to the Net.
+
+    :param root: root of your node
+    :param repository: root of the repository being registered
+    """
+    meta = config.repository.Meta(repository)
+    name = meta.get('name')
+    package_dir = os.path.join(root, 'packages', name)
+    os.mkdir(package_dir)
+    meta.write(package_dir)
+    config.repository.Dependencies(repository).write(package_dir)

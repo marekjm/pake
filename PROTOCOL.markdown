@@ -312,7 +312,6 @@ Optional keys are:
 *   `author` - if it is not found `pake` will take author of the repository as the author of the package,
 *   `keywords` - list of keywords used by search feature; if not found keywords are extracted from `name` and `description`,
 *   `description` - description of the package,
-*   `module-name` - if different from package name (you are discouraged from designing such packages),
 
 
 Every element in `dependencies` is a dict:

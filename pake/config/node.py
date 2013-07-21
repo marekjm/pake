@@ -18,62 +18,19 @@ As for PAKE version 0.0.7 these files are:
 from pake.config import base
 
 
-class Meta(base.Config):
-    """Object representing repository metadata.
-    Values are added, removed or overwritten immediately after
-    calling the right method (it means 'when you remove something we write
-    new version of meta to the file immediately, so be careful').
+class Meta(base.Meta):
+    """Object representing node metadata.
 
-    Fields listed here are (marked `*`) or will be (marked `+`)
-    supported by the `pake` and have special meaning.
+    It is invalid unless it contains following fields:
+        * author: name of the author of the node,
+        * contact: contact information (email, jabber, Diaspora* handle, GitHub username etc.)
+        * url: URL of the main mirror,
 
-    `meta.json` file HAS TO contain:
-        * name: name of repository (regexp: '[0-9A-Za-z]+([_-][0-9A-Za-z]+)*')
-        * url: url to repository
-        * author: authors name
+    It should contain:
+        * description: description of this node.
 
-    `meta.json` file SHOULD contain:
-        * mirrors: list of mirrors in case the main `url` is not working,
-        * description: description for the repository.
-
-    Other fields have no special meaning but may gain it in future.
-    Although you can add some self-describing fileds to your `meta.json` you
-    are then strongly encouraged to read RELEASE.markdown files for each release to
-    make yourself informed about wheter some filed did or did not gain any
-    meaning.
-
-    Thank you for your cooperation.
     """
-    name = 'meta.json'
     default = {'author':'', 'contact':'', 'description':'', 'url':''}
-    content = {}
-
-    def set(self, key, value):
-        """Sets key in metadata.
-        """
-        self.content[key] = value
-        self.write()
-
-    def get(self, key):
-        """Returns a value from metadata.
-        """
-        return self.content[key]
-
-    def remove(self, key):
-        """Removes key from metadata.
-        """
-        del self.content[key]
-        self.write()
-
-    def missing(self):
-        """Returns list of missing or unset but required keys in meta.json file.
-        """
-        missing = []
-        required = list( self.default.keys())
-        for i in required:
-            if i not in self.content: missing.append(i)
-            elif i in self.content and self.content[i] == '': missing.append('{} (empty)'.format(i))
-        return missing
 
 
 class Mirrors(base.Config):
@@ -241,3 +198,7 @@ class Packages(Installed):
     """Interface to packages.json file.
     """
     name = 'packages.json'
+
+    def add(self, package):
+        """Adds pakcge to the list of provided packages.
+        """
