@@ -48,6 +48,7 @@ def makeconfig(root):
     config.node.Nodes(root).reset()
     config.node.Installed(root).reset()
     config.node.Packages(root).reset()
+    config.node.Registered(root).reset()
 
 
 def push(root, url, username, password, cwd='', installed=False, fallback=False):
@@ -101,7 +102,7 @@ def pushurl(root, url, username, password, installed=False, fallback=False):
     push(root, url=pusher['push-url'], username=username, password=password, cwd=pusher['cwd'], installed=installed, fallback=fallback)
 
 
-def register(root, repository):
+def registerrepo(root, repository):
     """Register PAKE repository in the node. This will allow to
     push the package provided to the Net.
 
@@ -109,8 +110,19 @@ def register(root, repository):
     :param repository: root of the repository being registered
     """
     meta = config.repository.Meta(repository)
+    if 'name' not in meta or 'version' not in meta:
+        raise Exception('invalid `meta.json` file for repository: {0}'.format(repository))
     name = meta.get('name')
+    config.node.Registered(root).add(name, repository)
+    config.node.Packages(root).add()
     package_dir = os.path.join(root, 'packages', name)
     os.mkdir(package_dir)
     meta.write(package_dir)
     config.repository.Dependencies(repository).write(package_dir)
+
+
+def removerepo(root, name, directory=False):
+    """Removes previously registared repository.
+    """
+    config.node.Registered(root).add(name)
+    if directory: shutil.rmtree(os.path.join(root, 'packages', name))

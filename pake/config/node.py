@@ -15,6 +15,8 @@ As for PAKE version 0.0.7 these files are:
 """
 
 
+import warnings
+
 from pake.config import base
 
 
@@ -202,3 +204,27 @@ class Packages(Installed):
     def add(self, package):
         """Adds pakcge to the list of provided packages.
         """
+        warnings.warn('not implemented')
+        pass
+
+
+class Registered(base.Config):
+    """This is a list of registered repositories.
+    A repository is a directory on your local machine containing
+    files for a package.
+    """
+    name = 'registered.json'
+    default = {}
+    content = {}
+
+    def add(self, name, directory):
+        """Registers a repository.
+        """
+        self.content[name] = directory
+        self.write()
+
+    def remove(self, name):
+        """Removes a repository.
+        """
+        del self.content[name]
+        self.write()

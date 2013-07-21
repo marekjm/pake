@@ -315,8 +315,9 @@ if str(options) == 'init':
                 mirrors = pake.node.Mirrors(root)
                 nodes = pake.node.Nodes(root)
                 pushers = pake.node.Pushers(root)
-                packages = pake.node.Packages(root)
                 installed = pake.node.Installed(root)
+                packages = pake.node.Packages(root)
+                registered = pake.node.Registered(root)
             if '--dry' not in options:
                 #   if it's not a dry run remove old tree and create brand new one
                 shutil.rmtree(root)
@@ -348,6 +349,7 @@ if str(options) == 'init':
                 node_pusher.write()
                 packages.write()
                 installed.write()
+                registered.write()
             else:
                 #   if no --preserve was passed then create new config files with
                 #   default values
