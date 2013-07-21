@@ -4,7 +4,7 @@ import json
 import os
 import shutil
 
-from pake import models
+from pake import config
 from pake import errors
 
 
@@ -19,44 +19,24 @@ from pake import errors
 """
 
 
-def init(root):
-    """Initializes new package repo and package subdir in main repo.
-    Root directory of main repo is the directory in which `.pakenode` subdir is
-    located.
+def makedirs(root):
+    """Creates new PAKE repository.
 
-    :param name: name of package
-    :type name: str
-    :param root: absolute path to the root directory for main repo
+    :param root: root of the repository
     :type root: str
     """
-    root = os.path.abspath(os.path.join(root, '.pake'))
-    if os.path.isdir(root): shutil.rmtree(root)
+    subdirectories = [  'versions',
+                        ]
     os.mkdir(root)
+    for name in subdirectories:
+        os.mkdir(os.path.join(root, name))
 
 
-def setconfig(root, name):
-    """Initializes empty package config in ocal repo and
-    package subdir in main repo.
-    Root directory of main repo is the directory in which `.pake` subdir is
-    located.
+def makeconfig(root):
+    """Initializes empty PAKE repository.
 
-    :param name: name of package
-    :type name: str
-    :param root: absolute path to the root directory for main repo
+    :param root: root for the repository
     :type root: str
     """
-    config.package.Meta(root).reset()
-    root = os.path.join(root, '.pake')
-    empty = {   'name': name,
-                'version': '0.0.0',
-                'description': '',
-                'author': node.Meta().get('author'),
-                'license': '',
-                'url': node.Meta.get('url'),
-                'mirrors': node.Meta.get('mirrors'),
-                'dependencies': [],
-                }
-    meta = open(os.path.join(root, 'meta.json'), 'w')
-    meta.write(json.dumps(empty))
-    meta.close()
-
+    config.repository.Meta(root).reset()
+    config.repository.Dependencies(root).reset()

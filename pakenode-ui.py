@@ -355,6 +355,7 @@ if str(options) == 'init':
                 node_pusher.write()
                 packages.write()
                 installed.write()
+                registered.write()
             else:
                 #   if no --preserve was passed then create new config files with
                 #   default values

@@ -49,11 +49,55 @@ class Config():
         finally:
             self.content = content
 
-    def write(self, pretty=False):
+    def write(self, root='', pretty=False):
         """Stores changes made to config file.
+
+        :param pretty: enable pretty formating of JSON
+        :param path: path to the root
         """
-        ofstream = open(os.path.join(self.root, self.name), 'w')
+        if not root: root = self.root
+        ofstream = open(os.path.join(root, self.name), 'w')
         if pretty: encoded = json.dumps(self.content, sort_keys=True, indent=4, separators=(',', ': '))
         else: encoded = json.dumps(self.content)
         ofstream.write(encoded)
         ofstream.close()
+
+
+class Meta(base.Config):
+    """Object representing some metadata.
+    Values are added, removed or overwritten immediately after
+    calling the right method (it means 'when you remove something we write
+    new version to the file immediately, so be careful').
+
+    The only thing needed when creating `meta.json` interface based on this object
+    is overwrite of `default` field.
+    """
+    name = 'meta.json'
+    default = {}
+    content = {}
+
+    def set(self, key, value):
+        """Sets key in metadata.
+        """
+        self.content[key] = value
+        self.write()
+
+    def get(self, key):
+        """Returns a value from metadata.
+        """
+        return self.content[key]
+
+    def remove(self, key):
+        """Removes key from metadata.
+        """
+        del self.content[key]
+        self.write()
+
+    def missing(self):
+        """Returns list of missing or unset but required keys in meta.json file.
+        """
+        missing = []
+        required = list( self.default.keys())
+        for i in required:
+            if i not in self.content or self.content[i] == '': missing.append(i)
+        return missing
