@@ -76,6 +76,7 @@ options.addOption(short='C', long='component', argument=str, requires=['--versio
 options.addOption(short='V', long='verbose', conflicts=['--quiet'])
 options.addOption(short='Q', long='quiet', conflicts=['--verbose'])
 
+options = ui.checkinput(options)
 
 if '--version' in options:
     ui.printversion(options)

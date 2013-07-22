@@ -39,7 +39,7 @@ def printversion(options):
     """
     version = ''
     if '--component' in options: component = options.get('--component')
-    else: component = 'backend'
+    else: component = 'pake'
     if component in ['backend', 'pake']: version = pake.__version__
     elif component == 'clap': version = clap.__version__
     else: print('pake: fatal: no such component: {0}'.format(component))
