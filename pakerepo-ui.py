@@ -61,12 +61,10 @@ Copyright Marek Marecki (c) 2013"""
 
 import sys
 
-import pake
 import clap
+import pake
 
-
-__version__ = '0.0.3'
-
+from pake.ui import base as ui
 
 formater = clap.formater.Formater(sys.argv[1:])
 formater.format()
@@ -79,60 +77,8 @@ options.addOption(short='V', long='verbose', conflicts=['--quiet'])
 options.addOption(short='Q', long='quiet', conflicts=['--verbose'])
 
 
-try:
-    options.define()
-    options.check()
-    message = ''
-except clap.errors.UnrecognizedModeError as e:
-    message = 'unrecognized mode: {0}'.format(e)
-except clap.errors.UnrecognizedOptionError as e:
-    message = 'unrecognized option found: {0}'.format(e)
-except clap.errors.RequiredOptionNotFoundError as e:
-    message = 'required option not found: {0}'.format(e)
-except clap.errors.NeededOptionNotFoundError as e:
-    message = 'needed option not found: {0}'.format(e)
-except clap.errors.MissingArgumentError as e:
-    message = 'missing argument for option: {0}'.format(e)
-except clap.errors.InvalidArgumentTypeError as e:
-    message = 'invalid argument for option: {0}'.format(e)
-except clap.errors.ConflictingOptionsError as e:
-    message = 'conflicting options: {0}'.format(e)
-finally:
-    if message:
-        print('pakerepo: fatal: {0}'.format(message))
-        exit(1)
-    else:
-        options.parse()
-
 if '--version' in options:
-    """Prints version information.
-
-    By default it's version of pake backend but user can
-    specify component which version he/she wants to print.
-
-    Components are only libraries not found in standard Python 3
-    library. Currently valid --component arguments are:
-    *   backend:    backend version,
-    *   ui:         version of UI,
-    *   clap:       version of CLAP library (used to build user interface),
-    """
-    version = 'pakerepo {0}'.format(__version__)
-    if '--verbose' in options:
-        #   if --verbose if passed print also backend version
-        version += ' (pake backend: {0})'.format(pake.__version__)
-    if '--component' in options:
-        #   if --component is passed print specified component's version
-        component = options.get('--component')
-        if component in ['backend', 'pake']:
-            version = pake.__version__
-            component = 'pake'
-        elif component == 'ui': version = __version__
-        elif component == 'clap': version = clap.__version__
-        else:
-            print('pake: fatal: no such component: {0}'.format(component))
-            version = ''
-        if '--verbose' in options and version: version = '{0} {1}'.format(component, version)
-    if version: print(version)
+    ui.printversion(options)
     exit()
 
 if '--help' in options:
