@@ -8,8 +8,6 @@ As for PAKE version 0.0.7 these files are:
 """
 
 
-import json
-
 from pake.config import base
 
 
@@ -25,12 +23,7 @@ class Meta(base.Meta):
         * author: authors name
         * description: description for the repository.
     """
-    default = { 'name': '',
-                'version': '0.0.0',
-                'description': '',
-                'author': '',
-                'license': '',
-                }
+    default = {'name': '', 'version': '0.0.0', 'description': '', 'author': '', 'license': ''}
 
 
 class Dependencies(base.Config):
@@ -65,10 +58,7 @@ class Dependencies(base.Config):
         :returns: integer, -1 means new dependency else means an update
         """
         n = self._getindex(name)
-        dependency = {  'name': name,
-                        'min': min,
-                        'max': max,
-                        }
+        dependency = {'name': name, 'min': min, 'max': max}
         if n == -1: self.content.append(dependency)
         else: self.content[n] = dependency
         self.write()

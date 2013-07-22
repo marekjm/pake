@@ -28,11 +28,11 @@ Global options:
 Mode options:
 
 init:
-This mode is used for initializing a node repository in user's home directory. 
-If you want to just check if you can initialize option --dry is for you. 
-By default, if you are trying to reinitialize pake will exit with error message saying 
+This mode is used for initializing a node repository in user's home directory.
+If you want to just check if you can initialize option --dry is for you.
+By default, if you are trying to reinitialize pake will exit with error message saying
 that you cannot because old repository is found.
-This is to prevent you from accidentally overwriting your repository as a reinitialization 
+This is to prevent you from accidentally overwriting your repository as a reinitialization
 process is dumb and just removes the node and creates a fresh one.
 
 
@@ -44,8 +44,8 @@ process is dumb and just removes the node and creates a fresh one.
 ----
 
 meta:
-This mode is used for editing `meta.json` config file which is the most important file in 
-your node. Without it being properly set up your node is considered `dead` to the rest of 
+This mode is used for editing `meta.json` config file which is the most important file in
+your node. Without it being properly set up your node is considered `dead` to the rest of
 the network.
 
     -s, --set           - sets a key with given name (requires two arguments)
@@ -60,7 +60,7 @@ the network.
 mirrors:
 This mode is used to manipulate `mirrors.json` file of the node.
 
-These options define what to do. They conflict with each other. 
+These options define what to do. They conflict with each other.
 
         --add           - add new mirror
         --edit URL      - edit a mirror, URL defines what mirror is edited
@@ -77,7 +77,7 @@ These options add details.
 
 push:
 
-This mode is used for pushing to mirrors. Before every push you will be asked for username and 
+This mode is used for pushing to mirrors. Before every push you will be asked for username and
 password used for logging in to the remote server. By default push goes to every mirror.
 
     -m, --only-main     - if passed pushes only to main mirror
@@ -98,7 +98,7 @@ This mode is not yet implemented.
 ----
 
 
-This script is published under GNU GPL v3 or any later version of this license. 
+This script is published under GNU GPL v3 or any later version of this license.
 Text of the license can be found at: https://gnu.org/licenses/gpl.html
 
 Copyright Marek Marecki (c) 2013"""
@@ -169,7 +169,7 @@ try:
     message = ''
     options.define()
     options.check()
-except clap.errors.UnrecognizedModeError as e: 
+except clap.errors.UnrecognizedModeError as e:
     message = 'unrecognized mode: {0}'.format(e)
 except clap.errors.UnrecognizedOptionError as e:
     message = 'unrecognized option found: {0}'.format(e)
@@ -205,7 +205,7 @@ finally:
 #   just finish saying: `pakenode: fatal: ...` you can usually rerun the program with
 #   the same options and arguments but add --verbose option on the beginning and
 #   it will show you why it fatal'ed (will print you `fail` messages).
-#   
+#
 #   All these types print messages of specific format:
 #
 #   *   fail:       pakenode: fail: MESSAGE
@@ -216,7 +216,7 @@ finally:
 #
 #   `fail` alert is printed when something goes wrong during program execution and
 #   we want to notify the user that something bad happened.
-#   `fatal` is used when something REALY bad happend and we can't recover. 
+#   `fatal` is used when something REALY bad happend and we can't recover.
 #   `message` is printed when there is a need to notify user about something.
 
 
@@ -324,6 +324,7 @@ if str(options) == 'init':
                 pushers = pake.config.node.Pushers(root)
                 packages = pake.config.node.Packages(root)
                 installed = pake.config.node.Installed(root)
+                registered = pake.config.node.Registered(root)
             if '--dry' not in options:
                 #   if it's not a dry run remove old tree and create brand new one
                 shutil.rmtree(root)
@@ -352,7 +353,6 @@ if str(options) == 'init':
                 mirrors.write()
                 nodes.write()
                 pushers.write()
-                node_pusher.write()
                 packages.write()
                 installed.write()
                 registered.write()
@@ -367,7 +367,6 @@ elif str(options) == 'meta':
     """Logic for `meta` mode.
     """
 
-    
     if '--set' in options:
         #   With this option user can add new key to meta or
         #   overwrite old value of some key with new one.
@@ -482,7 +481,8 @@ elif str(options) == 'push':
         """Returns two-tuple (username, password) for given URL.
         """
         username = input('Username for {0}: '.format(url))
-        password = getpass.getpass('Password for {0}@{1}: '.format(username, pake.config.node.Pushers(root).get(url)['push-url']))
+        prompt = 'Password for {0}@{1}: '.format(username, pake.config.node.Pushers(root).get(url)['push-url'])
+        password = getpass.getpass(prompt)
         return (username, password)
 
     if '--only-main' in options:

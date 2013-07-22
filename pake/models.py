@@ -1,9 +1,12 @@
-import json
-import urllib
-import warnings
+#!/usr/bin/env python3
+
 
 """This module contains models shared between various elements of pake.
 """
+
+
+import json
+import urllib
 
 
 class Remote():
@@ -63,7 +66,7 @@ class Remote():
         """Tries to fetch packages.json from the node.
         """
         return self._fetchjson('packages')
-  
+
     def fetch(self):
         """Tries to fetch node metadata from it's url.
         """
@@ -86,7 +89,7 @@ class Remote():
         for key in required:
             if key not in self: missing.append(key)
         return missing
- 
+
 
 class Package():
     """Object representing a package.

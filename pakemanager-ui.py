@@ -24,14 +24,12 @@ Global options:
 ----
 
 
-This script is published under GNU GPL v3 or any later version of this license. 
+This script is published under GNU GPL v3 or any later version of this license.
 Text of the license can be found at: https://gnu.org/licenses/gpl.html
 
 Copyright Marek Marecki (c) 2013"""
 
 
-import os
-import shutil
 import sys
 
 import pake
@@ -56,7 +54,7 @@ try:
     options.define()
     options.check()
     message = ''
-except clap.errors.UnrecognizedModeError as e: 
+except clap.errors.UnrecognizedModeError as e:
     message = 'unrecognized mode: {0}'.format(e)
 except clap.errors.UnrecognizedOptionError as e:
     message = 'unrecognized option found: {0}'.format(e)

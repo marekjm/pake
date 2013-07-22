@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+
+#flake8: noqa
+
 from pake import node
 from pake import repository
 from pake import config

@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 
-import json
 import os
-import shutil
 
 from pake import config
-from pake import errors
 
 
 """This module contains objects responsible for:
@@ -25,8 +22,7 @@ def makedirs(root):
     :param root: root of the repository
     :type root: str
     """
-    subdirectories = [  'versions',
-                        ]
+    subdirectories = ['versions']
     os.mkdir(root)
     for name in subdirectories:
         os.mkdir(os.path.join(root, name))

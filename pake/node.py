@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 
+
+"""This module is responsible for creating global pake repository and managing it.
+It also provides interface to `meta.json` file -- which is metadata of the repository.
+"""
+
+
 import ftplib
-import json
 import os
 import shutil
 
 
 from pake import config
-from pake import errors
-
-
-"""This module is responsible for creating global pake repository and managing it.
-It also provides interface to `meta.json` file -- which is metadata of the repository.
-"""
 
 
 def makedirs(root):
@@ -23,12 +22,12 @@ def makedirs(root):
     :param root: root directory in which files will be written
     :type root: str
     """
-    subdirectories = [  'db',
-                        'downloaded',
-                        'installing',
-                        'prepared',
-                        'packages',
-                        ]
+    subdirectories = ['db',
+                      'downloaded',
+                      'installing',
+                      'prepared',
+                      'packages',
+                      ]
     os.mkdir(root)
     for name in subdirectories:
         os.mkdir(os.path.join(root, name))
@@ -51,7 +50,7 @@ def makeconfig(root):
     config.node.Registered(root).reset()
 
 
-def push(root, url, username, password, cwd='', installed=False, fallback=False):
+def push(root, url, username, password, cwd='', installed=False, fallback=False, callback=None):
     """Uploads node data to given url.
     """
     remote = ftplib.FTP(url)
@@ -97,9 +96,11 @@ def pushurl(root, url, username, password, installed=False, fallback=False):
     :param installed: push also `installed.json` file, disabled by default
     :param fallback: create fallback files (fallback.*.json)
     """
-    pusher = Pushers(root).get(url)
+    pusher = config.node.Pushers(root).get(url)
     if pusher is None: raise Exception('no pusher found for URL: {0}'.format(url))
-    push(root, url=pusher['push-url'], username=username, password=password, cwd=pusher['cwd'], installed=installed, fallback=fallback)
+    url = pusher['push-url']
+    cwd = pusher['cwd']
+    push(root, url=url, username=username, password=password, cwd=cwd, installed=installed, fallback=fallback)
 
 
 def registerrepo(root, repository):

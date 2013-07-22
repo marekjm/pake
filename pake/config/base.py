@@ -63,7 +63,7 @@ class Config():
         ofstream.close()
 
 
-class Meta(base.Config):
+class Meta(Config):
     """Object representing some metadata.
     Values are added, removed or overwritten immediately after
     calling the right method (it means 'when you remove something we write
@@ -97,7 +97,7 @@ class Meta(base.Config):
         """Returns list of missing or unset but required keys in meta.json file.
         """
         missing = []
-        required = list( self.default.keys())
+        required = list(self.default.keys())
         for i in required:
             if i not in self.content or self.content[i] == '': missing.append(i)
         return missing

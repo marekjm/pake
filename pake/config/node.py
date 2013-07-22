@@ -32,7 +32,7 @@ class Meta(base.Meta):
         * description: description of this node.
 
     """
-    default = {'author':'', 'contact':'', 'description':'', 'url':''}
+    default = {'author': '', 'contact': '', 'description': '', 'url': ''}
 
 
 class Mirrors(base.Config):
@@ -48,6 +48,19 @@ class Mirrors(base.Config):
     def __list__(self):
         return self.content
 
+    def _getindex(self, url):
+        """Returns index of a mirror based on it's URL.
+        -1 means that no mirror was found with this URL.
+
+        :param url: unique URL of a mirror
+        """
+        index = -1
+        for i, mirror in enumerate(self.content):
+            if mirror == url:
+                index = i
+                break
+        return index
+
     def add(self, url):
         """Adds URL to mirrors list.
         Will create duplicates.
@@ -59,13 +72,9 @@ class Mirrors(base.Config):
     def remove(self, url):
         """Removes URL from list of mirrors.
         """
-        index = -1
-        for i, mirrot in enumerate(self.content):
-            if mirror == url:
-                index = i
-                break
+        index = self._getindex(url)
         if index > -1:
-            self.content.pop(index)
+            del self.content[index]
             self.write()
         return index
 
@@ -82,6 +91,19 @@ class Pushers(base.Config):
 
     def __list__(self):
         return self.content
+
+    def _getindex(self, url):
+        """Returns index of a pusher.
+        -1 means that pusher was not found.
+
+        :param url: it is unique URL of a mirror, NOT A push-url
+        """
+        index = -1
+        for i, pusher in enumerate(self.content):
+            if pusher['url'] == url:
+                index = i
+                break
+        return index
 
     def hasurl(self, url):
         """Returns True if pushers.json already has pusher with given url.
@@ -101,7 +123,6 @@ class Pushers(base.Config):
             self.content.append(pusher)
             self.write()
 
-
     def get(self, url):
         """Returns pusher for given URL.
         Returns None if not found.
@@ -115,14 +136,12 @@ class Pushers(base.Config):
 
     def remove(self, url):
         """Removes URL from list of pushers.
+
+        :returns: index of removed mirror, -1 means that no pusher was removed
         """
-        index = -1
-        for i, mirrot in enumerate(self.content):
-            if mirror == url:
-                index = i
-                break
+        index = self._getindex()
         if index > -1:
-            self.content.pop(index)
+            del self.content[index]
             self.write()
         return index
 
@@ -155,11 +174,8 @@ class Nodes(base.Config):
         Duplicates are checked by comparing URLs.
         If you want to update node metadata use update() method.
         """
-        if type(node) is not models.Node: raise TypeError('expected {0} but got: {1}'.format(models.Node, type(node)))
-        if node['url'] not in self and node.valid(): self.content.append(dict(node))
-        elif node['url'] in self and node.valid(): raise DuplicateError('cannot duplicate node')
-        else: raise NodeError('node is not valid: missing keys: {0}'.format(', '.join(self.missing(node))))
-        self.write()
+        warnings.warn('not implemented')
+        pass
 
 
 class Installed(base.Config):
