@@ -4,7 +4,7 @@
 """This is base module for PAKE user interface.
 
 It is not imported with:
-    
+
     import pake
 
 instead, you have to import it explicitly:
@@ -22,9 +22,35 @@ and if `pake` imported `ui` and `ui` imported `pake` then it
 would cause an error (looped imports).
 """
 
+import re
+
 
 import clap
 import pake
+
+
+def gethelp(docstring, options):
+    """Returns help string to print.
+    """
+    doc = docstring.splitlines()
+    mode = str(options)
+    if mode:
+        string = []
+        begin_global = doc.index('@help.begin_global')+1
+        end_global = doc.index('@help.end_global')
+        begin_mode = doc.index('@help.begin_mode={0}'.format(mode))+1
+        end_mode = doc.index('@help.end_mode={0}'.format(mode))
+        begin_footer = doc.index('@help.footer')+1
+        string = doc[begin_global:end_global]
+        string += doc[begin_mode:end_mode]
+        string += doc[begin_footer:]
+    else:
+        string = []
+        for line in doc:
+            if line[0:5] == '@help': continue
+            string.append(line)
+    string = '\n'.join(string)
+    return string
 
 
 def printversion(options):

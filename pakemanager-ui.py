@@ -8,9 +8,10 @@ Currently, it provides methods for:
     *   ...,
     *   ....
 
+@help.begin_global
 Syntax:
 
-    pake [global options] [MODE [mode options]]
+    pakemanager [global options] [MODE [mode options]]
 
 
 Global options:
@@ -20,7 +21,8 @@ Global options:
     -V, --verbose       - print more messages, conflicts with: --quiet
     -Q, --quiet         - print less messages, conflicts with: --verbose (doesn't really do anything)
 
-
+@help.end_global
+@help.footer
 ----
 
 
@@ -54,5 +56,5 @@ if '--version' in options:
     exit()
 
 if '--help' in options:
-    print(__doc__)
+    print(ui.gethelp(__doc__, options))
     exit()

@@ -7,8 +7,10 @@ It also provides interface to `meta.json` file -- which is metadata of the repos
 
 
 import ftplib
+import urllib.request
 import os
 import shutil
+import json
 
 
 from pake import config
@@ -127,3 +129,14 @@ def removerepo(root, name, directory=False):
     """
     config.node.Registered(root).add(name)
     if directory: shutil.rmtree(os.path.join(root, 'packages', name))
+
+
+def setnode(root, url):
+    """Adds new node to network.
+    Would not add duplictes.
+    """
+    socket = urllib.request.urlopen('{0}/mirrors.json'.format(url))
+    mirrors = json.loads(str(socket.read(), encoding='utf-8'))
+    socket.close()
+    print(url, mirrors)
+    config.node.Nodes(root).set(url, mirrors)

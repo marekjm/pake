@@ -7,6 +7,7 @@
 
 import json
 import os
+import warnings
 
 
 class Config():
@@ -45,6 +46,9 @@ class Config():
             content = json.loads(ifstream.read())
             ifstream.close()
         except FileNotFoundError:
+            content = self.default
+        except ValueError as e:
+            warnings.warn('{0}: returning to default'.format(e))
             content = self.default
         finally:
             self.content = content

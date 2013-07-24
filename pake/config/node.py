@@ -150,11 +150,11 @@ class Nodes(base.Config):
     """Interface to nodes.json file.
     """
     name = 'nodes.json'
-    default = []
-    content = []
+    default = {}
+    content = {}
 
     def __list__(self):
-        return self.content
+        return list(self.content.keys())
 
     def __contains__(self, url):
         """Checks if nodes.json file contain node of given URL.
@@ -164,18 +164,27 @@ class Nodes(base.Config):
         """
         result = False
         for i in self.content:
-            if i['url'] == url:
+            if i == url:
                 result = True
-                break
+            else:
+                for mirror in self.content[i]:
+                    if mirror == url:
+                        result = True
+                        break
+            if result: break
         return result
 
-    def add(self, node):
-        """Adds new node.
-        Duplicates are checked by comparing URLs.
-        If you want to update node metadata use update() method.
+    def set(self, url, mirrors):
+        """Sets node in your list of nodes.
+        If a node with given URL already exists it's data is overwritten.
         """
-        warnings.warn('not implemented')
-        pass
+        self.content[url] = mirrors
+        self.write()
+
+    def getmirrors(self, url):
+        """Returns mirrors of the node.
+        """
+        return self.content[url]
 
 
 class Installed(base.Config):

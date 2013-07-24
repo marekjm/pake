@@ -10,24 +10,28 @@ Currently, it provides methods for:
     *   editing `*.json` config files,
     *   registering new PAKE repositories,
 
+@help.begin_global
 Syntax:
 
     pakenode [global options] [MODE [mode options]]
-
 
 Global options:
     -h, --help          - display this message
     -v, --version       - display version information
         --component STR - choose component (ui, backend) which version should be displayed (only with --version)
     -V, --verbose       - print more messages, conflicts with: --quiet
-    -Q, --quiet         - print less messages, conflicts with: --verbose (doesn't really do anything)
+        --debug         - show debug messages
+    -Q, --quiet         - print less messages, conflicts with: --verbose (it doesn't really do anything yet)
     -R, --root          - specify alternative root directory for initialization (default: ~);
 
 **Warning:** use --root option only for testing!
 
+@help.end_global
+
 Mode options:
 
 init:
+@help.begin_mode=init
 This mode is used for initializing a node repository in user's home directory.
 If you want to just check if you can initialize option --dry is for you.
 By default, if you are trying to reinitialize pake will exit with error message saying
@@ -41,9 +45,11 @@ process is dumb and just removes the node and creates a fresh one.
                           directory if found, otherwise an exception will be raised
     -p, --preserve      - preserves config files during reinitialization
 
+@help.end_mode=init
 ----
 
 meta:
+@help.begin_mode=meta
 This mode is used for editing `meta.json` config file which is the most important file in
 your node. Without it being properly set up your node is considered `dead` to the rest of
 the network.
@@ -54,10 +60,13 @@ the network.
     -m, --missing       - prints key missing in meta.json
     -l, --list          - prints comma separated list of keys in meta.json
     -p, --pretty        - enable pretty formating of `meta.json` file
+        --reset FILE    - resets given config file (use with caution!)
 
+@help.end_mode=meta
 ----
 
 mirrors:
+@help.begin_mode=mirrors
 This mode is used to manipulate `mirrors.json` file of the node.
 
 These options define what to do. They conflict with each other.
@@ -73,28 +82,40 @@ These options add details.
     -c, --cwd STR       - directory to which pake should go after connecting to server
     -m, --main          - if this option is passed with a mirror, it will be set as main in meta.json
 
+@help.end_mode=mirrors
 ----
 
 push:
-
+@help.begin_mode=push
 This mode is used for pushing to mirrors. Before every push you will be asked for username and
 password used for logging in to the remote server. By default push goes to every mirror.
 
     -m, --only-main     - if passed pushes only to main mirror
     -f, --fallback      - create fallback files
+    -i, --installed     - push also `installed.json` file (useful for backup)
     -d, --dont-push     - don't actually push anything, useful for updating credentials
     -D, --dont-force    - if push to one node fails don't continue with the others
+    -A, --ask-once      - for the same push-url PAKE will only ask once for username and password
+                          (can be buggy if you have several account for the same server -- push-url)
 
+@help.end_mode=push
 ----
 
 packages:
+@help.begin_mode=packages
 This mode is not yet implemented.
 
+@help.end_mode=packages
 ----
 
 nodes:
-This mode is not yet implemented.
+@help.begin_mode=nodes
+This mode lets you add nodes to your network.
 
+    -s, --set           - add URL by hand
+
+@help.end_mode=nodes
+@help.footer
 ----
 
 
@@ -108,6 +129,7 @@ import getpass
 import os
 import shutil
 import sys
+import re
 
 import clap
 import pake
@@ -130,6 +152,7 @@ meta.add(short='g', long='get', argument=str, conflicts=['-s', '-r', '-m', '-l']
 meta.add(short='m', long='missing', conflicts=['-s', '-r', '-g'])
 meta.add(short='l', long='list', conflicts=['-s', '-r', '-g'])
 meta.add(short='p', long='pretty')
+meta.add(long='reset', argument=str)
 
 mirrors = clap.parser.Parser()
 mirrors.add(long='add', requires=['-u', '-p', '-c'], conflicts=['--edit', '--remove'])
@@ -143,14 +166,32 @@ mirrors.add(short='c', long='cwd', argument=str)
 push = clap.parser.Parser()
 push.add(short='m', long='only-main')
 push.add(short='f', long='fallback')
+push.add(short='i', long='installed')
 push.add(short='d', long='dont-push')
 push.add(short='D', long='dont-force')
+push.add(short='A', long='ask-once')
+
+packages = clap.parser.Parser()
+
+def url(string):
+    """Returns passed string if it's valid URL.
+    Raises ValueError otherwise.
+    """
+    url_regexp = re.compile('^([a-z]+://)?(www[0-9]*.)?([a-z0-9-]+.)+[a-z]+/(.+[^/])?$')
+    if not re.match(url_regexp, string): raise ValueError(string)
+    return string
+nodes = clap.parser.Parser()
+nodes.add(short='s', long='set', argument=url)
+nodes.add(short='u', long='update')
+nodes.add(short='l', long='list')
 
 options = clap.modes.Parser(list(formater))
 options.addMode('init', init)
 options.addMode('meta', meta)
 options.addMode('mirrors', mirrors)
 options.addMode('push', push)
+options.addMode('packages', packages)
+options.addMode('nodes', nodes)
 options.addOption(short='h', long='help')
 options.addOption(short='v', long='version')
 options.addOption(short='C', long='component', argument=str, requires=['--version'])
@@ -162,12 +203,12 @@ options.addOption(short='R', long='root', argument=str)
 options = ui.checkinput(options)
 
 
-if '--version' in options: 
+if '--version' in options:
     ui.printversion(options)
     exit()
 
 if '--help' in options:
-    print(__doc__)
+    print(ui.gethelp(__doc__, options=options))
     exit()
 
 
@@ -203,7 +244,7 @@ if '--help' in options:
 root = os.path.expanduser('~')
 if '--root' in options: root = options.get('--root')
 root = os.path.join(root, '.pakenode')
-if '--verbose' in options: print('pakenode: root set to {0}'.format(root))
+if '--debug' in options: print('pakenode: root set to {0}'.format(root))
 
 message = ''
 if str(options) == 'init':
@@ -343,6 +384,16 @@ elif str(options) == 'meta':
             char = '\n'
         else: char = ', '
         message = char.join(c)
+    if '--reset' in options:
+        name = options.get('--reset')
+        if name == 'meta.json':
+            pake.config.node.Meta(root).reset()
+        if name == 'mirrors.json':
+            pake.config.node.Mirrors(root).reset()
+        if name == 'pushers.json':
+            pake.config.node.Pushers(root).reset()
+        if name == 'nodes.json':
+            pake.config.node.Nodes(root).reset()
     if '--pretty' in options: pake.config.node.Meta(root).write(pretty=True)
 elif str(options) == 'mirrors':
     """Logic for `mirrors` mode.
@@ -406,10 +457,10 @@ elif str(options) == 'push':
         password = getpass.getpass(prompt)
         return (username, password)
 
+    main = pake.config.node.Meta(root).get('url')
     if '--only-main' in options:
         #   this means that we will push only to main mirror
-        url = pake.node.Meta(root).get('url')
-        if url != '': urls = [url]
+        if main != '': urls = [main]
         else:
             #   this means that no main url is set in meta.json
             #   user should check his/hers meta.json
@@ -420,10 +471,23 @@ elif str(options) == 'push':
     else:
         #   this means that we are pushing to all mirrors (default)
         urls = list(pake.config.node.Mirrors(root))
+    pushers = pake.config.node.Pushers(root)
+    credentials = {}
     for url in urls:
         try:
-            username, password = getcredentials()
-            pake.node.pushurl(root=root, url=url, username=username, password=password)
+            pusher = pushers.get(url)['push-url']
+            if '--ask-once' in options and pusher in credentials: username, password = credentials[pusher]
+            else: username, password = getcredentials(url)
+            if '--ask-once' in options: credentials[pusher] = (username, password)
+            installed = '--installed' in options
+            fallback = '--fallback' in options
+            if '--verbose' in options:
+                alert = 'pake: pushing to node: {0}'.format(url)
+                if url == main: alert += '\t(main mirror)'
+                print(alert)
+                if installed: print('pake: pushing also `installed.json` data')
+                if fallback: print('pake: creating fallback files on server')
+            pake.node.pushurl(root=root, url=url, username=username, password=password, installed=installed, fallback=fallback)
         except (KeyboardInterrupt, EOFError): print()
         except Exception as e: print('pakenode: fail: push failed: {0}'.format(e))
         finally:
@@ -438,6 +502,16 @@ elif str(options) == 'packages':
 elif str(options) == 'nodes':
     """Logic for `nodes` mode.
     """
-    message = 'pakenode: fatal: nodes mode is not yet implemented'
+    if '--set' in options:
+        pake.node.setnode(root, options.get('--set'))
+    if '--update' in options:
+        for url in pake.config.node.Nodes(root): pake.node.setnode(root, url)
+    if '--list' in options:
+        nodes = pake.config.node.Nodes(root)
+        if '--verbose' not in options: print(', '.join([url for url in nodes]))
+        else:
+            for url in nodes:
+                print('{0}: {1}'.format(url, ', '.join(nodes.getmirrors(url))))
+            
 
 if message and '--quiet' not in options: print(message)

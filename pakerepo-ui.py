@@ -10,10 +10,10 @@ Currently, it provides methods for:
     *   updating package metadata,
     *   adding and removing files from the package,
 
+@help.begin_global
 Syntax:
 
-    pakenode [global options] [MODE [mode options]]
-
+    pakerepo [global options] [MODE [mode options]]
 
 Global options:
     -h, --help          - display this message
@@ -23,8 +23,10 @@ Global options:
     -Q, --quiet         - print less messages, conflicts with: --verbose (doesn't really do anything)
 
 
+@help.end_global
 ----
 
+@help.begin_mode=register
 If one wants to register package in node database (packages.json) one should
 use `pakenode` interface.
 
@@ -50,6 +52,8 @@ Optional (but helpful) keys are:
     *   keywords:       keywords used when searching for package,
     *   description:    description of the package.
 
+@help.end_mode=register
+@help.footer
 ----
 
 
@@ -69,7 +73,10 @@ from pake.ui import base as ui
 formater = clap.formater.Formater(sys.argv[1:])
 formater.format()
 
+register = clap.parser.Parser()
+
 options = clap.modes.Parser(list(formater))
+options.addMode('register', register)
 options.addOption(short='h', long='help')
 options.addOption(short='v', long='version')
 options.addOption(short='C', long='component', argument=str, requires=['--version'])
@@ -83,7 +90,7 @@ if '--version' in options:
     exit()
 
 if '--help' in options:
-    print(__doc__)
+    print(ui.gethelp(__doc__, options))
     exit()
 
 
