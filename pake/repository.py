@@ -23,10 +23,9 @@ def makedirs(root):
     :param root: root of the repository
     :type root: str
     """
-    subdirectories = ['packages', 'versions']
+    subdirectories = ['versions']
     os.mkdir(root)
-    for name in subdirectories:
-        os.mkdir(os.path.join(root, name))
+    for name in subdirectories: os.mkdir(os.path.join(root, name))
 
 
 def makeconfig(root):

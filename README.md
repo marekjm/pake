@@ -41,9 +41,9 @@ This allows you to create packages using PAKE and distribute them using differen
 Every program in PAKE toolchain has few options which provide you with the ability to set their level of
 verbosity. You can combine them to get different results, depending on what do you wnat in particular situation.
 
-*   `-v`, `--verbose`:      make PAKE display more messages about what it is doing,
-*   `-q`, `--quiet`:        make PAKE display no messages about what it is doing,
-*   `-d`, `--debug`:        make PAKE display debug messages (combine this option with `--quiet` to get pure debugging logs),
+*   `-V`, `--verbose`:      make PAKE display more messages about what it is doing,
+*   `-Q`, `--quiet`:        make PAKE display no messages about what it is doing,
+*   `-D`, `--debug`:        make PAKE display debug messages (combine this option with `--quiet` to get pure debugging logs),
 
 Programs in PAKE toolchain operate on modes. This means that usually one program can do different things and what it *will* do
 is controlled by passing a mode definition (`init`, `meta`, `mirrors`, etc.). Also, mode describes what options program can
