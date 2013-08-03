@@ -75,6 +75,7 @@ Copyright Marek Marecki (c) 2013"""
 import os
 import shutil
 import sys
+import re
 
 import clap
 import pake
@@ -85,24 +86,26 @@ formater = clap.formater.Formater(sys.argv[1:])
 formater.format()
 
 init = clap.parser.Parser()
-init.add(short='n', long='name', argument=str, required=True, not_with=['--help'])
+init.add(short='n', long='name', arguments=[str], required=True, not_with=['--help'])
 init.add(short='f', long='force')
 
 meta = clap.parser.Parser()
-#   multiple arguments are available in CLAP 0.6.4+
-#meta.add(short='s', long='set', argument=[str, str],conflicts=['--rm'])
-meta.add(short='s', long='set', conflicts=['--rm'])
-meta.add(short='r', long='rm', argument=str, conflicts=['--set'])
-meta.add(short='g', long='get', argument=str, conflicts=['--set', '--rm'])
+meta.add(short='s', long='set', arguments=[str, str],conflicts=['--rm'])
+meta.add(short='r', long='rm', arguments=[str], conflicts=['--set'])
+meta.add(short='g', long='get', arguments=[str], conflicts=['--set', '--rm'])
+meta.add(short='l', long='list')
 
 files = clap.parser.Parser()
 files.add(short='a', long='add', conflicts=['--rm'])
 files.add(short='r', long='rm', conflicts=['--add'])
-files.add(short='R', long='regexp', argument=str, needs=['--add', '--rm'])
+files.add(short='R', long='regexp', arguments=[str], needs=['--add', '--rm'])
+files.add(short='l', long='list')
 
 dependencies = clap.parser.Parser()
 
 package = clap.parser.Parser()
+package.add(short='b', long='build')
+package.add(short='O', long='overwrite')
 
 options = clap.modes.Parser(list(formater))
 options.addMode('init', init)
@@ -112,7 +115,7 @@ options.addMode('dependencies', dependencies)
 options.addMode('package', package)
 options.addOption(short='h', long='help')
 options.addOption(short='v', long='version')
-options.addOption(short='C', long='component', argument=str, requires=['--version'])
+options.addOption(short='C', long='component', arguments=[str], requires=['--version'])
 options.addOption(short='V', long='verbose', conflicts=['--quiet'])
 options.addOption(short='Q', long='quiet', conflicts=['--verbose'])
 options.addOption(short='D', long='debug')
@@ -156,46 +159,50 @@ if str(options) == 'init':
             if '--verbose' in options: message += ' in {0}'.format(os.path.split(root)[0])
             if '--quiet' not in options: print(message)
 elif str(options) == 'meta':
+    meta = pake.config.repository.Meta(root)
     if '--set' in options:
+        meta.set(*options.get('--set'))
+        if '--verbose' in options: print('pake: repo: meta.json: {0} = {1}'.format(key, value))
+    if '--get' in options:
         try:
-            key = options.arguments[0]
-            value = options.arguments[1]
-            pake.config.repository.Meta(root).set(key, value)
-            fail = False
-        except IndexError as e:
-            if '--debug' in options: print('pake: debug: setting requires two arguments: {0}'.format(e))
-            fail = True
-        finally:
-            if not fail:
-                if '--verbose' in options: print('pake: repo: meta.json: {0} = {1}'.format(key, value))
-            else:
-                print('pake: repo: fatal: setting value failed')
-    elif '--get' in options:
-        try:
-            value = pake.config.repository.Meta(root).get(options.get('--get'))
+            meta.get(options.get('--get'))
         except KeyError:
+            if '--debug' in options:
+                print('pake: repo: debug: meta.json: key \'{0}\' was not found'.format(options.get('-g')))
             value = ''
         finally:
             print(value)
-    elif '--rm' in options:
-        key = options.get('--remove')
-        pake.config.repository.Meta(root).remove(key)
+    if '--rm' in options:
+        meta.remove(options.get('--remove'))
+    if '--list' in options:
+        print(', '.join(sorted(meta.keys())))
 elif str(options) == 'files':
+    files = pake.config.repository.Files(root)
     if '--add' in options:
-        for item in options.arguments:
-            if os.path.isfile(item) or os.path.isdir(item):
-                pake.config.repository.Files(root).add(item)
+        candidates = options.arguments
+        if '--regexp' in options:
+            candidates = os.listdir('.')
+            regexp = re.compile(options.get('--regexp'))
+            accepted = []
+            for item in candidates:
+                if regexp.match(item): accepted.append(item)
+            candidates = accepted
+        for item in candidates:
+            if (os.path.isfile(item) or os.path.isdir(item)) and item not in files:
+                files.add(item)
             else:
                 if '--quiet' not in options: print('pake: repo: fail: no such file or directory: {0}'.format(item))
     if '--rm' in options:
-        files = pake.config.repository.Files(root)
         for item in options.arguments:
             if item in files:
-                pake.config.repository.Files(root).remove(item)
+                files.remove(item)
             else:
                 if '--quiet' not in options: print('pake: repo: files.json: fail: no such file or directory in: {0}'.format(item))
+    if '--list' in options:
+        for item in files: print(item)
 elif str(options) == 'dependencies':
     pass
 elif str(options) == 'package':
-    pass
+    if '--build' in options:
+        pake.repository.makepackage(root=root, overwrite=('--overwrite' in options))
 else: print('mode is not implemeted')
