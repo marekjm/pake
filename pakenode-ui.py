@@ -147,21 +147,21 @@ init.add(short='p', long='preserve', requires=['--re'])
 
 meta = clap.parser.Parser()
 meta.add(short='s', long='set', conflicts=['-r', '-g', '-m', '-l'])
-meta.add(short='r', long='remove', argument=str, conflicts=['-s', '-g', '-m', '-l'])
-meta.add(short='g', long='get', argument=str, conflicts=['-s', '-r', '-m', '-l'])
+meta.add(short='r', long='remove', arguments=[str], conflicts=['-s', '-g', '-m', '-l'])
+meta.add(short='g', long='get', arguments=[str], conflicts=['-s', '-r', '-m', '-l'])
 meta.add(short='m', long='missing', conflicts=['-s', '-r', '-g'])
 meta.add(short='l', long='list', conflicts=['-s', '-r', '-g'])
 meta.add(short='p', long='pretty')
-meta.add(long='reset', argument=str)
+meta.add(long='reset', arguments=[str])
 
 mirrors = clap.parser.Parser()
 mirrors.add(long='add', requires=['-u', '-p', '-c'], conflicts=['--edit', '--remove'])
-mirrors.add(long='edit', argument=str, needs=['--url', '--push-url', '--cwd'], conflicts=['--add', '--remove'])
-mirrors.add(long='remove', argument=str, conflicts=['--add', '--edit'])
+mirrors.add(long='edit', arguments=[str], needs=['--url', '--push-url', '--cwd'], conflicts=['--add', '--remove'])
+mirrors.add(long='remove', arguments=[str], conflicts=['--add', '--edit'])
 mirrors.add(long='main')
-mirrors.add(short='u', long='url', argument=str)
-mirrors.add(short='p', long='push-url', argument=str)
-mirrors.add(short='c', long='cwd', argument=str)
+mirrors.add(short='u', long='url', arguments=[str])
+mirrors.add(short='p', long='push-url', arguments=[str])
+mirrors.add(short='c', long='cwd', arguments=[str])
 
 push = clap.parser.Parser()
 push.add(short='m', long='only-main')
@@ -172,6 +172,10 @@ push.add(short='D', long='dont-force')
 push.add(short='A', long='ask-once')
 
 packages = clap.parser.Parser()
+packages.add(short='r', long='register', arguments=[str])
+packages.add(short='d', long='delete', arguments=[str])
+packages.add(short='A', long='dir-also', requires=['--delete'])
+packages.add(short='u', long='update')
 
 def url(string):
     """Returns passed string if it's valid URL.
@@ -194,10 +198,10 @@ options.addMode('packages', packages)
 options.addMode('nodes', nodes)
 options.addOption(short='h', long='help')
 options.addOption(short='v', long='version')
-options.addOption(short='C', long='component', argument=str, requires=['--version'])
+options.addOption(short='C', long='component', arguments=[str], requires=['--version'])
 options.addOption(short='V', long='verbose', conflicts=['--quiet'])
 options.addOption(short='Q', long='quiet', conflicts=['--verbose'])
-options.addOption(short='R', long='root', argument=str)
+options.addOption(short='R', long='root', arguments=[str])
 
 
 options = ui.checkinput(options)
@@ -498,7 +502,13 @@ elif str(options) == 'push':
 elif str(options) == 'packages':
     """Logic for `packages` mode.
     """
-    message = 'pakenode: fatal: packages mode is not yet implemented'
+    if '--register' in options:
+        pake.node.registerrepo(options.get('--register'))
+    if '--delete' in options:
+        pake.node.removerepo(options.get('--delete'), directory=('--dir-also' in options))
+    if '--update' in options:
+        print('pake: node: this is not yet implemented')
+        pake.node.updaterepo()
 elif str(options) == 'nodes':
     """Logic for `nodes` mode.
     """

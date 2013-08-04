@@ -7,10 +7,11 @@ It also provides interface to `meta.json` file -- which is metadata of the repos
 
 
 import ftplib
-import urllib.request
+import json
 import os
 import shutil
-import json
+import urllib.request
+import warnings
 
 
 from pake import config
@@ -109,8 +110,8 @@ def registerrepo(root, repository):
     """Register PAKE repository in the node. This will allow to
     push the package provided to the Net.
 
-    :param root: root of your node
-    :param repository: root of the repository being registered
+    :param root: path to the root of your node
+    :param repository: path to the root of the repository being registered
     """
     meta = config.repository.Meta(repository)
     if 'name' not in meta or 'version' not in meta:
@@ -124,10 +125,20 @@ def registerrepo(root, repository):
     config.repository.Dependencies(repository).write(package_dir)
 
 
+def updaterepo(root, repository):
+    """Updates repository data, copies new packages to node etc.
+    """
+    warnings.warn('not imlemented')
+
+
 def removerepo(root, name, directory=False):
     """Removes previously registared repository.
+
+    :param root: path to the root of the node
+    :param name: name of the package
+    :param directory: whether to remove also the directory containing packages
     """
-    config.node.Registered(root).add(name)
+    config.node.Registered(root).remove(name)
     if directory: shutil.rmtree(os.path.join(root, 'packages', name))
 
 
