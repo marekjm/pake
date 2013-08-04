@@ -23,10 +23,9 @@ def makedirs(root):
     :param root: root of the repository
     :type root: str
     """
-    subdirectories = ['packages', 'versions']
+    subdirectories = ['versions']
     os.mkdir(root)
-    for name in subdirectories:
-        os.mkdir(os.path.join(root, name))
+    for name in subdirectories: os.mkdir(os.path.join(root, name))
 
 
 def makeconfig(root):
@@ -49,8 +48,8 @@ def makepackage(root, overwrite=False):
     files = config.repository.Files(root)
     if not files.content: raise Exception('package will not be created: empty file list')
     name = '{0}-{1}.tar.xz'.format(meta['name'], meta['version'])
-    path = os.path.join(root, name)
+    path = os.path.join(root, 'versions', name)
     if not overwrite and os.path.isfile(path): raise FileExistsError(path)
-    archieve = tarfile.TarFile.xzopen(name=path, mode='w')
-    for f in files: archieve.add(f)
-    archives.close()
+    package = tarfile.TarFile.xzopen(name=path, mode='w')
+    for f in files: package.add(f)
+    package.close()

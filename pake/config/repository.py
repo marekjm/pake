@@ -85,10 +85,12 @@ class Files(base.Config):
     def add(self, string):
         """Adds file to the list.
         """
-        self.content.append(string)
-        self.write()
+        if string not in self.content:
+            self.content.append(string)
+            self.write()
 
     def remove(self, string):
         """Removes file from the list.
         """
-        self.content.pop(self.content.index(string))
+        self.content.remove(string)
+        self.write()

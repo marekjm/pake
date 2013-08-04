@@ -185,7 +185,7 @@ def url(string):
     if not re.match(url_regexp, string): raise ValueError(string)
     return string
 nodes = clap.parser.Parser()
-nodes.add(short='s', long='set', argument=url)
+nodes.add(short='s', long='set', arguments=[url])
 nodes.add(short='u', long='update')
 nodes.add(short='l', long='list')
 
