@@ -117,8 +117,10 @@ def registerrepo(root, repository):
     if 'name' not in meta or 'version' not in meta:
         raise Exception('invalid `meta.json` file for repository: {0}'.format(repository))
     name = meta.get('name')
+    if not name:
+        exit('cannot register unnamed package')
     config.node.Registered(root).add(name, repository)
-    config.node.Packages(root).add()
+    config.node.Packages(root).add(meta)
     package_dir = os.path.join(root, 'packages', name)
     os.mkdir(package_dir)
     meta.write(package_dir)
@@ -128,7 +130,14 @@ def registerrepo(root, repository):
 def updaterepo(root, repository):
     """Updates repository data, copies new packages to node etc.
     """
-    warnings.warn('not imlemented')
+    meta = config.repository.Meta(repository)
+    package_dir = os.path.join(root, 'packages', meta.get('name'))
+    meta.write(package_dir)
+    config.repository.Dependencies(repository).write(package_dir)
+    repository_versions_dir = os.path.join(repository, 'versions')
+    for item in os.listdir(repository_versions_dir):
+        if not os.path.isfile(os.path.join(package_dir, item):
+            shuilt.copy(os.path.join(repository_versions_dir, item), os.path.join(package_dir, item))
 
 
 def removerepo(root, name, directory=False):

@@ -165,7 +165,7 @@ elif str(options) == 'meta':
         if '--verbose' in options: print('pake: repo: meta.json: {0} = {1}'.format(key, value))
     if '--get' in options:
         try:
-            meta.get(options.get('--get'))
+            value = meta.get(options.get('--get'))
         except KeyError:
             if '--debug' in options:
                 print('pake: repo: debug: meta.json: key \'{0}\' was not found'.format(options.get('-g')))

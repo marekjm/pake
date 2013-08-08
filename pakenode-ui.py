@@ -503,9 +503,9 @@ elif str(options) == 'packages':
     """Logic for `packages` mode.
     """
     if '--register' in options:
-        pake.node.registerrepo(options.get('--register'))
+        pake.node.registerrepo(root, os.path.expanduser(options.get('--register')))
     if '--delete' in options:
-        pake.node.removerepo(options.get('--delete'), directory=('--dir-also' in options))
+        pake.node.removerepo(root, os.path.expanduser(options.get('--delete')), directory=('--dir-also' in options))
     if '--update' in options:
         print('pake: node: this is not yet implemented')
         pake.node.updaterepo()
