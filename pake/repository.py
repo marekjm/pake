@@ -50,6 +50,7 @@ def makepackage(root, overwrite=False):
     name = '{0}-{1}.tar.xz'.format(meta['name'], meta['version'])
     path = os.path.join(root, 'versions', name)
     if not overwrite and os.path.isfile(path): raise FileExistsError(path)
-    package = tarfile.TarFile.xzopen(name=path, mode='w')
+    package = tarfile.TarFile(name=path, mode='w')
+    package.xzopen(name=path, mode='w')
     for f in files: package.add(f)
     package.close()

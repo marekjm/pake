@@ -136,7 +136,7 @@ def updaterepo(root, repository):
     config.repository.Dependencies(repository).write(package_dir)
     repository_versions_dir = os.path.join(repository, 'versions')
     for item in os.listdir(repository_versions_dir):
-        if not os.path.isfile(os.path.join(package_dir, item):
+        if not os.path.isfile(os.path.join(package_dir, item)):
             shuilt.copy(os.path.join(repository_versions_dir, item), os.path.join(package_dir, item))
 
 
