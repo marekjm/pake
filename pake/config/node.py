@@ -146,10 +146,10 @@ class Pushers(base.Config):
         return index
 
 
-class Nodes(base.Config):
-    """Interface to nodes.json file.
+class Aliens(base.Config):
+    """Interface to aliens.json file.
     """
-    name = 'nodes.json'
+    name = 'aliens.json'
     default = {}
     content = {}
 

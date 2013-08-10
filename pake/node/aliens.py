@@ -21,4 +21,4 @@ def add(root, url):
     mirrors = json.loads(str(socket.read(), encoding='utf-8'))
     socket.close()
     print(url, mirrors)
-    config.node.Nodes(root).set(url, mirrors)
+    config.node.Aliens(root).set(url, mirrors)

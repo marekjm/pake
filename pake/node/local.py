@@ -46,7 +46,7 @@ def makeconfig(root):
     config.node.Meta(root).reset()
     config.node.Mirrors(root).reset()
     config.node.Pushers(root).reset()
-    config.node.Nodes(root).reset()
+    config.node.Aliens(root).reset()
     config.node.Installed(root).reset()
     config.node.Packages(root).reset()
     config.node.Registered(root).reset()
