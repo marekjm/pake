@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 
+"""Backend for managing local node.
 
-"""This module is responsible for creating global pake repository and managing it.
-It also provides interface to `meta.json` file -- which is metadata of the repository.
+It contains methods required to:
+*   intialize a node,
+*   pushing node to the mirrors.
 """
 
 
 import ftplib
-import json
 import os
-import shutil
-import urllib.request
 import warnings
-
 
 from pake import config
 
@@ -22,9 +20,10 @@ def makedirs(root):
     If the .pakenode directory is already in root it will be deleted and
     new one will be created.
 
-    :param root: root directory in which files will be written
+    :param root: root directory in which node will be created
     :type root: str
     """
+    root = os.path.join(root, '.pakenode')
     subdirectories = ['db',
                       'downloaded',
                       'installing',
@@ -32,8 +31,7 @@ def makedirs(root):
                       'packages',
                       ]
     os.mkdir(root)
-    for name in subdirectories:
-        os.mkdir(os.path.join(root, name))
+    for name in subdirectories: os.mkdir(os.path.join(root, name))
 
 
 def makeconfig(root):
@@ -44,6 +42,7 @@ def makeconfig(root):
     :param root: root directory in which files will be written
     :type root: str
     """
+    root = os.path.join(root, '.pakenode')
     config.node.Meta(root).reset()
     config.node.Mirrors(root).reset()
     config.node.Pushers(root).reset()
@@ -56,6 +55,7 @@ def makeconfig(root):
 def push(root, url, username, password, cwd='', installed=False, fallback=False, callback=None):
     """Uploads node data to given url.
     """
+    root = os.path.join(root, '.pakenode')
     remote = ftplib.FTP(url)
     remote.login(username, password)
     if cwd: remote.cwd(cwd)
@@ -99,6 +99,7 @@ def pushurl(root, url, username, password, installed=False, fallback=False):
     :param installed: push also `installed.json` file, disabled by default
     :param fallback: create fallback files (fallback.*.json)
     """
+    root = os.path.join(root, '.pakenode')
     pusher = config.node.Pushers(root).get(url)
     if pusher is None: raise Exception('no pusher found for URL: {0}'.format(url))
     url = pusher['push-url']
@@ -106,57 +107,5 @@ def pushurl(root, url, username, password, installed=False, fallback=False):
     push(root, url=url, username=username, password=password, cwd=cwd, installed=installed, fallback=fallback)
 
 
-def registerrepo(root, repository):
-    """Register PAKE repository in the node. This will allow to
-    push the package provided to the Net.
+def addalien(root, url):
 
-    :param root: path to the root of your node
-    :param repository: path to the root of the repository being registered
-    """
-    meta = config.repository.Meta(repository)
-    if 'name' not in meta or 'version' not in meta:
-        raise Exception('invalid `meta.json` file for repository: {0}'.format(repository))
-    name = meta.get('name')
-    if not name:
-        exit('cannot register unnamed package')
-    config.node.Registered(root).add(name, repository)
-    config.node.Packages(root).add(meta)
-    package_dir = os.path.join(root, 'packages', name)
-    os.mkdir(package_dir)
-    meta.write(package_dir)
-    config.repository.Dependencies(repository).write(package_dir)
-
-
-def updaterepo(root, repository):
-    """Updates repository data, copies new packages to node etc.
-    """
-    meta = config.repository.Meta(repository)
-    package_dir = os.path.join(root, 'packages', meta.get('name'))
-    meta.write(package_dir)
-    config.repository.Dependencies(repository).write(package_dir)
-    repository_versions_dir = os.path.join(repository, 'versions')
-    for item in os.listdir(repository_versions_dir):
-        if not os.path.isfile(os.path.join(package_dir, item)):
-            shuilt.copy(os.path.join(repository_versions_dir, item), os.path.join(package_dir, item))
-
-
-def removerepo(root, name, directory=False):
-    """Removes previously registared repository.
-
-    :param root: path to the root of the node
-    :param name: name of the package
-    :param directory: whether to remove also the directory containing packages
-    """
-    config.node.Registered(root).remove(name)
-    if directory: shutil.rmtree(os.path.join(root, 'packages', name))
-
-
-def setnode(root, url):
-    """Adds new node to network.
-    Would not add duplictes.
-    """
-    socket = urllib.request.urlopen('{0}/mirrors.json'.format(url))
-    mirrors = json.loads(str(socket.read(), encoding='utf-8'))
-    socket.close()
-    print(url, mirrors)
-    config.node.Nodes(root).set(url, mirrors)
