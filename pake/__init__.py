@@ -9,4 +9,4 @@ from pake import models
 from pake import errors
 
 
-__version__ = '0.0.11'
+__version__ = '0.0.12'
