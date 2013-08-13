@@ -15,23 +15,35 @@ import warnings
 from pake import config
 
 
+node_directories = ['db',
+                    'downloaded',
+                    'installing',
+                    'prepared',
+                    'packages',
+                    ]
+
+
+config_objects = [  config.node.Meta,
+                    config.node.Mirrors,
+                    config.node.Pushers,
+                    config.node.Aliens,
+                    config.node.Installed,
+                    config.node.Packages,
+                    config.node.Register,
+                    ]
+
+
 def makedirs(root):
     """Creates node directory structure in given root.
     If the .pakenode directory is already in root it will be deleted and
     new one will be created.
 
-    :param root: root directory in which node will be created
+    :param root: parent directory of the node directory
     :type root: str
     """
     root = os.path.join(root, '.pakenode')
-    subdirectories = ['db',
-                      'downloaded',
-                      'installing',
-                      'prepared',
-                      'packages',
-                      ]
     os.mkdir(root)
-    for name in subdirectories: os.mkdir(os.path.join(root, name))
+    for name in node_directories: os.mkdir(os.path.join(root, name))
 
 
 def makeconfig(root):
@@ -39,17 +51,11 @@ def makeconfig(root):
     Root defaults to home directory and should not be overridden
     unless for testing purposes.
 
-    :param root: root directory in which files will be written
+    :param root: parent directory of the node directory
     :type root: str
     """
     root = os.path.join(root, '.pakenode')
-    config.node.Meta(root).reset()
-    config.node.Mirrors(root).reset()
-    config.node.Pushers(root).reset()
-    config.node.Aliens(root).reset()
-    config.node.Installed(root).reset()
-    config.node.Packages(root).reset()
-    config.node.Registered(root).reset()
+    for o in confg_objects: o(root).reset()
 
 
 def push(root, url, username, password, cwd='', installed=False, fallback=False, callback=None):
@@ -59,7 +65,7 @@ def push(root, url, username, password, cwd='', installed=False, fallback=False,
     remote = ftplib.FTP(url)
     remote.login(username, password)
     if cwd: remote.cwd(cwd)
-    files = ['meta.json', 'packages.json', 'nodes.json', 'mirrors.json']
+    files = ['meta.json', 'packages.json', 'aliens.json', 'mirrors.json']
     if installed: files.append('installed.json')
     for name in files:
         try:
@@ -92,7 +98,7 @@ def push(root, url, username, password, cwd='', installed=False, fallback=False,
 def pushurl(root, url, username, password, installed=False, fallback=False):
     """Pushes node to remote server.
 
-    :param root: root directory for config files
+    :param root: parent directory of the node directory
     :param url: URL of a mirror from which data should be taken
     :param username: username for the server (not needed if stored)
     :param password: password for the server (not needed if stored)
@@ -108,4 +114,11 @@ def pushurl(root, url, username, password, installed=False, fallback=False):
 
 
 def addalien(root, url):
+    """Adds alien node to the list of aliens.json.
 
+    :param root: parent directory of the node directory
+    :type root: str
+    :param url: URL of the alien node
+    :type url: str
+    """
+    pass
