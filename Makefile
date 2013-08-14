@@ -1,6 +1,4 @@
-VERSION = 0.0.5
-OLD=0.0.2-alpha.2
-
+PYTHONVERSION=3.3
 LOCAL_BIN=~/.local/bin
 
 .PHONY: doc test manual clean ui
@@ -32,11 +30,14 @@ ui:
 	cp pakemanager-ui.py pakemanager
 	chmod +x pakemanager
 
-local-ui-install:
+local-install:
+	make test
+	cp -Rv ./pake/ ~/.local/lib/python${PYTHONVERSION}/site-packages/
 	make ui
 	mv ./pakenode ${LOCAL_BIN}/pakenode
 	mv ./pakerepo ${LOCAL_BIN}/pakerepo
 	mv ./pakemanager ${LOCAL_BIN}/pakemanager
+	make clean
 
 install:
 	./install.sh

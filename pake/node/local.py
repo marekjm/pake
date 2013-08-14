@@ -10,6 +10,7 @@ It contains methods required to:
 
 import ftplib
 import os
+import shutil
 import warnings
 
 from pake import config
@@ -29,7 +30,7 @@ config_objects = [  config.node.Meta,
                     config.node.Aliens,
                     config.node.Installed,
                     config.node.Packages,
-                    config.node.Register,
+                    config.node.Registered,
                     ]
 
 
@@ -58,10 +59,16 @@ def makeconfig(root):
     for o in confg_objects: o(root).reset()
 
 
-def push(root, url, username, password, cwd='', installed=False, fallback=False, callback=None):
-    """Uploads node data to given url.
+def remove(root):
+    """Removes repository from root.
     """
     root = os.path.join(root, '.pakenode')
+    shutil.rmtree(root)
+
+
+def _push(root, url, username, password, cwd='', installed=False, fallback=False, callback=None):
+    """Uploads node data to given url.
+    """
     remote = ftplib.FTP(url)
     remote.login(username, password)
     if cwd: remote.cwd(cwd)
@@ -110,7 +117,7 @@ def pushurl(root, url, username, password, installed=False, fallback=False):
     if pusher is None: raise Exception('no pusher found for URL: {0}'.format(url))
     url = pusher['push-url']
     cwd = pusher['cwd']
-    push(root, url=url, username=username, password=password, cwd=cwd, installed=installed, fallback=fallback)
+    _push(root, url=url, username=username, password=password, cwd=cwd, installed=installed, fallback=fallback)
 
 
 def addalien(root, url):
