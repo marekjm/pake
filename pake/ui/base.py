@@ -29,48 +29,25 @@ import clap
 import pake
 
 
-def gethelp(docstring, options):
-    """Returns help string to print.
+def getuipath(ui, debug=False):
+    """Returns appropriate UI file or returns None if file cannot be found.
     """
-    doc = docstring.splitlines()
-    mode = str(options)
-    if mode:
-        string = []
-        begin_global = doc.index('@help.begin_global')+1
-        end_global = doc.index('@help.end_global')
-        begin_mode = doc.index('@help.begin_mode={0}'.format(mode))+1
-        end_mode = doc.index('@help.end_mode={0}'.format(mode))
-        begin_footer = doc.index('@help.footer')+1
-        string = doc[begin_global:end_global]
-        string += doc[begin_mode:end_mode]
-        string += doc[begin_footer:]
-    else:
-        string = []
-        for line in doc:
-            if line[0:5] == '@help': continue
-            string.append(line)
-    string = '\n'.join(string)
-    return string
-
-
-def printversion(options):
-    """Prints version information.
-
-    By default it's version of pake backend but user can
-    specify component which version he/she wants to print.
-
-    Components are only libraries not found in standard Python 3
-    library. Currently valid --component arguments are:
-    *   clap:       version of CLAP library (used to build user interface),
-    """
-    version = ''
-    if '--component' in options: component = options.get('--component')
-    else: component = 'pake'
-    if component in ['backend', 'pake']: version = pake.__version__
-    elif component == 'clap': version = clap.__version__
-    else: print('pake: fatal: no such component: {0}'.format(component))
-    if '--verbose' in options and version: version = '{0} {1}'.format(component, version)
-    if version: print(version)
+    uifile = ''
+    base = os.path.join('ui', '{0}.json'.format(ui))
+    locations = [   ('', 'usr', 'share', 'pake'),
+                    ('', 'home', getpass.getuser(), '.local', 'share', 'pake'),
+                    ('.')
+                    ]
+    locations = [os.path.abspath(os.path.join(*l)) for l in locations]
+    for l in locations:
+        path = os.path.join(l, base)
+        if debug: print(path, end='  ')
+        if os.path.isfile(path):
+            uifile = path
+            if debug: print('[  OK  ]')
+            break
+        if debug: print('[ FAIL ]')
+    return uifile
 
 
 def checkinput(options):
