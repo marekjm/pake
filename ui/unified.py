@@ -54,7 +54,7 @@ import clap
 import pake
 
 
-uifile = pake.shared.getuipath('pakeui')
+uifile = pake.shared.getuipath('unified')
 if not uifile: exit('pake: ui: fatal: no ui file found')
 
 formater = clap.formater.Formater(sys.argv[1:])
@@ -81,7 +81,9 @@ fail = False
 if not root and str(ui) != 'node': exit('pake: fatal: no root found')
 
 if str(ui) == 'node':
-    if str(ui.parser) == 'init':
+    # we're going one mode down in the tree
+    ui = ui.parser
+    if str(ui) == 'init':
         """This mode is used for initialization of local node.
         Note, that when you'll reinitialize all config JSON will
         be overwritten.
@@ -105,7 +107,7 @@ if str(ui) == 'node':
             message = 'pake: node initialized'
             if '--verbose' in ui: message += ' in {0}'.format(root)
             if '--quiet' not in ui: print(message)
-    elif str(ui.parser) == 'meta':
+    elif str(ui) == 'meta':
         """Logic for meta.json manipulation.
         """
         if '--set' in ui:

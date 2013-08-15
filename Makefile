@@ -30,7 +30,7 @@ install-local-ui:
 	@echo ""
 	@echo "Installing interface logic code..."
 	@cp -v ./ui/node.py ${LOCAL_BIN}/pakenode && chmod +x ${LOCAL_BIN}/pakenode
-	@cp -v ./ui/pakeui.py ${LOCAL_BIN}/pake && chmod +x ${LOCAL_BIN}/pake
+	@cp -v ./ui/unified.py ${LOCAL_BIN}/pake && chmod +x ${LOCAL_BIN}/pake
 
 uninstall-local-ui:
 	@echo "Removing interface logic code..."
