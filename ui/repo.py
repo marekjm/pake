@@ -16,10 +16,9 @@ import sys
 
 import clap
 import pake
-from pake.ui import base
 
 
-uifile = base.getuipath('repo', debug=True)
+uifile = pake.shared.getuipath('repo', debug=True)
 if not uifile: exit('pake: ui: fatal: no ui file found')
 
 formater = clap.formater.Formater(sys.argv[1:])

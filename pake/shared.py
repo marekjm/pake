@@ -14,6 +14,7 @@ locations = [   ('.'),
                 ('', 'usr', 'share', 'pake'),
                 ]
 
+
 def getuipath(ui, debug=False):
     """Returns appropriate UI file or returns None if file cannot be found.
     """
