@@ -22,7 +22,6 @@ def add(root, url):
     :param url: url to the alien node
     :returns: tuple -- (url, mirros of this url)
     """
-    root = os.path.join(root, '.pakenode')
     socket = urllib.request.urlopen('{0}/mirrors.json'.format(url))
     mirrors = json.loads(str(socket.read(), encoding='utf-8'))
     socket.close()
@@ -33,5 +32,4 @@ def add(root, url):
 def remove(root, url):
     """This will remove alien URL from aliens.json.
     """
-    root = os.path.join(root, '.pakenode')
     config.nodes.Aliens(root).remove(url, mirrors)

@@ -39,10 +39,9 @@ def makedirs(root):
     If the .pakenode directory is already in root it will be deleted and
     new one will be created.
 
-    :param root: parent directory of the node directory
+    :param root: node root directory
     :type root: str
     """
-    root = os.path.join(root, '.pakenode')
     os.mkdir(root)
     for name in node_directories: os.mkdir(os.path.join(root, name))
 
@@ -52,17 +51,15 @@ def makeconfig(root):
     Root defaults to home directory and should not be overridden
     unless for testing purposes.
 
-    :param root: parent directory of the node directory
+    :param root: node root directory
     :type root: str
     """
-    root = os.path.join(root, '.pakenode')
     for o in confg_objects: o(root).reset()
 
 
 def remove(root):
     """Removes repository from root.
     """
-    root = os.path.join(root, '.pakenode')
     shutil.rmtree(root)
 
 
@@ -105,14 +102,13 @@ def _push(root, url, username, password, cwd='', installed=False, fallback=False
 def pushurl(root, url, username, password, installed=False, fallback=False):
     """Pushes node to remote server.
 
-    :param root: parent directory of the node directory
+    :param root: node root directory
     :param url: URL of a mirror from which data should be taken
     :param username: username for the server (not needed if stored)
     :param password: password for the server (not needed if stored)
     :param installed: push also `installed.json` file, disabled by default
     :param fallback: create fallback files (fallback.*.json)
     """
-    root = os.path.join(root, '.pakenode')
     pusher = config.node.Pushers(root).get(url)
     if pusher is None: raise Exception('no pusher found for URL: {0}'.format(url))
     url = pusher['push-url']
@@ -123,7 +119,7 @@ def pushurl(root, url, username, password, installed=False, fallback=False):
 def addalien(root, url):
     """Adds alien node to the list of aliens.json.
 
-    :param root: parent directory of the node directory
+    :param root: node root directory
     :type root: str
     :param url: URL of the alien node
     :type url: str

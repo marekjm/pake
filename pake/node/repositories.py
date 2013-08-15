@@ -22,7 +22,6 @@ def registerrepo(root, repository):
     :param root: path to the root of your node
     :param repository: path to the root of the repository being registered
     """
-    root = os.path.join(root, '.pakenode')
     meta = config.repository.Meta(repository)
     if 'name' not in meta or 'version' not in meta:
         raise Exception('invalid `meta.json` file for repository: {0}'.format(repository))
@@ -40,7 +39,6 @@ def registerrepo(root, repository):
 def synchronize(root, repository):
     """Updates repository data, copies new packages to node etc.
     """
-    root = os.path.join(root, '.pakenode')
     meta = config.repository.Meta(repository)
     package_dir = os.path.join(root, 'packages', meta.get('name'))
     meta.write(package_dir)
@@ -58,6 +56,5 @@ def remove(root, name, directory=False):
     :param name: name of the package
     :param directory: whether to remove also the directory containing packages
     """
-    root = os.path.join(root, '.pakenode')
     config.node.Registered(root).remove(name)
     if directory: shutil.rmtree(os.path.join(root, 'packages', name))
