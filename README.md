@@ -42,7 +42,7 @@ Every program in PAKE toolchain has few options which provide you with the abili
 verbosity. You can combine them to get different results, depending on what do you wnat in particular situation.
 
 *   `-V`, `--verbose`:      make PAKE display more messages about what it is doing,
-*   `-Q`, `--quiet`:        make PAKE display no messages about what it is doing,
+*   `-Q`, `--quiet`:        make PAKE display less messages about what it is doing,
 *   `-D`, `--debug`:        make PAKE display debug messages (combine this option with `--quiet` to get pure debugging logs),
 
 Programs in PAKE toolchain operate on modes. This means that usually one program can do different things and what it *will* do
@@ -55,16 +55,25 @@ after a mode definition.
 
 #### Creating a node
 
+First you need to issue these commands to install basic PAKE:
+
+    mkdir ~/.local/lib/python3.3/site-packages
+    export PYTHONPATH=$PYTHONPATH:~/.local/lib/python3.3/site-packages
+
+    make install-local-backend  # This will install in ~/.local/lib/python3.3/site-packages/pake
+
+    mkdir ~/.local/bin
+    mkdir ~/.local/share/pake
+    make install-local-ui       # To install UI logic code and JSON descriptions of interfaces
+
 To create a node use this command:
 
-    pakenode init
-
-If you want to check if your environment allows you to perform such an action use `--dry-run` option.
-
-    pakenode init --dry-run
+    pake --verbose node init
 
 
 #### Creating a repository
+
+**Currently, not available (due to refactoring).**
 
     pakerepo init --name "foo"
     pakerepo files --add --regexp '*\.py$' .
@@ -73,6 +82,8 @@ If you want to check if your environment allows you to perform such an action us
 
 
 #### Adding repository to node's database
+
+**Currently, not available (due to refactoring).**
 
     pakenode packages --register /home/user/path/to/package
 
