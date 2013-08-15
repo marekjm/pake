@@ -18,7 +18,7 @@ import clap
 import pake
 
 
-uifile = pake.shared.getuipath('repo', debug=True)
+uifile = pake.shared.getuipath('repo')
 if not uifile: exit('pake: ui: fatal: no ui file found')
 
 formater = clap.formater.Formater(sys.argv[1:])
@@ -27,7 +27,7 @@ formater.format()
 builder = clap.builder.Builder(path=uifile, argv=list(formater))
 builder.build()
 
-ui = pake.ui.base.checkinput(builder.get())
+ui = pake.shared.checkinput(builder.get())
 
 
 if '--version' in ui:

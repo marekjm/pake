@@ -54,7 +54,7 @@ def makeconfig(root):
     :param root: node root directory
     :type root: str
     """
-    for o in confg_objects: o(root).reset()
+    for o in config_objects: o(root).reset()
 
 
 def remove(root):
