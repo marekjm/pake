@@ -39,5 +39,5 @@ if '--help' in ui:
     exit()
 
 
-root = os.path.expanduser('~')
+root = pake.shared.getrootpath()
 fail = False

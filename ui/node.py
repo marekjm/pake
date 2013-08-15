@@ -39,7 +39,7 @@ if '--help' in ui:
     exit()
 
 
-root = os.path.expanduser('~')
+root = pake.shared.getrootpath()
 fail = False
 
 if str(ui) == 'init':
@@ -47,7 +47,7 @@ if str(ui) == 'init':
     Note, that when you'll reinitialize all config JSON will
     be overwritten.
     """
-    if os.path.isdir(os.path.join(root, '.pakenode')):
+    if os.path.isdir(root):
         if '--verbose' in ui: print('pake: debug: repository already exists in {0}'.format(root))
         if '--force' in ui:
             pake.node.local.remove(root)
