@@ -29,6 +29,14 @@ meta:
     -l, --list-keys         - list keys in meta.json (if --verbose list format is KEY:VALUE\\n)
     -p, --pretty            - format JSON in a pretty way
 
+push:
+    Mode used to push contents of the local node to mirrors.
+
+    -m, --main              - push to main mirror (== --only $(pakenode meta -g url))
+    -M, --mirrors           - push to all mirrors except main
+    -o, --only URL          - push only to this mirror
+    -C, --create-fallback   - create fallback files on the mirrors
+
 
 ----
 
@@ -99,3 +107,23 @@ if str(ui) == 'init':
 elif str(ui) == 'meta':
     """Logic for meta.json manipulation.
     """
+    if '--set' in ui:
+        key, value = ui.get('--set')
+        pake.config.node.Meta(root).set(key, value)
+    if '--remove' in ui:
+        pake.config.node.Meta(root).remove(ui.get('--remove'))
+    if '--get' in ui:
+        print(pake.config.node.Meta(root).get(ui.get('--get')))
+    if '--list-keys' in ui:
+        meta = pake.config.node.Meta(root)
+        if '--verbose' in ui:
+            for key in sorted(meta.keys()): print('{0}: {1}'.format(key, meta.get(key)))
+        else:
+            print(', '.join(sorted(meta.keys())))
+    if '--pretty' in ui:
+        #   this should be routine and independent from
+        #   every other options to always enable the possibility
+        #   to format JSON in pretty way
+        pake.config.node.Meta(root).write(pretty=True)
+else:
+    if '--debug' in ui: print('pake: fail: mode `{0}` is implemented yet'.format(str(ui)))

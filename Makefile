@@ -19,10 +19,25 @@ test:
 clean:
 	rm -rv ./{pake/,pake/config/,pake/node/}__pycache__/
 
-local-install:
+install-local-backend:
 	make test
 	make clean
 	cp -Rv ./pake/ ~/.local/lib/python${PYTHONVERSION}/site-packages/
 
-install:
-	./install.sh
+install-local-ui:
+	@echo "Copying JSON descriptions of interfaces..."
+	@cp -v ./ui/*.json ~/.local/share/pake/ui/
+	@echo ""
+	@echo "Installing interface logic code..."
+	@cp -v ./ui/node.py ${LOCAL_BIN}/pakenode && chmod +x ${LOCAL_BIN}/pakenode
+
+uninstall-local-ui:
+	@echo "Removing interface logic code..."
+	@rm -v ${LOCAL_BIN}/pake*
+	@echo ""
+	@echo "Removing JSON descriptions of interfaces..."
+	@rm -rv ~/.local/share/pake/ui/
+
+install-local:
+	make install-local-backend
+	make install-local-ui
