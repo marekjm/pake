@@ -9,7 +9,7 @@ It is not imported with:
 
 instead, you have to import it explicitly:
 
-    import pake.ui
+    from pake.ui import base
 
 to use it.
 
@@ -19,7 +19,7 @@ import to access the backend.
 
 Also, we need to import `pake` itself to get version information
 and if `pake` imported `ui` and `ui` imported `pake` then it
-would cause an error (looped imports).
+would cause an error (recursive, looped imports - terrible thing).
 """
 
 import re
@@ -34,9 +34,9 @@ def getuipath(ui, debug=False):
     """
     uifile = ''
     base = os.path.join('ui', '{0}.json'.format(ui))
-    locations = [   ('', 'usr', 'share', 'pake'),
+    locations = [   ('.'),
                     ('', 'home', getpass.getuser(), '.local', 'share', 'pake'),
-                    ('.')
+                    ('', 'usr', 'share', 'pake'),
                     ]
     locations = [os.path.abspath(os.path.join(*l)) for l in locations]
     for l in locations:
