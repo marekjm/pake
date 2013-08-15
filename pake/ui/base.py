@@ -29,27 +29,6 @@ import clap
 import pake
 
 
-def getuipath(ui, debug=False):
-    """Returns appropriate UI file or returns None if file cannot be found.
-    """
-    uifile = ''
-    base = os.path.join('ui', '{0}.json'.format(ui))
-    locations = [   ('.'),
-                    ('', 'home', getpass.getuser(), '.local', 'share', 'pake'),
-                    ('', 'usr', 'share', 'pake'),
-                    ]
-    locations = [os.path.abspath(os.path.join(*l)) for l in locations]
-    for l in locations:
-        path = os.path.join(l, base)
-        if debug: print(path, end='  ')
-        if os.path.isfile(path):
-            uifile = path
-            if debug: print('[  OK  ]')
-            break
-        if debug: print('[ FAIL ]')
-    return uifile
-
-
 def checkinput(options):
     """Checks user input for errors.
     """
