@@ -49,7 +49,7 @@ if str(ui) == 'init':
     be overwritten.
     """
     if os.path.isdir(os.path.join(root, '.pakenode')):
-        if '--debug' in ui: print('pake: debug: repository already exists in {0}'.format(root))
+        if '--verbose' in ui: print('pake: debug: repository already exists in {0}'.format(root))
         if '--force' in ui:
             pake.node.local.remove(root)
             message = 'pake: removed old repository'
@@ -63,3 +63,5 @@ if str(ui) == 'init':
     if not fail:
         pake.node.local.makedirs(root)
         pake.node.local.makeconfig(root)
+    else:
+        pass
