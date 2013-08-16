@@ -21,13 +21,39 @@ init:
 
     -f, --force             - force node initialization (used for reinitializing)
 
+
 meta:
     Mode used for manipulation and checking of meta.json configuration file.
 
     -s, --set KEY VALUE     - used to set a key in meta.json
     -r, --remove KEY        - remove key from meta.json
-    -l, --list-keys         - list keys in meta.json (if --verbose list format is KEY:VALUE\\n)
+    -l, --list-keys         - list keys in meta.json (if --verbose list format is KEY: VALUE\\n)
     -p, --pretty            - format JSON in a pretty way
+    -r, --reset             - reset meta.json to default state
+
+
+mirrors:
+    Mode used for manipulating `mirrors.json` and `pushers.json` files.
+    `mirrors.json` file contains list of URLs pointing to the mirrors of the node and
+    is downloadable from the Net.
+    `pushers.json` is used by PAKE to determine how to setup FTP connection to a server.
+    It contains list of dictionaries containing:
+        * url   - url as set in mirrors (acts as unique ID of the pusher, cannot be duplicated),
+        * host  - host with which FTP connection will be made,
+        * cwd   - directory to which PAKE should go after connection to the server.
+
+    Example (this is the pusher for my main mirror):
+        * url   - 'http://pake.taistelu.com/node'
+        * host  - 'taistelu.com'
+        * cwd   - '/domains/taistelu.com/public_html/pake/node'
+
+    -a, --add               - add new mirror and pusher (requires: -u, -H, and -c options),
+    -u, --url STR           - set URL for the mirror,
+    -H, --host STR          - set HOST for the mirror,
+    -c, --cwd STR           - set CWD for the mirror,
+    -r, --remove URL        - remove mirror and pusher identified by given URL (if URL is not found
+                              message will be printed)
+
 
 push:
     Mode used to push contents of the local node to mirrors.
@@ -78,7 +104,10 @@ if '--help' in ui:
 root = pake.shared.getrootpath()
 fail = False
 
-if not root and str(ui) != 'init': exit('pake: fatal: no root found')
+# this will execute the program if there is no node on which to operate
+# exception is when the program is called in `init` modes
+# because it means that user will be initializing the node
+if not root and str(ui) == 'init': exit('pake: fatal: no root found')
 
 if str(ui) == 'init':
     """This mode is used for initialization of local node.
@@ -120,10 +149,51 @@ elif str(ui) == 'meta':
             for key in sorted(meta.keys()): print('{0}: {1}'.format(key, meta.get(key)))
         else:
             print(', '.join(sorted(meta.keys())))
+    if '--reset' in ui:
+        pake.config.node.Meta(root).reset()
     if '--pretty' in ui:
         #   this should be routine and independent from
         #   every other options to always enable the possibility
         #   to format JSON in pretty way
         pake.config.node.Meta(root).write(pretty=True)
+elif str(ui) == 'mirrors':
+    """This mode is used for management of mirrors and pushers list.
+    """
+    mirrors = pake.config.node.Mirrors(root)
+    pushers = pake.config.node.Pushers(root)
+    if '--add' in ui:
+        url = ui.get('--url')
+        host = ui.get('--host')
+        cwd = ui.get('--cwd')
+        if url not in mirrors:
+            mirrors.add(url)
+            pushers.add(url=url, host=host, cwd=cwd)
+            message = 'pake: node: added mirror'
+            if '--verbose' in ui: message += ' {0} on host {1}'.format(url, host)
+            if '--quiet' not in ui: print(message)
+        else:
+            if '--debug' in ui: print('pake: fail: mirror {0} already exists'.format(url))
+            message = 'pake: node: fatal cannot add mirror'
+            if '--verbose' in ui: message += ' {0}'.format(url)
+            if '--quiet' not in ui: print(message)
+    if '--remove' in ui:
+        url = ui.get('--remove')
+        mremoved = mirrors.remove(url)
+        premoved = pushers.remove(url)
+        if mremoved and premoved:
+            message = 'pake: node: mirror removed'
+            if '--verbose' in ui: message += ': {0}'.format(url)
+            if '--quiet' not in ui: print(message)
+        elif mremoved and not premoved and '--debug' in ui:
+            print('pake: fail: pusher does not exist: {0}'.format(url))
+        elif not mremoved and premoved and '--debug' in ui:
+            print('pake: fail: mirror does not exist: {0}'.format(url))
+        else:
+            print('pake: fail: mirror was not existsent')
+    if '--list' in ui:
+        if '--verbose' in ui:
+            for m in pushers: print('{0}: {1}: {2}'.format(m['url'], m['host'], m['cwd']))
+        else:
+            for m in mirrors: print(m)
 else:
     if '--debug' in ui: print('pake: fail: mode `{0}` is implemented yet'.format(str(ui)))

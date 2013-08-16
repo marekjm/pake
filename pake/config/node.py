@@ -48,19 +48,6 @@ class Mirrors(base.Config):
     def __list__(self):
         return self.content
 
-    def _getindex(self, url):
-        """Returns index of a mirror based on it's URL.
-        -1 means that no mirror was found with this URL.
-
-        :param url: unique URL of a mirror
-        """
-        index = -1
-        for i, mirror in enumerate(self.content):
-            if mirror == url:
-                index = i
-                break
-        return index
-
     def add(self, url):
         """Adds URL to mirrors list.
         Will create duplicates.
@@ -72,11 +59,12 @@ class Mirrors(base.Config):
     def remove(self, url):
         """Removes URL from list of mirrors.
         """
-        index = self._getindex(url)
-        if index > -1:
-            del self.content[index]
+        removed = False
+        if url in self.content:
+            self.content.remove(url)
+            removed = True
             self.write()
-        return index
+        return removed
 
 
 class Pushers(base.Config):
@@ -115,10 +103,10 @@ class Pushers(base.Config):
                 break
         return result
 
-    def add(self, url, push_url, cwd=''):
+    def add(self, url, host, cwd=''):
         """Adds pusher to push.json list.
         """
-        pusher = {'url': url, 'push-url': push_url, 'cwd': cwd}
+        pusher = {'url': url, 'host': host, 'cwd': cwd}
         if pusher not in self.content:
             self.content.append(pusher)
             self.write()
@@ -139,11 +127,13 @@ class Pushers(base.Config):
 
         :returns: index of removed mirror, -1 means that no pusher was removed
         """
-        index = self._getindex()
+        removed = False
+        index = self._getindex(url)
         if index > -1:
             del self.content[index]
             self.write()
-        return index
+            removed = True
+        return removed
 
 
 class Aliens(base.Config):
