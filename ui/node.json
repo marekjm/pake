@@ -1,0 +1,129 @@
+{
+    "init": [
+        {
+            "short": "f",
+            "long": "force"
+        }
+    ],
+    "meta": [
+        {
+            "short": "s",
+            "long": "set",
+            "conflicts": ["--remove"],
+            "arguments": ["str", "str"]
+        },
+        {
+            "short": "r",
+            "long": "remove",
+            "conflicts": ["--set", "--get"],
+            "arguments": ["str"]
+        },
+        {
+            "short": "g",
+            "long": "get",
+            "conflicts": ["--remove"],
+            "arguments": ["str"]
+        },
+        {
+            "short": "m",
+            "long": "missing",
+            "conflicts": ["--remove"]
+        },
+        {
+            "short": "l",
+            "long": "list-keys"
+        },
+        {
+            "short": "p",
+            "long": "pretty"
+        },
+        {
+            "long": "reset",
+            "conflicts": ["--set", "--remove", "--get", "--missing", "--list"],
+            "arguments": ["str"]
+        }
+    ],
+    "mirrors": [
+        {
+            "short": "a",
+            "long": "add",
+            "requires": ["--url", "--host", "--cwd"],
+            "conflicts": ["--remove"]
+        },
+        {
+            "short": "u",
+            "long": "url",
+            "arguments": ["str"],
+            "needs": ["--add", "--remove"]
+        },
+        {
+            "short": "H",
+            "long": "host",
+            "arguments": ["str"],
+            "requires": ["--add"]
+        },
+        {
+            "short": "c",
+            "long": "cwd",
+            "arguments": ["str"],
+            "requires": ["--add"]
+        },
+        {
+            "short": "r",
+            "long": "remove",
+            "arguments": ["str"],
+            "conflicts": ["--add"]
+        },
+        {
+            "short": "l",
+            "long": "list",
+            "conflicts": ["--add", "--remove"]
+        }
+    ],
+    "push": [
+        {
+            "short": "m",
+            "long": "main"
+        },
+        {
+            "short": "o",
+            "long": "only",
+            "conflicts": ["--main", "--mirrors"],
+            "arguments": ["str"]
+        },
+        {
+            "short": "i",
+            "long": "installed"
+        }
+    ],
+    "__global__": [
+        {
+            "short": "h",
+            "long": "help"
+        },
+        {
+            "short": "v",
+            "long": "version"
+        },
+        {
+            "short": "C",
+            "long": "component",
+            "arguments": ["str"],
+            "requires": ["--version"]
+        },
+        {
+            "short": "V",
+            "long": "verbose",
+            "conflicts": ["--quiet"]
+        },
+        {
+            "short": "Q",
+            "long": "quiet",
+            "conflicts": ["--verbose"]
+        },
+        {
+            "short": "D",
+            "long": "debug"
+        }
+    ]
+}

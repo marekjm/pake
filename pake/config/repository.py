@@ -73,3 +73,24 @@ class Dependencies(base.Config):
             del self.content[n]
             self.write()
         return n
+
+
+class Files(base.Config):
+    """Interface to package's `files.json` config file.
+    """
+    name = 'files.json'
+    default = []
+    content = []
+
+    def add(self, string):
+        """Adds file to the list.
+        """
+        if string not in self.content:
+            self.content.append(string)
+            self.write()
+
+    def remove(self, string):
+        """Removes file from the list.
+        """
+        self.content.remove(string)
+        self.write()

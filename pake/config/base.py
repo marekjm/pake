@@ -97,6 +97,11 @@ class Meta(Config):
         del self.content[key]
         self.write()
 
+    def keys(self):
+        """Returns dict_keys list of keys contained in meta.json file.
+        """
+        return self.content.keys()
+
     def missing(self):
         """Returns list of missing or unset but required keys in meta.json file.
         """

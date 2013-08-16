@@ -1,6 +1,4 @@
-VERSION = 0.0.5
-OLD=0.0.2-alpha.2
-
+PYTHONVERSION=3.3
 LOCAL_BIN=~/.local/bin
 
 .PHONY: doc test manual clean ui
@@ -19,24 +17,28 @@ test:
 	python3 -m unittest --catch --failfast --verbose tests.py
 
 clean:
-	rm -rv ./{pake/,pake/config/,pake/ui/,}__pycache__/
+	rm -rv ./{pake/,pake/config/,pake/node/}__pycache__/
 
-ui:
-	python3 pakenode-ui.py
-	cp pakenode-ui.py pakenode
-	chmod +x pakenode
-	python3 pakerepo-ui.py
-	cp pakerepo-ui.py pakerepo
-	chmod +x pakerepo
-	python3 pakemanager-ui.py
-	cp pakemanager-ui.py pakemanager
-	chmod +x pakemanager
+install-local-backend:
+	make test
+	make clean
+	cp -Rv ./pake/ ~/.local/lib/python${PYTHONVERSION}/site-packages/
 
-local-ui-install:
-	make ui
-	mv ./pakenode ${LOCAL_BIN}/pakenode
-	mv ./pakerepo ${LOCAL_BIN}/pakerepo
-	mv ./pakemanager ${LOCAL_BIN}/pakemanager
+install-local-ui:
+	@echo "Copying JSON descriptions of interfaces..."
+	@cp -v ./ui/*.json ~/.local/share/pake/ui/
+	@echo ""
+	@echo "Installing interface logic code..."
+	@cp -v ./ui/node.py ${LOCAL_BIN}/pakenode && chmod +x ${LOCAL_BIN}/pakenode
+	@cp -v ./ui/unified.py ${LOCAL_BIN}/pake && chmod +x ${LOCAL_BIN}/pake
 
-install:
-	./install.sh
+uninstall-local-ui:
+	@echo "Removing interface logic code..."
+	@rm -v ${LOCAL_BIN}/pake*
+	@echo ""
+	@echo "Removing JSON descriptions of interfaces..."
+	@rm -rv ~/.local/share/pake/ui/
+
+install-local:
+	make install-local-backend
+	make install-local-ui

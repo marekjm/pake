@@ -45,7 +45,7 @@ formater.format()
 options = clap.modes.Parser(list(formater))
 options.addOption(short='h', long='help')
 options.addOption(short='v', long='version')
-options.addOption(short='C', long='component', argument=str, requires=['--version'])
+options.addOption(short='C', long='component', arguments=[str], requires=['--version'])
 options.addOption(short='V', long='verbose', conflicts=['--quiet'])
 options.addOption(short='Q', long='quiet', conflicts=['--verbose'])
 
