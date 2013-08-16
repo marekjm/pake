@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="./data/css/style.css" rel="stylesheet" type="text/css">
+<script src="./data/js/pake.js"></script>
+<title> PAKE node web interface </title>
+</head>
+
+<body>
+
+<h2> PAKE node web interface </h2>
+
+<br>
+
+<div class="content">
+    <h3> About this node </h3>
+
+    <div id="about-node"></div>
+</div>
+
+<br>
+
+
+<div class="content">
+    <h3> Packages available from this node </h3>
+
+    <div id="packages-list"></div>
+</div>
+
+<br>
+
+
+<div class="content">
+    <h3> Mirrors </h3>
+
+    <div id="mirror-list"></div>
+</div>
+
+
+<br>
+
+
+<a href="https://github.com/marekjm/pake" title="PAKE on GitHub">PAKE on GitHub</a>
+
+
+<script>
+    //  display basic information about the node
+    var meta = pake.meta.get();
+
+    var about = document.getElementById('about-node');
+
+    if ('author' in meta && 'contact' in meta) {
+        var element = document.createElement('p');
+        var text = 'Owner: {0} ({1})'.replace('{0}', meta['author']).replace('{1}', meta['contact']);
+        element.appendChild(document.createTextNode(text));
+        about.appendChild(element);
+    }
+
+    if ('url' in meta) {
+        var element = document.createElement('p');
+        var text = 'Main mirror: {0}'.replace('{0}', meta['url']);
+        element.appendChild(document.createTextNode(text));
+        about.appendChild(element);
+    }
+
+    if ('license' in meta) {
+        var element = document.createElement('p');
+        var text = 'License(s) used for stuff on this node: {0}'.replace('{0}', meta['license']);
+        element.appendChild(document.createTextNode(text));
+        about.appendChild(element);
+    }
+
+
+    //  generate list of packages
+    var packages = pake.packages.get();
+    for (var i = 0; i < packages.length; i++) {
+    }
+
+
+    //  generate list of mirrors
+    var mirrors = pake.mirrors.get();
+    for (var i = 0; i < mirrors.length; i++) {
+        var p = document.createElement('p');
+        var link = document.createElement('a');
+        var url = mirrors[i];
+        if ('url' in meta) {
+            if (meta['url'] == url) continue;
+        }
+        link.setAttribute('href', mirrors[i]);
+        link.appendChild(document.createTextNode(url));
+        p.appendChild(document.createTextNode(i + '. '));
+        p.appendChild(link);
+        document.getElementById('mirror-list').appendChild(p);
+    }
+</script>
+
+</body>
+</html>
