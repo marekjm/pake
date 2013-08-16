@@ -57,11 +57,19 @@ mirrors:
 
 push:
     Mode used to push contents of the local node to mirrors.
+    By default it pushes to all mirrors.
+
+    First, you will be asked about logins and passwords to all mirrors and
+    then, after credentials gathering is finished, PAKE will push to all mirrors and
+    print report to the screen.
+    It's designed this way because in a situation when you had many packages and
+    many mirrors you would have to login and wait many times.
+    This design lets you enter all credentials and then do something productive while
+    your stuff is being uploaded automatically.
 
     -m, --main              - push to main mirror (== --only $(pakenode meta -g url))
-    -M, --mirrors           - push to all mirrors except main
     -o, --only URL          - push only to this mirror
-    -C, --create-fallback   - create fallback files on the mirrors
+    -i, --installed         - push also `installed.json` file (useful for backup)
 
 
 ----
@@ -192,8 +200,53 @@ elif str(ui) == 'mirrors':
             print('pake: fail: mirror was not existsent')
     if '--list' in ui:
         if '--verbose' in ui:
-            for m in pushers: print('{0}: {1}: {2}'.format(m['url'], m['host'], m['cwd']))
+            for m in pushers:
+                print('{0}: {1}: {2}'.format(m['url'], m['host'], m['cwd']))
         else:
-            for m in mirrors: print(m)
+            for m in mirrors:
+                print(m)
+elif str(ui) == 'push':
+    """This mode is used to push node's contents to mirror servers on the Net.
+    """
+    def getcredentials(url, pushers):
+        """Returns two-tuple (username, password) for given URL.
+        """
+        username = input('Username for {0}: '.format(url))
+        prompt = 'Password for {0}@{1}: '.format(username, pushers.get(url)['host'])
+        password = getpass.getpass(prompt)
+        return (username, password)
+
+    mirrors = pake.config.node.Mirrors(root)
+    pushers = pake.config.node.Pushers(root)
+    installed = '--installed' in ui  # whether push also installed.json file
+    credentials = []
+    if '--only' in ui: urls = [ui.get('--only')]
+    if '--main' in ui: urls = [pake.config.node.Meta(root).get('url')]
+    else: urls = [m for m in mirrors]
+
+    for url in urls:
+        if url in mirrors:
+            try:
+                credentials.append(getcredentials(url, pushers))
+            except KeyboardInterrupt:
+                credentials.append(())  # append empty credentials - do not push to this mirror
+                print()
+            except EOFError:
+                print()
+                exit()  # cancel push operation
+        else:
+            print('pake: fail: no such mirror: {0}'.format(url))
+
+    for i, url in enumerate(urls):
+        if credentials[i]:
+            print('* pushing to mirror {0}:'.format(url), end='  ')
+            username, password = credentials[i]
+            try:
+                pake.node.local.push(root, url, username, password, installed=installed)
+                message = 'OK'
+            except Exception as e:
+                message = e
+            finally:
+                print(message)
 else:
     if '--debug' in ui: print('pake: fail: mode `{0}` is implemented yet'.format(str(ui)))

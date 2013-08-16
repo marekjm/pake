@@ -86,19 +86,14 @@
             "long": "main"
         },
         {
-            "short": "M",
-            "long": "mirrors"
-        },
-        {
-            "short": "c",
-            "long": "create-fallback",
-            "needs": ["--main", "--mirrors"]
-        },
-        {
             "short": "o",
             "long": "only",
             "conflicts": ["--main", "--mirrors"],
             "arguments": ["str"]
+        },
+        {
+            "short": "i",
+            "long": "installed"
         }
     ],
     "__global__": [
