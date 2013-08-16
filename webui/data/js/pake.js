@@ -1,5 +1,5 @@
-const DEBUG = false;
-const ROOT = 'http://pake.taistelu.com/node';
+//  ROOT should be set for each site
+const ROOT = '';
 
 
 function getjson(url, fallback) {
