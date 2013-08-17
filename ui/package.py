@@ -32,6 +32,17 @@ meta:
     -r, --reset             - reset meta.json to default state
 
 
+deps:
+    Mode used for manipulating the list of dependencies for the package.
+
+    -s, --set NAME          - set dependency
+    -r, --remove NAME       - remove dependency
+    -m, --min-version STR   - set this version as minimum required
+    -M, --max-version STR   - set this version as maximum allowed
+    -o, --origin URL        - set URL from which the dependency can be downloaded (currently required
+                              but it will become optional once I implement package searching)
+
+
 ----
 
 This program is part of the PAKE toolset and is published under GNU GPL v3+ license.
@@ -125,5 +136,21 @@ elif str(ui) == 'meta':
         #   every other options to always enable the possibility
         #   to format JSON in pretty way
         meta.write(pretty=True)
+elif str(ui) == 'deps':
+    dependencies = pake.config.repository.Dependencies(root)
+    if '--set' in ui:
+        dep = {}
+        name = ui.get('--set')
+        dep['origin'] = ui.get('--origin')
+        if '--min-version' in ui: dep['min'] = ui.get('-m')
+        if '--max-version' in ui: dep['max'] = ui.get('-M')
+        dependencies.set(name=name, dependency=dep)
+    if '--list' in ui:
+        if '--verbose' in ui:
+            for d in list(dependencies):
+                dep = dependencies[d]
+                report = '{0} ({1})'.format(d, dep['origin'])
+        else:
+            print(', '.join(list(dependencies)))
 else:
     if '--debug' in ui: print('pake: fail: mode `{0}` is implemented yet'.format(str(ui)))

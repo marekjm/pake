@@ -43,6 +43,41 @@
             "arguments": ["str"]
         }
     ],
+    "deps": [
+        {
+            "short": "s",
+            "long": "set",
+            "arguments": ["str"],
+            "requires": ["--origin"]
+        },
+        {
+            "short": "r",
+            "long": "remove",
+            "arguments": ["str"]
+        },
+        {
+            "short": "m",
+            "long": "min-version",
+            "arguments": ["str"],
+            "requires": ["--set"]
+        },
+        {
+            "short": "M",
+            "long": "max-version",
+            "arguments": ["str"],
+            "requires": ["--set"]
+        },
+        {
+            "short": "o",
+            "long": "origin",
+            "arguments": ["str"],
+            "requires": ["--add"]
+        },
+        {
+            "short": "l",
+            "long": "list"
+        }
+    ],
     "__global__": [
         {
             "short": "h",

@@ -33,47 +33,32 @@ class Dependencies(base.Config):
     Dependency is a dict describing a package (it's `meta.json`).
     """
     name = 'dependencies.json'
-    default = []
-    content = []
+    default = {}
+    content = {}
 
-    def _getindex(self, name):
-        """Returns index of the dependency.
-        -1 means that there is no such dependecy on the list.
-        """
-        index = -1
-        for i, d in enumerate(self.content):
-            if d['name'] == name:
-                index = i
-                break
-        return index
-
-    def set(self, name, min='', max=''):
+    def set(self, name, dependency):
         """Sets a dependency for package.
         Dependecies cannot be duplicated which means that there can be
         only one entry `foo` on the dependencies list.
         If a dependency with given name is already found it will be updated.
 
         :param name: name of the package
-        :param min: minimal version required
-        :param max: maximal version allowed
-        :returns: integer, -1 means new dependency else means an update
+        :param dependency: dictionary containing dependency specification
         """
-        n = self._getindex(name)
-        dependency = {'name': name, 'min': min, 'max': max}
-        if n == -1: self.content.append(dependency)
-        else: self.content[n] = dependency
+        self.content[name] = dependency
         self.write()
-        return n
+
+    def get(self, name):
+        """Returns dependency dict.
+        """
+        return self.content[name]
 
     def remove(self, name):
         """Removes a dependency.
         :returns: integer, -1 means that the dependency was not found
         """
-        n = self._getindex(name)
-        if n != -1:
-            del self.content[n]
-            self.write()
-        return n
+        self.content.pop(name)
+        self.write()
 
 
 class Files(base.Config):

@@ -32,6 +32,9 @@ class Config():
     def __iter__(self):
         return iter(self.content)
 
+    def __list__(self):
+        return list(self.content.keys())
+
     def reset(self):
         """Resets config file to it's default value.
         """
