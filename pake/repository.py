@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import shutil
 import tarfile
 
 from pake import config
@@ -37,6 +38,12 @@ def makeconfig(root):
     config.repository.Meta(root).reset()
     config.repository.Dependencies(root).reset()
     config.repository.Files(root).reset()
+
+
+def remove(root):
+    """Removes repository.
+    """
+    shutil.rmtree(root)
 
 
 def makepackage(root, overwrite=False):

@@ -86,7 +86,7 @@ push:
     -i, --installed         - push also `installed.json` file (useful for backup)
 
 
-packs:
+packages:
     Mode used to register, unregister and delete packages that can be found at the node.
     Unregistering means removing path to it's repository from `registerd.json` file.
     Deleting means removing it from `registered.json` and `packages.json` si it can not
@@ -100,11 +100,10 @@ packs:
     mirrors so they can be still obtained using direct URLs.
     You have to manually delete archives if you want to delete the package entirely.
 
-    -r, --register PATH     - register package in the node
-    -u, --unregister PATH   - unregister package
-    -d, --delete PATH       - delete package from the node
-        --name              - this tells PAKE to treat PATH given to -u and -d options
-                              as a package name
+    -r, --register PATH     - register repository in the node
+    -u, --update NAME       - update repository metadata
+    -U, --unregister NAME   - unregister repository
+    -d, --delete NAME       - delete repository from the node
 
 
 ----
@@ -312,19 +311,39 @@ elif str(ui) == 'aliens':
             if '--verbose' in ui:
                 amirrors = aliens.get(url)['mirrors']
                 for am in amirrors: print('  + {0}'.format(am))
-elif str(ui) == 'packs':
+elif str(ui) == 'packages':
     packages = pake.config.node.Packages(root)
     registered = pake.config.node.Registered(root)
     if '--register' in ui:
-        pake.node.packages.register(root, ui.get('--register')
+        try:
+            pake.node.packages.register(root, os.path.join(ui.get('--register'), '.pakerepo'))
+            meta = pake.config.repository.Meta(os.path.join(ui.get('--register'), '.pakerepo'))
+            report = 'pake: registered repository'
+            if '--verbose' in ui: report += ' for package: {0} (version: {1})'.format(meta.get('name'), meta.get('version'))
+        except (pake.errors.PAKEError) as e:
+            report = 'pake: fatal: {0}'.format(e)
+        finally:
+            print(report)
+    if '--update' in ui:
+        try:
+            pake.node.packages.update(root, ui.get('--update'))
+        except (pake.errors.PAKEError) as e:
+            print('pake: fatal: {0}'.format(e))
+            fail = True
+        finally:
+            if '--quiet' not in ui and not fail: print('pake: metadata updated')
     if '--unregister' in ui:
         pack = ui.get('--unregister')
         if '--name' in ui: registered.remove(name=pack)
         else: registered.remove(path=pack)
     if '--list' in ui:
-        for p in packages:
-            report = ''
-            if p not in registerd: report += ' (not registered)'
+        for package in packages:
+            p = packages.get(package)
+            report = '{0} {1}'.format(p['name'], p['version'])
+            if '--verbose' in ui:
+                report += ' ({0})'.format(p['license'])
+                if 'description' in p: report += ': {0}'.format(p['description'])
+            if package not in registered: report += ' (not registered)'
             print(report)
 else:
     if '--debug' in ui: print('pake: fail: mode `{0}` is implemented yet'.format(str(ui)))

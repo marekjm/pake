@@ -50,6 +50,21 @@ def getrootpath(check=True):
     return path
 
 
+def getrepopath(check=True):
+    """Returns path to PAKE repository in the current working directory.
+    Returns empty string if repository cannot be found.
+
+    NOTICE: check parameter should be used only internally
+
+    :param check: check if root really exists
+    :type check: bool
+    """
+    path = os.path.abspath('.')
+    path = os.path.join(path, '.pakerepo')
+    if check and not os.path.isdir(path): path = ''
+    return path
+
+
 def checkinput(options):
     """Checks user input for errors.
     """

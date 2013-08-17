@@ -24,7 +24,7 @@ class Meta(base.Meta):
         * author: authors name
         * description: description for the repository.
     """
-    default = {'name': '', 'version': '0.0.0', 'description': '', 'author': '', 'license': ''}
+    default = {}
 
 
 class Dependencies(base.Config):

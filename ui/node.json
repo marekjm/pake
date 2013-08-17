@@ -126,7 +126,7 @@
             "long": "installed"
         }
     ],
-    "packs": [
+    "packages": [
         {
             "short": "r",
             "long": "register",
@@ -135,6 +135,11 @@
         },
         {
             "short": "u",
+            "long": "update",
+            "arguments": ["str"]
+        },
+        {
+            "short": "U",
             "long": "unregister",
             "arguments": ["str"]
         },

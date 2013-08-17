@@ -31,7 +31,7 @@ config_objects = [  config.node.Meta,
                     config.node.Mirrors,
                     config.node.Pushers,
                     config.node.Aliens,
-                    config.node.Installed,
+                    #config.node.Installed,
                     config.node.Packages,
                     config.node.Registered,
                     ]

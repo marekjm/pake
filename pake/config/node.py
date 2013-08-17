@@ -2,16 +2,6 @@
 
 
 """This module contains interfaces to node configuration files.
-As for PAKE version 0.0.7 these files are:
-
-    *   `meta.json`:        contains basic metadata for the node,
-    *   `mirrors.json`:     list of mirrors for user's node,
-    *   `pushers.json`:     list of pushers for every mirror of user's node,
-    *   `nodes.json`:       list of known other nodes,
-    *   `installed.json`:   list of all installed packages with brief
-                            information about their status,
-    *   `packages.json`:    list of packages this node provides.
-
 """
 
 
@@ -190,50 +180,29 @@ class Aliens(base.Config):
         return alien
 
 
-class Installed(base.Config):
-    """Interface to installed.json file.
-    """
-    name = 'installed.json'
-    default = []
-    content = []
-
-    def __contains__(self, package):
-        """Checks if given package is installed.
-        """
-        result = False
-        if type(package) is str: package = {'name': package}
-        for i in self.content:
-            if package['name'] == i['name']:
-                result = True
-                break
-        return result
-
-    def add(self, package, dependency=False):
-        """Appends package to list of installed packages.
-
-        :param dependency: whether package was installed independently or as a dependency
-        """
-        package['dependency'] = dependency
-        index = -1
-        for i in self.content:
-            if package['name'] == i['name']:
-                index = i
-                break
-        if index == -1: self.content.append(package)
-        else: self.content[index] = package
-        self.write()
-
-
-class Packages(Installed):
+class Packages(base.Config):
     """Interface to packages.json file.
     """
     name = 'packages.json'
+    default = {}
+    content = {}
 
-    def add(self, package):
-        """Adds pakcge to the list of provided packages.
+    def set(self, meta):
+        """Adds package to the list of provided packages.
         """
-        warnings.warn('not implemented')
-        pass
+        self.content[meta['name']] = meta
+        self.write()
+
+    def get(self, name):
+        """Returns package metadata stored in packages.json.
+        """
+        return self.content[name]
+
+    def remove(self, name):
+        """Removes package
+        """
+        self.content.pop(name)
+        self.write()
 
 
 class Registered(base.Config):
@@ -245,14 +214,19 @@ class Registered(base.Config):
     default = {}
     content = {}
 
-    def add(self, name, directory):
+    def set(self, name, path):
         """Registers a repository.
         """
-        self.content[name] = directory
+        self.content[name] = path
         self.write()
+
+    def getpath(self, name):
+        """Returns path to the repository.
+        """
+        return self.content[name]
 
     def remove(self, name):
         """Removes a repository.
         """
-        del self.content[name]
+        self.content.pop(name)
         self.write()

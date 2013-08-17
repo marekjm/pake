@@ -1,0 +1,76 @@
+{
+    "init": [
+        {
+            "short": "f",
+            "long": "force"
+        }
+    ],
+    "meta": [
+        {
+            "short": "s",
+            "long": "set",
+            "conflicts": ["--remove"],
+            "arguments": ["str", "str"]
+        },
+        {
+            "short": "r",
+            "long": "remove",
+            "conflicts": ["--set", "--get"],
+            "arguments": ["str"]
+        },
+        {
+            "short": "g",
+            "long": "get",
+            "conflicts": ["--remove"],
+            "arguments": ["str"]
+        },
+        {
+            "short": "m",
+            "long": "missing",
+            "conflicts": ["--remove"]
+        },
+        {
+            "short": "l",
+            "long": "list-keys"
+        },
+        {
+            "short": "p",
+            "long": "pretty"
+        },
+        {
+            "long": "reset",
+            "conflicts": ["--set", "--remove", "--get", "--missing", "--list"],
+            "arguments": ["str"]
+        }
+    ],
+    "__global__": [
+        {
+            "short": "h",
+            "long": "help"
+        },
+        {
+            "short": "v",
+            "long": "version"
+        },
+        {
+            "short": "C",
+            "long": "component",
+            "arguments": ["str"],
+            "requires": ["--version"]
+        },
+        {
+            "short": "V",
+            "long": "verbose",
+            "conflicts": ["--quiet"]
+        },
+        {
+            "short": "Q",
+            "long": "quiet",
+            "conflicts": ["--verbose"]
+        },
+        {
+            "short": "D",
+            "long": "debug"
+        }
+    ]
+}

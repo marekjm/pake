@@ -12,7 +12,16 @@ It contains functions that may be used to:
 import os
 import warnings
 
-from pake import config
+from pake import config, errors
+
+
+def _check(meta):
+    """Checks if repository in given path has valid meta.json.
+    """
+    required_keys = ['name', 'version', 'license', 'origin']
+    for key in required_keys:
+        if key not in meta: raise errors.PAKEError('missing information for this package: {0}'.format(key))
+        if not meta[key]: raise errors.PAKEError('missing information for this package: {0}'.format(key))
 
 
 def register(root, path):
@@ -20,17 +29,23 @@ def register(root, path):
     push the package provided to the Net.
 
     :param root: path to the root of your node
-    :param repository: path to the root of the repository being registered
+    :param path: path to the root of the repository being registered
     """
     meta = config.repository.Meta(path)
-    required_keys = ['name', 'version', 'license', 'origin']
-    for key in required_keys:
-        if key not in meta: raise Exception('missing information for this package: {0}'.format(key))
-    name = meta.get('name')
-    if not name: raise Exception('cannot register unnamed package')
-    if not meta.get('origin'): raise Exception('cannot register package with empty origin')
-    config.node.Registered(root).add(name, path)
-    config.node.Packages(root).add(meta)
+    _check(meta.content)
+    config.node.Packages(root).set(meta.content)
+    config.node.Registered(root).set(name=meta.get('name'), path=path)
+
+
+def update(root, name):
+    """Updates repository metadata for specified package.
+
+    :param name: name of the package
+    """
+    path = config.node.Registered(root).getpath(name)
+    meta = config.repository.Meta(path)
+    _check(meta.content)
+    config.node.Packages(root).set(meta.content)
 
 
 def delete(root, name, directory=False):
