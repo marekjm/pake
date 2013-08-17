@@ -314,10 +314,13 @@ elif str(ui) == 'aliens':
                 for am in amirrors: print('  + {0}'.format(am))
 elif str(ui) == 'packs':
     packages = pake.config.node.Packages(root)
-    registerd = pake.config.node.Registered(root)
-    if '--register' in ui: pass
-    if '--unregister' in ui: pass
-    if '--delete' in ui: pass
+    registered = pake.config.node.Registered(root)
+    if '--register' in ui:
+        pake.node.packages.register(root, ui.get('--register')
+    if '--unregister' in ui:
+        pack = ui.get('--unregister')
+        if '--name' in ui: registered.remove(name=pack)
+        else: registered.remove(path=pack)
     if '--list' in ui:
         for p in packages:
             report = ''

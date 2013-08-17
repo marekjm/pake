@@ -15,41 +15,25 @@ import warnings
 from pake import config
 
 
-def registerrepo(root, repository):
+def register(root, path):
     """Register PAKE repository in the node. This will allow to
     push the package provided to the Net.
 
     :param root: path to the root of your node
     :param repository: path to the root of the repository being registered
     """
-    meta = config.repository.Meta(repository)
-    if 'name' not in meta or 'version' not in meta:
-        raise Exception('invalid `meta.json` file for repository: {0}'.format(repository))
+    meta = config.repository.Meta(path)
+    required_keys = ['name', 'version', 'license', 'origin']
+    for key in required_keys:
+        if key not in meta: raise Exception('missing information for this package: {0}'.format(key))
     name = meta.get('name')
-    if not name:
-        exit('cannot register unnamed package')
-    config.node.Registered(root).add(name, repository)
+    if not name: raise Exception('cannot register unnamed package')
+    if not meta.get('origin'): raise Exception('cannot register package with empty origin')
+    config.node.Registered(root).add(name, path)
     config.node.Packages(root).add(meta)
-    package_dir = os.path.join(root, 'packages', name)
-    os.mkdir(package_dir)
-    meta.write(package_dir)
-    config.repository.Dependencies(repository).write(package_dir)
 
 
-def synchronize(root, repository):
-    """Updates repository data, copies new packages to node etc.
-    """
-    meta = config.repository.Meta(repository)
-    package_dir = os.path.join(root, 'packages', meta.get('name'))
-    meta.write(package_dir)
-    config.repository.Dependencies(repository).write(package_dir)
-    repository_versions_dir = os.path.join(repository, 'versions')
-    for item in os.listdir(repository_versions_dir):
-        if not os.path.isfile(os.path.join(package_dir, item)):
-            shuilt.copy(os.path.join(repository_versions_dir, item), os.path.join(package_dir, item))
-
-
-def remove(root, name, directory=False):
+def delete(root, name, directory=False):
     """Removes previously registared repository.
 
     :param root: path to the root of the node

@@ -12,14 +12,15 @@ from pake.config import base
 
 
 class Meta(base.Meta):
-    """Object representing repository metadata.
+    """Object representing package metadata.
 
     It is invalid unless it contains following fields:
-        * name: name of a package
-        * version: semantic version string (preferred) or other type of version string
+        * name:     name of a package
+        * version:  semantic version string (preferred) or other type of version string
+        * license:  license used for this package
+        * origin:   original node from which the package can be downloaded
 
     It should contain:
-        * license: license used for this package
         * author: authors name
         * description: description for the repository.
     """
