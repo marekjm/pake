@@ -126,6 +126,33 @@
             "long": "installed"
         }
     ],
+    "packs": [
+        {
+            "short": "r",
+            "long": "register",
+            "arguments": ["str"],
+            "conflicts": ["--unregister", "--delete"]
+        },
+        {
+            "short": "u",
+            "long": "unregister",
+            "arguments": ["str"]
+        },
+        {
+            "short": "d",
+            "long": "delete",
+            "arguments": ["str"]
+        },
+        {
+            "short": "n",
+            "long": "name",
+            "needs": ["--unregister", "--delete"]
+        },
+        {
+            "short": "l",
+            "long": "list"
+        }
+    ],
     "__global__": [
         {
             "short": "h",

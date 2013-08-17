@@ -86,6 +86,27 @@ push:
     -i, --installed         - push also `installed.json` file (useful for backup)
 
 
+packs:
+    Mode used to register, unregister and delete packages that can be found at the node.
+    Unregistering means removing path to it's repository from `registerd.json` file.
+    Deleting means removing it from `registered.json` and `packages.json` si it can not
+    be installed by other users.
+
+    When registering you must give path to the repository. When unregistering or deleting
+    you can giev either path to the repository or the name of the package you want to
+    be removed.
+
+    Keep in mind that the --delete option will not delete the archives uploaded to the
+    mirrors so they can be still obtained using direct URLs.
+    You have to manually delete archives if you want to delete the package entirely.
+
+    -r, --register PATH     - register package in the node
+    -u, --unregister PATH   - unregister package
+    -d, --delete PATH       - delete package from the node
+        --name              - this tells PAKE to treat PATH given to -u and -d options
+                              as a package name
+
+
 ----
 
 This program is part of the PAKE toolset and is published under GNU GPL v3+ license.
@@ -291,5 +312,16 @@ elif str(ui) == 'aliens':
             if '--verbose' in ui:
                 amirrors = aliens.get(url)['mirrors']
                 for am in amirrors: print('  + {0}'.format(am))
+elif str(ui) == 'packs':
+    packages = pake.config.node.Packages(root)
+    registerd = pake.config.node.Registered(root)
+    if '--register' in ui: pass
+    if '--unregister' in ui: pass
+    if '--delete' in ui: pass
+    if '--list' in ui:
+        for p in packages:
+            report = ''
+            if p not in registerd: report += ' (not registered)'
+            print(report)
 else:
     if '--debug' in ui: print('pake: fail: mode `{0}` is implemented yet'.format(str(ui)))
