@@ -1,6 +1,6 @@
 ### PAKE 
 
-By design, PAKE is a distributed system for distribution of Python source modules.
+PAKE is a distributed system for distribution of Python source modules.
 
 However, it doesn't operate on *Python-specific* files only and can be used to distribute any kind of
 data - let it be text files, binary files and whatever you may throw at it.  
