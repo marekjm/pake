@@ -138,6 +138,12 @@ class Pushers(base.Config):
 
 class Aliens(base.Config):
     """Interface to aliens.json file.
+
+    Alien dictionary:
+        {
+            "meta": {},     # metadata about the alien (/meta.json)
+            "mirrors": []   # mirrorlist (/mirrors.json)
+        }
     """
     name = 'aliens.json'
     default = {}
@@ -171,10 +177,17 @@ class Aliens(base.Config):
         self.content[url] = mirrors
         self.write()
 
-    def getmirrors(self, url):
-        """Returns mirrors of the node.
+    def get(self, url):
+        """Returns alien dictionary.
         """
         return self.content[url]
+
+    def remove(self, url):
+        """Removes alien from the dictionary.
+        """
+        alien = self.content.pop(url)
+        self.write()
+        return alien
 
 
 class Installed(base.Config):

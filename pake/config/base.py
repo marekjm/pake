@@ -48,7 +48,9 @@ class Config():
         except FileNotFoundError:
             content = self.default
         except ValueError as e:
-            warnings.warn('{0}: returning to default'.format(e))
+            warnings.warn(e)
+            print('the content read was:')
+            print(content)
             content = self.default
         finally:
             self.content = content

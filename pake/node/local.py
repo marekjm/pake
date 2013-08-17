@@ -11,7 +11,10 @@ It contains methods required to:
 import ftplib
 import os
 import shutil
+import urllib.request
 import warnings
+
+import json
 
 from pake import config
 
@@ -140,12 +143,30 @@ def push(root, url, username, password, installed):
     _upload(root, host=host, username=username, password=password, cwd=cwd)
 
 
+def _fetchalien(url):
+    """Fetches data from alien node and creates a dictionary of it.
+    """
+    alien = {}
+    for name in ['meta', 'mirrors']:
+        resource = '{0}/{1}.json'.format(url, name)
+        socket = urllib.request.urlopen(resource)
+        alien[name] = json.loads(str(socket.read(), encoding='utf-8'))
+        socket.close()
+    return alien
+
+
 def addalien(root, url):
     """Adds alien node to the list of aliens.json.
+    If given url is not of the alien's main node it will be changed.
 
     :param root: node root directory
     :type root: str
     :param url: URL of the alien node
     :type url: str
+
+    :returns: main url
     """
-    pass
+    alien = _fetchalien(url)
+    if url in alien['mirrors']: url = alien['meta']['url']
+    config.node.Aliens(root).set(url, alien)
+    return url

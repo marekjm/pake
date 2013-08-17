@@ -55,6 +55,20 @@ mirrors:
                               message will be printed)
 
 
+aliens:
+    Mode used to add alien nodes to your network. Aliens are used for package installation and search.
+    The more you have them in your network the more powerful and healthy it is.
+    If you can't install a package via PAKE but you know it's available it may be an issue of not having
+    author's node in your network.
+
+    -a, --add URL           - add alien to your network (it will also download mirrors)
+    -r, --remove URL        - remove alien from your network
+    -u, --update            - update your list of aliens (fetch new mirrorlists)
+    -p, --purge             - remove dead (returning 404 for all mirrors) nodes from your network
+    -l, --list              - list all aliens (combine with --verbose to list aliens and their mirrors)
+    -d, --discover          - use alien discovery feature to expand your network automatically
+
+
 push:
     Mode used to push contents of the local node to mirrors.
     By default it pushes to all mirrors.
@@ -83,6 +97,7 @@ Copyright Marek Marecki (c) 2013"""
 import getpass
 import os
 import sys
+import urllib
 
 import clap
 import pake
@@ -248,5 +263,33 @@ elif str(ui) == 'push':
                 message = e
             finally:
                 print(message)
+elif str(ui) == 'aliens':
+    """This mode is used for aliens.
+    """
+    aliens = pake.config.node.Aliens(root)
+    if '--add' in ui:
+        url = ui.get('--add')
+        if url[-1] == '/': url = url[:-1]
+        try:
+            added = pake.node.local.addalien(root, url)
+            message = 'pake: alien added: {0}'.format(added)
+        except urllib.error.URLError as e:
+            message = 'pake: fail: alien was not found: {0}'.format(e)
+        finally:
+            if '--quiet' not in ui: print(message)
+    if '--remove' in ui:
+        try:
+            aliens.remove(ui.get('--remove'))
+            message = 'pake: alien removed'
+        except KeyError as e:
+            message = 'pake: fail: alien not found: {0}'.format(e)
+        finally:
+            if '--quiet' not in ui: print(message)
+    if '--list' in ui:
+        for url in aliens:
+            print('* {0}'.format(url))
+            if '--verbose' in ui:
+                amirrors = aliens.get(url)['mirrors']
+                for am in amirrors: print('  + {0}'.format(am))
 else:
     if '--debug' in ui: print('pake: fail: mode `{0}` is implemented yet'.format(str(ui)))

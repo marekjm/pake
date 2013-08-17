@@ -80,6 +80,36 @@
             "conflicts": ["--add", "--remove"]
         }
     ],
+    "aliens": [
+        {
+            "short": "a",
+            "long": "add",
+            "arguments": ["str"],
+            "conflicts": ["--remove"]
+        },
+        {
+            "short": "r",
+            "long": "remove",
+            "arguments": ["str"],
+            "conflicts": ["--add"]
+        },
+        {
+            "short": "u",
+            "long": "update"
+        },
+        {
+            "short": "p",
+            "long": "purge"
+        },
+        {
+            "short": "l",
+            "long": "list"
+        },
+        {
+            "short": "d",
+            "long": "discover"
+        }
+    ],
     "push": [
         {
             "short": "m",
