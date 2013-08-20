@@ -20,10 +20,9 @@ from pake import config
 
 
 node_directories = ['db',
-                    'downloaded',
+                    'cache',
                     'installing',
                     'prepared',
-                    'packages',
                     ]
 
 

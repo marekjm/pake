@@ -2,19 +2,29 @@
 
 """This module contains routines, functions and variables shared between
 various PAKE modules.
+
+API clarifications:
+
+    *   `fake` parameter is inteded to be used only for testing purposes,
+
+    *   `fake` overcomes only default expansion (home and current working directory) and
+        will still append .pake* directory to the path,
+
+    *   `check` parameter checks if the roots are really present, it should
+        be passed as False only during initialization of the node or
+        repository,
 """
 
 
 import os
-import getpass
 
 import clap
 
 
 # locations in which PAKE will search for configration files, UI files etc.
 uilocations = [ ('.'),
-                ('', 'home', getpass.getuser(), '.local', 'share', 'pake'),
-                ('', 'usr', 'share', 'pake'),
+                (os.path.expanduser('~'), '.local', 'share', 'pake'),
+                (os.path.sep, 'usr', 'share', 'pake'),
                 ]
 
 
@@ -35,31 +45,33 @@ def getuipath(ui, debug=False):
     return uifile
 
 
-def getrootpath(check=True):
+def getrootpath(check=True, fake=''):
     """Returns path to PAKE root.
     Returns empty string if root cannot be found.
 
-    NOTICE: check parameter should be used only internally
-
     :param check: check if root really exists
     :type check: bool
+    :param fake: fake root, set by caller (disables expansion and allows to not use home dir)
+    :type fake: str
     """
-    path = os.path.expanduser('~')
+    if fake: path = fake
+    else: path = os.path.expanduser('~')
     path = os.path.join(path, '.pakenode')
     if check and not os.path.isdir(path): path = ''
     return path
 
 
-def getrepopath(check=True):
+def getrepopath(check=True, fake=''):
     """Returns path to PAKE repository in the current working directory.
     Returns empty string if repository cannot be found.
 
-    NOTICE: check parameter should be used only internally
-
     :param check: check if root really exists
     :type check: bool
+    :param fake: fake root, set by caller (disables expansion and allows to not use cwd)
+    :type fake: str
     """
-    path = os.path.abspath('.')
+    if fake: path = fake
+    else: path = os.path.abspath('.')
     path = os.path.join(path, '.pakerepo')
     if check and not os.path.isdir(path): path = ''
     return path

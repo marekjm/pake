@@ -22,7 +22,7 @@ class Meta(base.Meta):
         * description: description of this node.
 
     """
-    default = {'author': '', 'contact': '', 'description': '', 'url': ''}
+    default = {}
 
 
 class Mirrors(base.Config):
