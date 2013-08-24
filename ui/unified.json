@@ -104,7 +104,6 @@
             "long": "help"
         },
         {
-            "short": "v",
             "long": "version"
         },
         {
@@ -114,7 +113,7 @@
             "requires": ["--version"]
         },
         {
-            "short": "V",
+            "short": "v",
             "long": "verbose",
             "conflicts": ["--quiet"]
         },
