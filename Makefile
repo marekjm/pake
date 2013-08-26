@@ -6,8 +6,6 @@ LOCAL_BIN=~/.local/bin
 doc:
 	make clean
 	pydoc3 ./pake/* > DOC
-	echo '\n\n\n' >> DOC
-	pydoc3 ./pakenode-ui.py >> DOC
 
 manual:
 	sed -i -e s/${OLD}/${VERSION}/ manual/*.markdown
@@ -30,7 +28,7 @@ install-local-ui:
 	@echo ""
 	@echo "Installing interface logic code..."
 	@cp -v ./ui/node.py ${LOCAL_BIN}/pakenode && chmod +x ${LOCAL_BIN}/pakenode
-	@cp -v ./ui/package.py ${LOCAL_BIN}/pakepackage && chmod +x ${LOCAL_BIN}/pakepackage
+	@cp -v ./ui/repo.py ${LOCAL_BIN}/pakerepo && chmod +x ${LOCAL_BIN}/pakepackage
 	@cp -v ./ui/unified.py ${LOCAL_BIN}/pake && chmod +x ${LOCAL_BIN}/pake
 
 uninstall-local-ui:
