@@ -78,6 +78,45 @@
             "long": "list"
         }
     ],
+    "files": {
+        "add": [
+            {
+                "short": "e",
+                "long": "exclude",
+                "requires": ["--regexp"],
+                "help": "excludes files matching the --regexp",
+            }
+        ],
+        "remove": [],
+        "__global__": [
+            {
+                "short": "s",
+                "long": "shell",
+                "help": "use shell-style expansions on file list"
+            }
+            {
+                "short": "R",
+                "long": "regexp",
+                "arguments": ["str"],
+                "help": "behaviour dependent on other options, default: include files matching the regexp"
+            },
+            {
+                "short": "r",
+                "long": "recursive",
+                "help": "add directories recursively"
+            }
+        ],
+    },
+    "release": [
+        {
+            "short": "c",
+            "long": "create"
+        },
+        {
+            "short": "l",
+            "long": "list"
+        }
+    ]
     "__global__": [
         {
             "short": "h",

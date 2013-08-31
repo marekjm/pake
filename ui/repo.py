@@ -60,7 +60,7 @@ import clap
 import pake
 
 
-uifile = pake.shared.getuipath('package')
+uifile = pake.shared.getuipath('repo')
 if not uifile: exit('pake: ui: fatal: no ui file found')
 
 formater = clap.formater.Formater(sys.argv[1:])
@@ -152,5 +152,13 @@ elif str(ui) == 'deps':
                 report = '{0} ({1})'.format(d, dep['origin'])
         else:
             print(', '.join(list(dependencies)))
+elif str(ui) == 'files':
+    ui = ui.parser
+    if str(ui) == 'add':
+        """If directories are found on arguments list they are added to file list
+        of current repository.
+        Files inside these directories are added only if --recursive option is passed.
+        """
+        pass
 else:
     if '--debug' in ui: print('pake: fail: mode `{0}` is implemented yet'.format(str(ui)))
