@@ -154,11 +154,18 @@ elif str(ui) == 'deps':
             print(', '.join(list(dependencies)))
 elif str(ui) == 'files':
     ui = ui.parser
+    files = pake.config.repository.Files(root)
     if str(ui) == 'add':
         """If directories are found on arguments list they are added to file list
         of current repository.
         Files inside these directories are added only if --recursive option is passed.
         """
         pass
+    if str(ui) == 'check':
+        """Various options for checking files added in the repository.
+        """
+        if '--list' in ui:
+            for i in files:
+                print(' * {0}'.format(i))
 else:
     if '--debug' in ui: print('pake: fail: mode `{0}` is implemented yet'.format(str(ui)))

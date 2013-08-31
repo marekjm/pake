@@ -79,12 +79,19 @@
         }
     ],
     "files": {
+        "check": [
+            {
+                "short": "l",
+                "long": "list",
+                "help": "list files included in the package"
+            }
+        ],
         "add": [
             {
                 "short": "e",
                 "long": "exclude",
                 "requires": ["--regexp"],
-                "help": "excludes files matching the --regexp",
+                "help": "excludes files matching the --regexp"
             }
         ],
         "remove": [],
@@ -93,7 +100,7 @@
                 "short": "s",
                 "long": "shell",
                 "help": "use shell-style expansions on file list"
-            }
+            },
             {
                 "short": "R",
                 "long": "regexp",
@@ -105,7 +112,7 @@
                 "long": "recursive",
                 "help": "add directories recursively"
             }
-        ],
+        ]
     },
     "release": [
         {
@@ -116,7 +123,7 @@
             "short": "l",
             "long": "list"
         }
-    ]
+    ],
     "__global__": [
         {
             "short": "h",
