@@ -55,6 +55,7 @@ import getpass
 import os
 import sys
 import urllib
+import warnings
 
 import clap
 import pake
@@ -155,12 +156,44 @@ elif str(ui) == 'deps':
 elif str(ui) == 'files':
     ui = ui.parser
     files = pake.config.repository.Files(root)
+
+    """Here are options local to *files* mode and not its sub-modes, e.g. --list.
+    """
+    if '--list' in options:
+        for item in files: print(item)
+
     if str(ui) == 'add':
         """If directories are found on arguments list they are added to file list
         of current repository.
-        Files inside these directories are added only if --recursive option is passed.
+        Files inside these directories are added unless --not-recursive option is passed in which
+        case only directories are added.
         """
-        pass
+        def scan(directory):
+            """Recursively scan the directory and return its contents as list.
+            """
+            files = []
+            for i in os.listdir(directory):
+                if os.path.isfile(i): files.append(i)
+                elif os.path.isdir(i): files.expand(scan(i))
+                else: warnings.warn('{0} is not a file or directory: dropped'.format(i))
+            return files
+
+        candidates = []
+            if os.path.isfile(i): candidates.append(i)
+            elif os.path.isdir(i): candidates.expand(scan(i))
+
+        if '--regexp' in ui:
+            regexp = re.compile(options.get('--regexp'))
+            accepted = []
+            for item in candidates:
+                if '--exclude' in ui:
+                    if regexp.match(item): dropped.append(item)
+                    else: accepted.append(item)
+                else:
+                    if regexp.match(item): accepted.append(item)
+                    else: dropped.append(item)
+            candidates = accepted
+
     if str(ui) == 'check':
         """Various options for checking files added in the repository.
         """

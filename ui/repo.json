@@ -80,11 +80,6 @@
     ],
     "files": {
         "check": [
-            {
-                "short": "l",
-                "long": "list",
-                "help": "list files included in the package"
-            }
         ],
         "add": [
             {
@@ -108,9 +103,15 @@
                 "help": "behaviour dependent on other options, default: include files matching the regexp"
             },
             {
-                "short": "r",
-                "long": "recursive",
-                "help": "add directories recursively"
+                "short": "n",
+                "long": "not-recursive",
+                "help": "do *not* add directories recursively"
+            },
+            {
+                "short": "l",
+                "long": "list",
+                "help": "list files included in the package",
+                "local": true
             }
         ]
     },
