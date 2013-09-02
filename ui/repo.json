@@ -85,11 +85,6 @@
         "remove": [],
         "__global__": [
             {
-                "short": "s",
-                "long": "shell",
-                "help": "use shell-style expansions on file list"
-            },
-            {
                 "short": "n",
                 "long": "not-recursive",
                 "help": "do *not* add directories recursively"

@@ -189,11 +189,10 @@ elif str(ui) == 'files':
             """
             files = []
             for i in os.listdir(directory):
-                if os.path.isfile(i):
-                    files.append(i)
-                elif os.path.isdir(i):
-                    for f in scan(os.path.join(directory, i)):
-                        files.append(os.path.join(directory, i, f))
+                if os.path.isfile(os.path.join(directory, i)):
+                    files.append(os.path.join(directory,i))
+                elif os.path.isdir(os.path.join(directory, i)):
+                    files.extend(scan(os.path.join(directory, i)))
                 else:
                     warnings.warn('{0} is not a file or directory: dropped'.format(i))
             return files
@@ -204,9 +203,8 @@ elif str(ui) == 'files':
 
         # create list of candidate files
         for i in ui.arguments:
-
             if os.path.isfile(i): candidates.append(i)
-            elif os.path.isdir(i): candidates.expand(scan(i))
+            elif os.path.isdir(i): candidates.extend(scan(i))
 
         if '--regexp' in ui:
             # filter them according to given regular expression(s)
@@ -239,7 +237,7 @@ elif str(ui) == 'files':
 elif str(ui) == 'release':
     """Logic for managing release archives.
     """
-    # TODO
-    print('not implemented!')
+    if '--create' in ui:
+        pake.repository.releases.makepackage(root)
 else:
     if '--debug' in ui: print('pake: fail: mode `{0}` is implemented yet'.format(str(ui)))
