@@ -138,29 +138,45 @@ elif str(ui) == 'meta':
         #   to format JSON in pretty way
         meta.write(pretty=True)
 elif str(ui) == 'deps':
+    ui = ui.parser
     dependencies = pake.config.repository.Dependencies(root)
-    if '--set' in ui:
-        dep = {}
-        name = ui.get('--set')
-        dep['origin'] = ui.get('--origin')
-        if '--min-version' in ui: dep['min'] = ui.get('-m')
-        if '--max-version' in ui: dep['max'] = ui.get('-M')
-        dependencies.set(name=name, dependency=dep)
     if '--list' in ui:
         if '--verbose' in ui:
             for d in list(dependencies):
                 dep = dependencies[d]
-                report = '{0} ({1})'.format(d, dep['origin'])
+                report = '  * {0} ({1})'.format(d, dep['origin'])
+                if 'min' in dep: report += ' >={0}'.format(dep['min'])
+                if 'max' in dep: report += ' <={0}'.format(dep['max'])
+                print(report)
         else:
-            print(', '.join(list(dependencies)))
+            report = ', '.join(list(dependencies))
+            if report: print(report)
+
+    if str(ui) == 'set':
+        dep = {}
+        name = ui.get('--name')
+        dep['origin'] = ui.get('--origin')
+        if '--min-version' in ui: dep['min'] = ui.get('-m')
+        if '--max-version' in ui: dep['max'] = ui.get('-M')
+        dependencies.set(name=name, dependency=dep)
+    if str(ui) == 'remove':
+        if ui.arguments:
+            for i in ui.arguments:
+                try:
+                    dependencies.remove(i)
+                    print('pake: repo: removed dependency: {0}'.format(i))
+                except KeyError:
+                    print('pake: warning: undefined dependency: {0}'.format(i))
+                finally:
+                    pass
 elif str(ui) == 'files':
     ui = ui.parser
     files = pake.config.repository.Files(root)
 
     """Here are options local to *files* mode and not its sub-modes, e.g. --list.
     """
-    if '--list' in options:
-        for item in files: print(item)
+    if '--list' in ui:
+        for i in files: print(' * {0}'.format(i))
 
     if str(ui) == 'add':
         """If directories are found on arguments list they are added to file list
@@ -173,32 +189,57 @@ elif str(ui) == 'files':
             """
             files = []
             for i in os.listdir(directory):
-                if os.path.isfile(i): files.append(i)
-                elif os.path.isdir(i): files.expand(scan(i))
-                else: warnings.warn('{0} is not a file or directory: dropped'.format(i))
+                if os.path.isfile(i):
+                    files.append(i)
+                elif os.path.isdir(i):
+                    for f in scan(os.path.join(directory, i)):
+                        files.append(os.path.join(directory, i, f))
+                else:
+                    warnings.warn('{0} is not a file or directory: dropped'.format(i))
             return files
 
         candidates = []
+        accepted = []
+        dropped = []
+
+        # create list of candidate files
+        for i in ui.arguments:
+
             if os.path.isfile(i): candidates.append(i)
             elif os.path.isdir(i): candidates.expand(scan(i))
 
         if '--regexp' in ui:
+            # filter them according to given regular expression(s)
             regexp = re.compile(options.get('--regexp'))
-            accepted = []
             for item in candidates:
                 if '--exclude' in ui:
+                    # if regexp is used for excluding files
+                    # drop all matching names and
+                    # accept all thet do not
                     if regexp.match(item): dropped.append(item)
                     else: accepted.append(item)
                 else:
+                    # otherwise accept all matching names and
+                    # drop the non-matching ones
                     if regexp.match(item): accepted.append(item)
                     else: dropped.append(item)
-            candidates = accepted
+        else:
+            accepted = candidates
 
-    if str(ui) == 'check':
-        """Various options for checking files added in the repository.
-        """
-        if '--list' in ui:
-            for i in files:
-                print(' * {0}'.format(i))
+        # append accepted files to JSON configuration
+        for c in accepted:
+            if '--verbose' in ui: print(' + {0}'.format(c))
+            files.add(c)
+
+        # inform user about dropped files
+        if '--quiet' not in ui:
+            for d in dropped: print(' !  {0}'.format(d))
+        else:
+            pass
+elif str(ui) == 'release':
+    """Logic for managing release archives.
+    """
+    # TODO
+    print('not implemented!')
 else:
     if '--debug' in ui: print('pake: fail: mode `{0}` is implemented yet'.format(str(ui)))

@@ -90,7 +90,7 @@ def checkinput(options):
         message = 'unrecognized option found: {0}'.format(e)
     except clap.errors.RequiredOptionNotFoundError as e:
         message = 'required option not found: {0}'.format(e)
-    except clap.errors.NeededOptionNotFoundError as e:
+    except clap.errors.WantedOptionNotFoundError as e:
         message = 'needed option not found: {0}'.format(e)
     except clap.errors.MissingArgumentError as e:
         message = 'missing argument for option: {0}'.format(e)

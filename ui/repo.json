@@ -43,64 +43,51 @@
             "arguments": ["str"]
         }
     ],
-    "deps": [
-        {
-            "short": "s",
-            "long": "set",
-            "arguments": ["str"],
-            "requires": ["--origin"]
-        },
-        {
-            "short": "r",
-            "long": "remove",
-            "arguments": ["str"]
-        },
-        {
-            "short": "m",
-            "long": "min-version",
-            "arguments": ["str"],
-            "requires": ["--set"]
-        },
-        {
-            "short": "M",
-            "long": "max-version",
-            "arguments": ["str"],
-            "requires": ["--set"]
-        },
-        {
-            "short": "o",
-            "long": "origin",
-            "arguments": ["str"],
-            "requires": ["--add"]
-        },
-        {
-            "short": "l",
-            "long": "list"
-        }
-    ],
-    "files": {
-        "check": [
-        ],
-        "add": [
+    "deps": {
+        "set": [
             {
-                "short": "e",
-                "long": "exclude",
-                "requires": ["--regexp"],
-                "help": "excludes files matching the --regexp"
+                "short": "m",
+                "long": "min-version",
+                "arguments": ["str"]
+            },
+            {
+                "short": "M",
+                "long": "max-version",
+                "arguments": ["str"]
+            },
+            {
+                "short": "n",
+                "long": "name",
+                "arguments": ["str"],
+                "required": true
+            },
+            {
+                "short": "o",
+                "long": "origin",
+                "arguments": ["str"],
+                "required": true
             }
         ],
+        "update": [
+        ],
+        "remove": [
+        ],
+        "__global__": [
+            {
+                "short": "l",
+                "long": "list",
+                "local": true
+            }
+        ]
+    },
+    "files": {
+        "add": [],
         "remove": [],
         "__global__": [
             {
                 "short": "s",
                 "long": "shell",
                 "help": "use shell-style expansions on file list"
-            },
-            {
-                "short": "R",
-                "long": "regexp",
-                "arguments": ["str"],
-                "help": "behaviour dependent on other options, default: include files matching the regexp"
             },
             {
                 "short": "n",
