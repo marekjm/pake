@@ -160,11 +160,11 @@ class Aliens(base.Config):
             if result: break
         return result
 
-    def set(self, url, mirrors):
+    def set(self, url, mirrors, meta):
         """Sets node in your list of nodes.
         If a node with given URL already exists it's data is overwritten.
         """
-        self.content[url] = mirrors
+        self.content[url] = {'mirrors': mirrors, 'meta': meta}
         self.write()
 
     def get(self, url):

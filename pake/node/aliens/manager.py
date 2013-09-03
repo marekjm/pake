@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
-
-"""This moduel holds functionality for dealing with aliens (nodes which
-are not mirrors of the local node).
+"""This file holds responsibility for managing alien nodes
+registered in current network.
 """
-
 
 import json
 import os
@@ -25,7 +23,10 @@ def add(root, url):
     socket = urllib.request.urlopen('{0}/mirrors.json'.format(url))
     mirrors = json.loads(str(socket.read(), encoding='utf-8'))
     socket.close()
-    config.node.Aliens(root).set(url, mirrors)
+    socket = urllib.request.urlopen('{0}/meta.json'.format(url))
+    mirrors = json.loads(str(socket.read(), encoding='utf-8'))
+    socket.close()
+    config.node.Aliens(root).set(url, mirrors, meta)
     return (url, mirrors)
 
 
