@@ -73,8 +73,6 @@ To create a node use this command:
 
 #### Creating a repository
 
-**Currently, not available (due to refactoring).**
-
     pakerepo init --name "foo"
     pakerepo files --add --regexp '*\.py$' .
     pakerepo meta --version '0.0.1'
@@ -82,8 +80,6 @@ To create a node use this command:
 
 
 #### Adding repository to node's database
-
-**Currently, not available (due to refactoring).**
 
     pakenode packages --register /home/user/path/to/package
 
