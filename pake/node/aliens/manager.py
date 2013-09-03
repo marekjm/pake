@@ -12,25 +12,30 @@ import warnings
 from pake import config
 
 
+def fetchalien(url):
+    """Fetches data from alien node and creates a dictionary of it.
+    """
+    alien = {}
+    for name in ['meta', 'mirrors']:
+        resource = '{0}/{1}.json'.format(url, name)
+        socket = urllib.request.urlopen(resource)
+        alien[name] = json.loads(str(socket.read(), encoding='utf-8'))
+        socket.close()
+    return alien
+
+
 def add(root, url):
-    """Adds new node to network.
-    Would not add duplictes.
+    """Adds alien node to the list of aliens.json.
+    If given url is not of the alien's main node it will be changed.
 
-    :param root: directory in which root node is located
-    :param url: url to the alien node
-    :returns: tuple -- (url, mirros of this url)
+    :param root: node root directory
+    :type root: str
+    :param url: URL of the alien node
+    :type url: str
+
+    :returns: main url
     """
-    socket = urllib.request.urlopen('{0}/mirrors.json'.format(url))
-    mirrors = json.loads(str(socket.read(), encoding='utf-8'))
-    socket.close()
-    socket = urllib.request.urlopen('{0}/meta.json'.format(url))
-    mirrors = json.loads(str(socket.read(), encoding='utf-8'))
-    socket.close()
-    config.node.Aliens(root).set(url, mirrors, meta)
-    return (url, mirrors)
-
-
-def remove(root, url):
-    """This will remove alien URL from aliens.json.
-    """
-    config.nodes.Aliens(root).remove(url, mirrors)
+    alien = _fetchalien(url)
+    if url in alien['mirrors']: url = alien['meta']['url']
+    config.node.Aliens(root).set(url, alien)
+    return url
