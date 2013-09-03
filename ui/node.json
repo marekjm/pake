@@ -54,7 +54,7 @@
             "short": "u",
             "long": "url",
             "arguments": ["str"],
-            "needs": ["--add", "--remove"]
+            "wants": ["--add", "--remove"]
         },
         {
             "short": "H",
@@ -151,7 +151,7 @@
         {
             "short": "n",
             "long": "name",
-            "needs": ["--unregister", "--delete"]
+            "wants": ["--unregister", "--delete"]
         },
         {
             "short": "l",
@@ -165,12 +165,6 @@
         },
         {
             "long": "version"
-        },
-        {
-            "short": "C",
-            "long": "component",
-            "arguments": ["str"],
-            "requires": ["--version"]
         },
         {
             "short": "v",
