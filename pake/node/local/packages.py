@@ -48,12 +48,10 @@ def update(root, name):
     config.node.Packages(root).set(meta.content)
 
 
-def delete(root, name, directory=False):
-    """Removes previously registared repository.
+def unregister(root, name):
+    """Unregisters repository.
 
     :param root: path to the root of the node
     :param name: name of the package
-    :param directory: whether to remove also the directory containing packages
     """
     config.node.Registered(root).remove(name)
-    if directory: shutil.rmtree(os.path.join(root, 'packages', name))

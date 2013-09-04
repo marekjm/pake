@@ -35,14 +35,23 @@ meta:
 deps:
     Mode used for manipulating the list of dependencies for the package.
 
-    -s, --set NAME          - set dependency
-    -r, --remove NAME       - remove dependency
-    -m, --min-version STR   - set this version as minimum required
-    -M, --max-version STR   - set this version as maximum allowed
-    -o, --origin URL        - set URL from which the dependency can be downloaded (currently required
-                              but it will become optional once I implement package searching)
+    SUBMODES:
 
+    set:
+        Used for setting new dependencies.
 
+        -m, --min-version STR   - set this version as minimum required
+        -M, --max-version STR   - set this version as maximum allowed
+        -o, --origin URL        - set URL from which the dependency can be downloaded (currently required
+                                  but it will become optional once I implement package searching)
+        -n, --name NAME         - name of the package
+
+    update: *not implemented*
+        Update information about the dependency.
+
+    remove: *not implemented*
+        Remove dependency.
+ 
 ----
 
 This program is part of the PAKE toolset and is published under GNU GPL v3+ license.

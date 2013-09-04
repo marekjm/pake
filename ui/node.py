@@ -226,8 +226,12 @@ elif str(ui) == 'packages':
     registered = pake.config.node.Registered(root)
     if '--register' in ui:
         try:
-            pake.node.packages.register(root, os.path.join(ui.get('--register'), '.pakerepo'))
-            meta = pake.config.repository.Meta(os.path.join(ui.get('--register'), '.pakerepo'))
+            path = os.path.join(ui.get('--register'), '.pakerepo')
+            if path[0] == '~': path = os.path.abspath(os.path.expanduser(path))
+            pake.node.local.packages.register(root, path)
+            meta = pake.config.repository.Meta(path)
+            if not os.path.isdir(path): raise pake.errors.PAKEError('repository not found in: {0}'.format(path))
+
             report = 'pake: registered repository'
             if '--verbose' in ui: report += ' for package: {0} (version: {1})'.format(meta.get('name'), meta.get('version'))
         except (pake.errors.PAKEError) as e:
@@ -236,7 +240,7 @@ elif str(ui) == 'packages':
             print(report)
     if '--update' in ui:
         try:
-            pake.node.packages.update(root, ui.get('--update'))
+            pake.node.local.packages.update(root, ui.get('--update'))
         except (pake.errors.PAKEError) as e:
             print('pake: fatal: {0}'.format(e))
             fail = True
@@ -249,11 +253,11 @@ elif str(ui) == 'packages':
     if '--list' in ui:
         for package in packages:
             p = packages.get(package)
-            report = '{0} {1}'.format(p['name'], p['version'])
+            report = '{0} {1} {2}'.format(p['name'], p['version'], registered.get(p['name']))
             if '--verbose' in ui:
                 report += ' ({0})'.format(p['license'])
                 if 'description' in p: report += ': {0}'.format(p['description'])
             if package not in registered: report += ' (not registered)'
-            print(report)
+            if '--quiet' not in ui: print(report)
 else:
     if '--debug' in ui: print('pake: fail: mode `{0}` is implemented yet'.format(str(ui)))
