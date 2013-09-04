@@ -4,107 +4,13 @@
 """Interface to PAKE node.
 
 SYNTAX:
-    pakenode [global opts...] [mode [mode opts...]]
+    pakenode [global_opts...] [mode [mode_opts...] [submode [submode_opts...]...]]
+
 
 GLOBAL OPTIONS:
     These options can be placed before or after mode declaration.
 
-    -v, --version           - print version information and exit
-    -V, --verbose           - be more verbose
-    -Q, --quiet             - be less verbose
-
-
-MODES:
-
-init:
-    Mode used for initalization of the node
-
-    -f, --force             - force node initialization (used for reinitializing)
-
-
-meta:
-    Mode used for manipulation and checking of meta.json configuration file.
-
-    -s, --set KEY VALUE     - used to set a key in meta.json
-    -r, --remove KEY        - remove key from meta.json
-    -l, --list-keys         - list keys in meta.json (if --verbose list format is KEY: VALUE\\n)
-    -p, --pretty            - format JSON in a pretty way
-    -r, --reset             - reset meta.json to default state
-
-
-mirrors:
-    Mode used for manipulating `mirrors.json` and `pushers.json` files.
-    `mirrors.json` file contains list of URLs pointing to the mirrors of the node and
-    is downloadable from the Net.
-    `pushers.json` is used by PAKE to determine how to setup FTP connection to a server.
-    It contains list of dictionaries containing:
-        * url   - url as set in mirrors (acts as unique ID of the pusher, cannot be duplicated),
-        * host  - host with which FTP connection will be made,
-        * cwd   - directory to which PAKE should go after connection to the server.
-
-    Example (this is the pusher for my main mirror):
-        * url   - 'http://pake.taistelu.com/node'
-        * host  - 'taistelu.com'
-        * cwd   - '/domains/taistelu.com/public_html/pake/node'
-
-    -a, --add               - add new mirror and pusher (requires: -u, -H, and -c options),
-    -u, --url STR           - set URL for the mirror,
-    -H, --host STR          - set HOST for the mirror,
-    -c, --cwd STR           - set CWD for the mirror,
-    -r, --remove URL        - remove mirror and pusher identified by given URL (if URL is not found
-                              message will be printed)
-
-
-aliens:
-    Mode used to add alien nodes to your network. Aliens are used for package installation and search.
-    The more you have them in your network the more powerful and healthy it is.
-    If you can't install a package via PAKE but you know it's available it may be an issue of not having
-    author's node in your network.
-
-    -a, --add URL           - add alien to your network (it will also download mirrors)
-    -r, --remove URL        - remove alien from your network
-    -u, --update            - update your list of aliens (fetch new mirrorlists)
-    -p, --purge             - remove dead (returning 404 for all mirrors) nodes from your network
-    -l, --list              - list all aliens (combine with --verbose to list aliens and their mirrors)
-    -d, --discover          - use alien discovery feature to expand your network automatically
-
-
-push:
-    Mode used to push contents of the local node to mirrors.
-    By default it pushes to all mirrors.
-
-    First, you will be asked about logins and passwords to all mirrors and
-    then, after credentials gathering is finished, PAKE will push to all mirrors and
-    print report to the screen.
-    It's designed this way because in a situation when you had many packages and
-    many mirrors you would have to login and wait many times.
-    This design lets you enter all credentials and then do something productive while
-    your stuff is being uploaded automatically.
-
-    -m, --main              - push to main mirror (== --only $(pakenode meta -g url))
-    -o, --only URL          - push only to this mirror
-    -i, --installed         - push also `installed.json` file (useful for backup)
-
-
-packages:
-    Mode used to register, unregister and delete packages that can be found at the node.
-    Unregistering means removing path to it's repository from `registerd.json` file.
-    Deleting means removing it from `registered.json` and `packages.json` si it can not
-    be installed by other users.
-
-    When registering you must give path to the repository. When unregistering or deleting
-    you can giev either path to the repository or the name of the package you want to
-    be removed.
-
-    Keep in mind that the --delete option will not delete the archives uploaded to the
-    mirrors so they can be still obtained using direct URLs.
-    You have to manually delete archives if you want to delete the package entirely.
-
-    -r, --register PATH     - register repository in the node
-    -u, --update NAME       - update repository metadata
-    -U, --unregister NAME   - unregister repository
-    -d, --delete NAME       - delete repository from the node
-
+{0}
 
 ----
 
@@ -140,7 +46,7 @@ if '--version' in ui:
     exit()
 
 if '--help' in ui:
-    print(__doc__)
+    print(__doc__.format('\n'.join(clap.helper.Helper(ui).help()[1:])))
     exit()
 
 
@@ -236,7 +142,9 @@ elif str(ui) == 'mirrors':
     if '--list' in ui:
         if '--verbose' in ui:
             for m in pushers:
-                print('{0}: {1}: {2}'.format(m['url'], m['host'], m['cwd']))
+                print(' * {0}'.format(m['url']))
+                print('   = host: {0}'.format(m['host']))
+                print('   = cwd:  {0}'.format(m['cwd']))
         else:
             for m in mirrors:
                 print(m)
@@ -305,12 +213,14 @@ elif str(ui) == 'aliens':
             message = 'pake: fail: alien not found: {0}'.format(e)
         finally:
             if '--quiet' not in ui: print(message)
+    if '--update' in ui:
+        print('not impelemented')
     if '--list' in ui:
         for url in aliens:
-            print('* {0}'.format(url))
+            print(' * {0}'.format(url))
             if '--verbose' in ui:
                 amirrors = aliens.get(url)['mirrors']
-                for am in amirrors: print('  + {0}'.format(am))
+                for am in amirrors: print('   + {0}'.format(am))
 elif str(ui) == 'packages':
     packages = pake.config.node.Packages(root)
     registered = pake.config.node.Registered(root)

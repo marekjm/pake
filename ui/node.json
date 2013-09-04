@@ -2,7 +2,8 @@
     "init": [
         {
             "short": "f",
-            "long": "force"
+            "long": "force",
+            "help": "force reinitialization, WARNING: deletes all old data"
         }
     ],
     "meta": [
@@ -10,37 +11,44 @@
             "short": "s",
             "long": "set",
             "conflicts": ["--remove"],
-            "arguments": ["str", "str"]
+            "arguments": ["str", "str"],
+            "help": "set or update a key in metadata of the node"
         },
         {
             "short": "r",
             "long": "remove",
             "conflicts": ["--set", "--get"],
-            "arguments": ["str"]
+            "arguments": ["str"],
+            "help": "remove a key from metadata of the node"
         },
         {
             "short": "g",
             "long": "get",
             "conflicts": ["--remove"],
-            "arguments": ["str"]
+            "arguments": ["str"],
+            "help": "return value of the given key"
         },
         {
             "short": "m",
             "long": "missing",
-            "conflicts": ["--remove"]
+            "conflicts": ["--remove"],
+            "help": "display missing but required keys from node's metadata"
         },
         {
             "short": "l",
-            "long": "list-keys"
+            "long": "list-keys",
+            "help": "display comma-separated list of keys in node's metadata"
         },
         {
             "short": "p",
-            "long": "pretty"
+            "long": "pretty",
+            "help": "enable pretty formatting of JSON in metadata"
         },
         {
             "long": "reset",
             "conflicts": ["--set", "--remove", "--get", "--missing", "--list"],
-            "arguments": ["str"]
+            "arguments": ["str"],
+            "help": "reset nodes metadata"
         }
     ],
     "mirrors": [
@@ -48,36 +56,42 @@
             "short": "a",
             "long": "add",
             "requires": ["--url", "--host", "--cwd"],
-            "conflicts": ["--remove"]
+            "conflicts": ["--remove"],
+            "help": "add mirror for the node"
         },
         {
             "short": "u",
             "long": "url",
             "arguments": ["str"],
-            "wants": ["--add", "--remove"]
+            "wants": ["--add", "--remove"],
+            "help": "URL of the mirror"
         },
         {
             "short": "H",
             "long": "host",
             "arguments": ["str"],
-            "requires": ["--add"]
+            "requires": ["--add"],
+            "help": "host for the FTP connection"
         },
         {
             "short": "c",
             "long": "cwd",
             "arguments": ["str"],
-            "requires": ["--add"]
+            "requires": ["--add"],
+            "help": "directory to which PAKE should go after connecting to FTP server"
         },
         {
             "short": "r",
             "long": "remove",
             "arguments": ["str"],
-            "conflicts": ["--add"]
+            "conflicts": ["--add"],
+            "help": "remove mirror"
         },
         {
             "short": "l",
             "long": "list",
-            "conflicts": ["--add", "--remove"]
+            "conflicts": ["--add", "--remove"],
+            "help": "list added mirrors"
         }
     ],
     "aliens": [
@@ -85,45 +99,49 @@
             "short": "a",
             "long": "add",
             "arguments": ["str"],
-            "conflicts": ["--remove"]
+            "conflicts": ["--remove"],
+            "help": "add alien node to the net"
         },
         {
             "short": "r",
             "long": "remove",
             "arguments": ["str"],
-            "conflicts": ["--add"]
+            "conflicts": ["--add"],
+            "help": "remove alien node from the net"
         },
         {
             "short": "u",
-            "long": "update"
+            "long": "update",
+            "help": "update aliens metadata and mirrors"
         },
         {
             "short": "p",
-            "long": "purge"
+            "long": "purge",
+            "help": "purge dead aliens from the net"
         },
         {
             "short": "l",
-            "long": "list"
+            "long": "list",
+            "help": "list all aliens in the net"
         },
         {
             "short": "d",
-            "long": "discover"
+            "long": "discover",
+            "help": "try to expand the net by discovering new aliens"
         }
     ],
     "push": [
         {
             "short": "m",
-            "long": "main"
+            "long": "main",
+            "help": "push to main mirror"
         },
         {
             "short": "o",
             "long": "only",
-            "conflicts": ["--main", "--mirrors"],
-            "arguments": ["str"]
-        },
-        {
-            "short": "i",
-            "long": "installed"
+            "conflicts": ["--main"],
+            "arguments": ["str"],
+            "help": "push only to selected mirror"
         }
     ],
     "packages": [
@@ -131,54 +149,64 @@
             "short": "r",
             "long": "register",
             "arguments": ["str"],
-            "conflicts": ["--unregister", "--delete"]
+            "conflicts": ["--unregister", "--delete"],
+            "help": "register new package in the node"
         },
         {
             "short": "u",
             "long": "update",
-            "arguments": ["str"]
+            "help": "update metadata of registered packages"
         },
         {
             "short": "U",
             "long": "unregister",
-            "arguments": ["str"]
+            "arguments": ["str"],
+            "help": "unregister package from the node"
         },
         {
             "short": "d",
             "long": "delete",
-            "arguments": ["str"]
+            "arguments": ["str"],
+            "help": "delete package from the node"
         },
         {
             "short": "n",
             "long": "name",
-            "wants": ["--unregister", "--delete"]
+            "wants": ["--unregister", "--delete"],
+            "help": "name for the package"
         },
         {
             "short": "l",
-            "long": "list"
+            "long": "list",
+            "help": "list all packages in the node"
         }
     ],
     "__global__": [
         {
             "short": "h",
-            "long": "help"
+            "long": "help",
+            "help": "display this message and exit"
         },
         {
-            "long": "version"
+            "long": "version",
+            "help": "display version information and exit"
         },
         {
             "short": "v",
             "long": "verbose",
-            "conflicts": ["--quiet"]
+            "conflicts": ["--quiet"],
+            "help": "display more messages"
         },
         {
             "short": "Q",
             "long": "quiet",
-            "conflicts": ["--verbose"]
+            "conflicts": ["--verbose"],
+            "help": "display less/no messages"
         },
         {
             "short": "D",
-            "long": "debug"
+            "long": "debug",
+            "help": "display debug messages"
         }
     ]
 }
