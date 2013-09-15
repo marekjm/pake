@@ -9,31 +9,37 @@ import unittest
 import pake
 
 
-# global variables setup
-testnoderoot = pake.shared.getnodepath(check=False, fake=os.path.abspath('./testdir'))
-testreporoot = pake.shared.getnestpath(check=False, fake=os.path.abspath('./testdir'))
+# Global variables
+test_node_root = pake.shared.getnodepath(check=False, fake=os.path.abspath('./testdir'))
+test_nest_root = pake.shared.getnestpath(check=False, fake=os.path.abspath('./testdir'))
 
 
-# test environment setup
-if os.path.isdir(testnoderoot):
-    print('removing old test node...')
-    shutil.rmtree(testnoderoot)
-if os.path.isdir(testreporoot):
-    print('removing old test nest...')
-    shutil.rmtree(testreporoot)
+# Test environment setup
+if os.path.isdir(test_node_root):
+    print('- removing old test node root...')
+    shutil.rmtree(test_node_root)
+if os.path.isdir(test_nest_root):
+    print('- removing old test nest root...')
+    shutil.rmtree(test_nest_root)
 
-pake.node.local.manager.makedirs(root=testnoderoot)
-pake.node.local.manager.makeconfig(root=testnoderoot)
+print('+ creating new test node root...')
+pake.node.local.manager.makedirs(root=test_node_root)
+pake.node.local.manager.makeconfig(root=test_node_root)
 
+print('+ creating new test nest root...')
+pake.nest.manager.makedirs(root=test_nest_root)
+pake.nest.manager.makeconfig(root=test_nest_root)
 
+print('\nSuccessfully created test environment in {0}'.format(os.path.abspath('./testdir')))
 print()  # to make a one-line break between setup messages and actual test messages
 
 
+@unittest.skip('refactoring in progress')
 class NodeInitializationTests(unittest.TestCase):
     def testDirectoriesWriting(self):
         """This test checks for correct initialization of all required directories.
         """
-        directories = ['db', 'cache', 'installing', 'prepared']
+        directories = ['cache', 'db', 'installing', 'prepared']
         for d in directories:
             self.assertEqual(True, os.path.isdir(os.path.join(testnoderoot, d)))
 

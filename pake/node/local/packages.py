@@ -25,13 +25,15 @@ def _check(meta):
 
 
 def register(root, path):
-    """Register PAKE repository in the node. This will allow to
+    """Register PAKE nest in the node. This will allow to
     push the package provided to the Net.
 
     :param root: path to the root of your node
-    :param path: path to the root of the repository being registered
+    :param path: path to the root of the nest being registered
     """
-    meta = config.repository.Meta(path)
+    if not os.path.isabs(path): warnings.warn('path {0} is not absolute'.format(path))
+    path = os.path.abspath(path)
+    meta = config.nest.Meta(path)
     _check(meta.content)
     config.node.Packages(root).set(meta.content)
     config.node.Registered(root).set(name=meta.get('name'), path=path)
