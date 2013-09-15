@@ -18,7 +18,7 @@ test: tests.py
 	python3 -m unittest --catch --failfast --verbose tests.py
 
 clean:
-	rm -rv ./{pake/,pake/config/,pake/node/,pake/node/local/,pake/node/aliens/,pake/repository/}__pycache__/
+	@rm -rv ./{pake/,pake/config/,pake/node/,pake/node/local/,pake/node/aliens/,pake/nest/,}__pycache__/
 
 install-backend:
 	make test

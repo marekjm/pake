@@ -34,14 +34,18 @@ print('\nSuccessfully created test environment in {0}'.format(os.path.abspath('.
 print()  # to make a one-line break between setup messages and actual test messages
 
 
-@unittest.skip('refactoring in progress')
 class NodeInitializationTests(unittest.TestCase):
     def testDirectoriesWriting(self):
         """This test checks for correct initialization of all required directories.
         """
-        directories = ['cache', 'db', 'installing', 'prepared']
+        ifstream = open('./env/node/required/directories.json')
+        directories = json.loads(ifstream.read())
+        ifstream.close()
+        print()
         for d in directories:
-            self.assertEqual(True, os.path.isdir(os.path.join(testnoderoot, d)))
+            path = os.path.join(test_node_root, d)
+            print("'{0}'".format(path))
+            self.assertEqual(True, os.path.isdir(path))
 
     def testConfigWriting(self):
         """This test checks for correct intialization of all required config files.
@@ -54,10 +58,52 @@ class NodeInitializationTests(unittest.TestCase):
                     ('packages.json', {}),
                     ('registered.json', {}),
                     ]
+        print()
         for f, desired in configs:
-            ifstream = open(os.path.join(testnoderoot, f), 'r')
+            path = os.path.join(test_node_root, f)
+            print("'{0}'".format(path))
+            ifstream = open(path, 'r')
             self.assertEqual(desired, json.loads(ifstream.read()))
             ifstream.close()
+
+
+class NestInitializationTests(unittest.TestCase):
+    def testDirectoriesWriting(self):
+        """This test checks for correct initialization of all required directories.
+        """
+        ifstream = open('./env/nest/required/directories.json')
+        directories = json.loads(ifstream.read())
+        ifstream.close()
+        print()
+        for d in directories:
+            path = os.path.join(test_nest_root, d)
+            print("'{0}'".format(path))
+            self.assertEqual(True, os.path.isdir(path))
+
+    def testConfigWriting(self):
+        """This test checks for correct intialization of all required config files.
+        """
+        # (filename, desired_content)
+        configs = [ ('meta.json', {}),
+                    ('versions.json', []),
+                    ('dependencies.json', {}),
+                    ('files.json', []),
+                    ]
+        print()
+        for f, desired in configs:
+            path = os.path.join(test_nest_root, f)
+            print("'{0}'".format(path))
+            ifstream = open(path, 'r')
+            self.assertEqual(desired, json.loads(ifstream.read()))
+            ifstream.close()
+
+
+class NodeConfigurationTests(unittest.TestCase):
+    def testAddingKeyToMeta(self):
+        pake.config.node.Meta(test_node_root).set('foo', 'bar').write()
+        self.assertEqual(pake.config.node.Meta(test_node_root).get('foo'), 'bar')
+        pake.config.node.Meta(test_node_root).reset().write()
+
 
 
 if __name__ == '__main__': unittest.main()

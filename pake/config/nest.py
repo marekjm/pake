@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 
 
-"""This module contains interfaces to repository configuration files.
-As for PAKE version 0.0.7 these files are:
-
-    *   `meta.json`:    contains basic metadata for the package.
+"""This module contains interfaces to nest configuration files.
 """
 
 
@@ -24,18 +21,21 @@ class Meta(base.Meta):
         * author: authors name
         * description: description for the repository.
     """
-    default = {}
+    pass
 
 
-class Versions(base.Meta):
+class Versions(base.Config):
     """Interface to a list of versions file.
     """
+    name = 'versions.json'
     default = []
+    content = []
 
     def add(self, version):
         """Adds new version to a list of versions.
         """
         if version not in self.content: self.content.append(version)
+        return self
 
 
 class Dependencies(base.Config):
@@ -57,19 +57,19 @@ class Dependencies(base.Config):
         :param dependency: dictionary containing dependency specification
         """
         self.content[name] = dependency
-        self.write()
-
-    def get(self, name):
-        """Returns dependency dict.
-        """
-        return self.content[name]
+        return self
 
     def remove(self, name):
         """Removes a dependency.
         :returns: integer, -1 means that the dependency was not found
         """
-        self.content.pop(name)
-        self.write()
+        del self.content[name]
+        return self
+
+    def get(self, name):
+        """Returns dependency dict.
+        """
+        return self.content[name]
 
 
 class Files(base.Config):
@@ -82,12 +82,11 @@ class Files(base.Config):
     def add(self, string):
         """Adds file to the list.
         """
-        if string not in self.content:
-            self.content.append(string)
-            self.write()
+        if string not in self.content: self.content.append(string)
+        return self
 
     def remove(self, string):
         """Removes file from the list.
         """
         self.content.remove(string)
-        self.write()
+        return self

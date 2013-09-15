@@ -5,9 +5,9 @@ from pake import config
 
 
 def makedirs(root):
-    """Creates new PAKE repository.
+    """Creates new PAKE nest.
 
-    :param root: root of the repository
+    :param root: root of the nest
     :type root: str
     """
     subdirectories = ['releases']
@@ -16,17 +16,18 @@ def makedirs(root):
 
 
 def makeconfig(root):
-    """Initializes empty PAKE repository.
+    """Initializes empty PAKE nest.
 
-    :param root: root for the repository
+    :param root: root for the nest
     :type root: str
     """
-    config.repository.Meta(root).reset()
-    config.repository.Dependencies(root).reset()
-    config.repository.Files(root).reset()
+    config.nest.Versions(root).reset()
+    config.nest.Dependencies(root).reset()
+    config.nest.Files(root).reset()
+    config.nest.Meta(root).reset()
 
 
 def remove(root):
-    """Removes repository.
+    """Removes nest.
     """
     shutil.rmtree(root)

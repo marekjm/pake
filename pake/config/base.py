@@ -14,6 +14,9 @@ class Config():
     """Base object for config files interfaces.
     It exposes basic API: functionality for reading from and
     writing to files.
+
+    This base config object can be modified in-place but also
+    provides a fluent API which is in some cases much more useful.
     """
     name = 'base.json'
     default = {}
@@ -39,7 +42,7 @@ class Config():
         """Resets config file to it's default value.
         """
         self.content = self.default
-        self.write()
+        return self
 
     def read(self):
         """Reads JSON from config file.
@@ -57,6 +60,7 @@ class Config():
             content = self.default
         finally:
             self.content = content
+        return self
 
     def write(self, root='', pretty=False):
         """Stores changes made to config file.
@@ -70,6 +74,7 @@ class Config():
         else: encoded = json.dumps(self.content)
         ofstream.write(encoded)
         ofstream.close()
+        return self
 
 
 class Meta(Config):
@@ -86,32 +91,23 @@ class Meta(Config):
     content = {}
 
     def set(self, key, value):
-        """Sets key in metadata.
+        """Sets key in metadata. Part of PAKE fluent API.
         """
         self.content[key] = value
-        self.write()
+        return self
+
+    def remove(self, key):
+        """Removes key from metadata. Part of PAKE fluent API.
+        """
+        del self.content[key]
+        return self
 
     def get(self, key):
         """Returns a value from metadata.
         """
         return self.content[key]
 
-    def remove(self, key):
-        """Removes key from metadata.
-        """
-        del self.content[key]
-        self.write()
-
     def keys(self):
         """Returns dict_keys list of keys contained in meta.json file.
         """
         return self.content.keys()
-
-    def missing(self):
-        """Returns list of missing or unset but required keys in meta.json file.
-        """
-        missing = []
-        required = list(self.default.keys())
-        for i in required:
-            if i not in self.content or self.content[i] == '': missing.append(i)
-        return missing

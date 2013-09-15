@@ -22,7 +22,7 @@ class Meta(base.Meta):
         * description: description of this node.
 
     """
-    default = {}
+    pass
 
 
 class Mirrors(base.Config):
@@ -42,19 +42,14 @@ class Mirrors(base.Config):
         """Adds URL to mirrors list.
         Will create duplicates.
         """
-        if url not in self.content:
-            self.content.append(url)
-            self.write()
+        if url not in self.content: self.content.append(url)
+        return self
 
     def remove(self, url):
         """Removes URL from list of mirrors.
         """
-        removed = False
-        if url in self.content:
-            self.content.remove(url)
-            removed = True
-            self.write()
-        return removed
+        if url in self.content: self.content.remove(url)
+        return self
 
 
 class Pushers(base.Config):
@@ -94,12 +89,11 @@ class Pushers(base.Config):
         return result
 
     def add(self, url, host, cwd=''):
-        """Adds pusher to push.json list.
+        """Adds pusher to push.json list. Part of PAKE fluent API.
         """
         pusher = {'url': url, 'host': host, 'cwd': cwd}
-        if pusher not in self.content:
-            self.content.append(pusher)
-            self.write()
+        if pusher not in self.content: self.content.append(pusher)
+        return self
 
     def get(self, url):
         """Returns pusher for given URL.
@@ -113,17 +107,14 @@ class Pushers(base.Config):
         return pusher
 
     def remove(self, url):
-        """Removes URL from list of pushers.
+        """Removes URL from list of pushers. Part of PAKE fluent API.
 
         :returns: index of removed mirror, -1 means that no pusher was removed
         """
-        removed = False
         index = self._getindex(url)
         if index > -1:
             del self.content[index]
-            self.write()
-            removed = True
-        return removed
+        return self
 
 
 class Aliens(base.Config):
@@ -163,21 +154,21 @@ class Aliens(base.Config):
     def set(self, url, mirrors, meta):
         """Sets node in your list of nodes.
         If a node with given URL already exists it's data is overwritten.
+        Part of PAKE fluent API.
         """
         self.content[url] = {'mirrors': mirrors, 'meta': meta}
-        self.write()
+        return self
+
+    def remove(self, url):
+        """Removes alien from the dictionary. Part of PAKE fluent API.
+        """
+        del self.content[url]
+        return self
 
     def get(self, url):
         """Returns alien dictionary.
         """
         return self.content[url]
-
-    def remove(self, url):
-        """Removes alien from the dictionary.
-        """
-        alien = self.content.pop(url)
-        self.write()
-        return alien
 
 
 class Packages(base.Config):
@@ -188,21 +179,21 @@ class Packages(base.Config):
     content = {}
 
     def set(self, meta):
-        """Adds package to the list of provided packages.
+        """Adds package to the list of provided packages. Part of PAKE fluent API.
         """
         self.content[meta['name']] = meta
-        self.write()
+        return self
+
+    def remove(self, name):
+        """Removes package
+        """
+        del self.content[name]
+        return self
 
     def get(self, name):
         """Returns package metadata stored in packages.json.
         """
         return self.content[name]
-
-    def remove(self, name):
-        """Removes package
-        """
-        self.content.pop(name)
-        self.write()
 
 
 class Registered(base.Config):
@@ -218,7 +209,7 @@ class Registered(base.Config):
         """Registers a repository.
         """
         self.content[name] = path
-        self.write()
+        return self
 
     def getpath(self, name):
         """Returns path to the repository.
@@ -228,5 +219,5 @@ class Registered(base.Config):
     def remove(self, name):
         """Removes a repository.
         """
-        self.content.pop(name)
-        self.write()
+        del self.content[name]
+        return self
