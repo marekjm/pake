@@ -17,9 +17,11 @@ def makepackage(root, overwrite=False):
     """
     meta = config.repository.Meta(root)
     files = config.repository.Files(root)
+    versions = config.repository.Versions(root)
     if not files.content: warnings.warn('creating package with empty file list')
     name = '{0}-{1}.tar.xz'.format(meta['name'], meta['version'])
     path = os.path.join(root, 'releases', name)
+    versions.add(meta['version'])
     if not overwrite and os.path.isfile(path): raise FileExistsError(path)
     package = tarfile.TarFile(name=path, mode='w')
     package.xzopen(name=path, mode='w')

@@ -27,6 +27,17 @@ class Meta(base.Meta):
     default = {}
 
 
+class Versions(base.Meta):
+    """Interface to a list of versions file.
+    """
+    default = []
+
+    def add(self, version):
+        """Adds new version to a list of versions.
+        """
+        if version not in self.content: self.content.append(version)
+
+
 class Dependencies(base.Config):
     """Interface to package's `dependencies.json` file.
 

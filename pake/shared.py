@@ -45,13 +45,13 @@ def getuipath(ui, debug=False):
     return uifile
 
 
-def getrootpath(check=True, fake=''):
-    """Returns path to PAKE root.
-    Returns empty string if root cannot be found.
+def getnodepath(check=True, fake=''):
+    """Returns path to PAKE node root.
+    Returns empty string if node cannot be found.
 
-    :param check: check if root really exists
+    :param check: check if node really exists
     :type check: bool
-    :param fake: fake root, set by caller (disables expansion and allows to not use home dir)
+    :param fake: fake node root, set by caller (disables expansion and allows to not use home directory)
     :type fake: str
     """
     if fake: path = fake
@@ -61,18 +61,18 @@ def getrootpath(check=True, fake=''):
     return path
 
 
-def getrepopath(check=True, fake=''):
-    """Returns path to PAKE repository in the current working directory.
-    Returns empty string if repository cannot be found.
+def getnestpath(check=True, fake=''):
+    """Returns path to PAKE nest in the current working directory.
+    Returns empty string if nest cannot be found.
 
-    :param check: check if root really exists
+    :param check: check if nest root really exists
     :type check: bool
-    :param fake: fake root, set by caller (disables expansion and allows to not use cwd)
+    :param fake: fake nest root, set by caller (disables expansion and allows to not use cwd)
     :type fake: str
     """
     if fake: path = fake
     else: path = os.path.abspath('.')
-    path = os.path.join(path, '.pakerepo')
+    path = os.path.join(path, '.pakenest')
     if check and not os.path.isdir(path): path = ''
     return path
 

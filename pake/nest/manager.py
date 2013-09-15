@@ -1,22 +1,7 @@
-#!/usr/bin/env python3
-
-
-"""This module contains objects responsible for:
-    * creating new package-repos (repos for single package),
-    * creating package directories in main repo,
-    * managing package metadata,
-
-    * building package archives,
-    * installing packages archives,
-    * removing packages archives,
-"""
-
-
 import os
 import shutil
 
 from pake import config
-from pake.repository import releases
 
 
 def makedirs(root):

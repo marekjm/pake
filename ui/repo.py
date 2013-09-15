@@ -107,7 +107,7 @@ if str(ui) == 'init':
     if root:
         if '--debug' in ui: print('pake: debug: repository already exists in {0}'.format(root))
         if '--force' in ui:
-            pake.repository.remove(root)
+            pake.repository.manager.remove(root)
             message = 'pake: removed old repository'
             if '--verbose' in ui: message += ' from {0}'.format(root)
             if '--quiet' not in ui: print(message)
@@ -118,8 +118,8 @@ if str(ui) == 'init':
             fail = True
     if not fail:
         root = pake.shared.getrepopath(check=False)
-        pake.repository.makedirs(root)
-        pake.repository.makeconfig(root)
+        pake.repository.manager.makedirs(root)
+        pake.repository.manager.makeconfig(root)
         message = 'pake: repository initialized'
         if '--verbose' in ui: message += ' in {0}'.format(root)
         if '--quiet' not in ui: print(message)

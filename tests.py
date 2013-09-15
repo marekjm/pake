@@ -10,15 +10,20 @@ import pake
 
 
 # global variables setup
-testnoderoot = pake.shared.getrootpath(check=False, fake=os.path.abspath('./testdir'))
-testreporoot = pake.shared.getrepopath(check=False, fake=os.path.abspath('./testdir'))
+testnoderoot = pake.shared.getnodepath(check=False, fake=os.path.abspath('./testdir'))
+testreporoot = pake.shared.getnestpath(check=False, fake=os.path.abspath('./testdir'))
 
 
 # test environment setup
-if os.path.isdir(testnoderoot): shutil.rmtree(testnoderoot)
-if os.path.isdir(testreporoot): shutil.rmtree(testreporoot)
-pake.node.local.makedirs(root=testnoderoot)
-pake.node.local.makeconfig(root=testnoderoot)
+if os.path.isdir(testnoderoot):
+    print('removing old test node...')
+    shutil.rmtree(testnoderoot)
+if os.path.isdir(testreporoot):
+    print('removing old test nest...')
+    shutil.rmtree(testreporoot)
+
+pake.node.local.manager.makedirs(root=testnoderoot)
+pake.node.local.manager.makeconfig(root=testnoderoot)
 
 
 print()  # to make a one-line break between setup messages and actual test messages
