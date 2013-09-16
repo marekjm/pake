@@ -9,6 +9,10 @@ import unittest
 import pake
 
 
+# Flags
+VERBOSE = False
+
+
 # Global variables
 test_node_root = pake.shared.getnodepath(check=False, fake=os.path.abspath('./testdir'))
 test_nest_root = pake.shared.getnestpath(check=False, fake=os.path.abspath('./testdir'))
@@ -16,17 +20,17 @@ test_nest_root = pake.shared.getnestpath(check=False, fake=os.path.abspath('./te
 
 # Test environment setup
 if os.path.isdir(test_node_root):
-    print('- removing old test node root...')
+    print('- removing old test node root')
     shutil.rmtree(test_node_root)
 if os.path.isdir(test_nest_root):
-    print('- removing old test nest root...')
+    print('- removing old test nest root')
     shutil.rmtree(test_nest_root)
 
-print('+ creating new test node root...')
+print('+ creating new test node root')
 pake.node.local.manager.makedirs(root=test_node_root)
 pake.node.local.manager.makeconfig(root=test_node_root)
 
-print('+ creating new test nest root...')
+print('+ creating new test nest root')
 pake.nest.manager.makedirs(root=test_nest_root)
 pake.nest.manager.makeconfig(root=test_nest_root)
 
@@ -41,10 +45,10 @@ class NodeInitializationTests(unittest.TestCase):
         ifstream = open('./env/node/required/directories.json')
         directories = json.loads(ifstream.read())
         ifstream.close()
-        print()
+        if VERBOSE: print()
         for d in directories:
             path = os.path.join(test_node_root, d)
-            print("'{0}'".format(path))
+            if VERBOSE: print("'{0}'".format(path))
             self.assertEqual(True, os.path.isdir(path))
 
     def testConfigWriting(self):
@@ -58,10 +62,10 @@ class NodeInitializationTests(unittest.TestCase):
                     ('packages.json', {}),
                     ('registered.json', {}),
                     ]
-        print()
+        if VERBOSE: print()
         for f, desired in configs:
             path = os.path.join(test_node_root, f)
-            print("'{0}'".format(path))
+            if VERBOSE: print("'{0}'".format(path))
             ifstream = open(path, 'r')
             self.assertEqual(desired, json.loads(ifstream.read()))
             ifstream.close()
@@ -74,10 +78,10 @@ class NestInitializationTests(unittest.TestCase):
         ifstream = open('./env/nest/required/directories.json')
         directories = json.loads(ifstream.read())
         ifstream.close()
-        print()
+        if VERBOSE: print()
         for d in directories:
             path = os.path.join(test_nest_root, d)
-            print("'{0}'".format(path))
+            if VERBOSE: print("'{0}'".format(path))
             self.assertEqual(True, os.path.isdir(path))
 
     def testConfigWriting(self):
@@ -89,21 +93,119 @@ class NestInitializationTests(unittest.TestCase):
                     ('dependencies.json', {}),
                     ('files.json', []),
                     ]
-        print()
+        if VERBOSE: print()
         for f, desired in configs:
             path = os.path.join(test_nest_root, f)
-            print("'{0}'".format(path))
+            if VERBOSE: print("'{0}'".format(path))
             ifstream = open(path, 'r')
             self.assertEqual(desired, json.loads(ifstream.read()))
             ifstream.close()
 
 
 class NodeConfigurationTests(unittest.TestCase):
-    def testAddingKeyToMeta(self):
+    def testSettingKeyInMeta(self):
         pake.config.node.Meta(test_node_root).set('foo', 'bar').write()
         self.assertEqual(pake.config.node.Meta(test_node_root).get('foo'), 'bar')
         pake.config.node.Meta(test_node_root).reset().write()
 
+    def testRemovingKeyFromMeta(self):
+        pake.config.node.Meta(test_node_root).set('foo', 'bar').write().remove('foo').write()
+        self.assertEqual(dict(pake.config.node.Meta(test_node_root)), {})
+
+    def testGettingMetaKeys(self):
+        pake.config.node.Meta(test_node_root).set('foo', 0).set('bar', 1).set('baz', 2).write()
+        self.assertEqual(['bar', 'baz', 'foo'], sorted(pake.config.node.Meta(test_node_root).keys()))
+        pake.config.node.Meta(test_node_root).reset().write()
+
+    def testAddingMirror(self):
+        pake.config.node.Mirrors(test_node_root).add('http://pake.example.com').write()
+        self.assertEqual(['http://pake.example.com'], list(pake.config.node.Mirrors(test_node_root)))
+        pake.config.node.Mirrors(test_node_root).reset().write()
+
+    def testRemovingMirror(self):
+        pake.config.node.Mirrors(test_node_root).add('http://pake.example.com').add('http://pake.example.net').add('http://pake.example.org').write()
+        pake.config.node.Mirrors(test_node_root).remove('http://pake.example.net').write()
+        self.assertNotIn('http://pake.example.net', list(pake.config.node.Mirrors(test_node_root)))
+        pake.config.node.Mirrors(test_node_root).reset().write()
+
+    def testAddingPusher(self):
+        pusher = {'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}
+        pake.config.node.Pushers(test_node_root).add(**pusher).write()
+        self.assertIn(pusher, pake.config.node.Pushers(test_node_root))
+        pake.config.node.Pushers(test_node_root).reset().write()
+
+    def testRemovingPusher(self):
+        pusher = {'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}
+        pake.config.node.Pushers(test_node_root).add(**pusher).write()
+        pake.config.node.Pushers(test_node_root).remove(url='http://pake.example.com').write()
+        self.assertNotIn(pusher, pake.config.node.Pushers(test_node_root))
+
+    def testGettingPusher(self):
+        pusher = {'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}
+        pake.config.node.Pushers(test_node_root).add(**pusher).write()
+        self.assertEqual(pusher, pake.config.node.Pushers(test_node_root).get(url='http://pake.example.com'))
+        pake.config.node.Pushers(test_node_root).reset().write()
+
+    def testCheckingForURLInPushers(self):
+        pusher = {'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}
+        pake.config.node.Pushers(test_node_root).add(**pusher).write()
+        self.assertEqual(True, pake.config.node.Pushers(test_node_root).hasurl('http://pake.example.com'))
+        pake.config.node.Pushers(test_node_root).reset().write()
+
+    def testAddingAlien(self):
+        alien = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
+        pake.config.node.Aliens(test_node_root).set(**alien).write()
+        self.assertIn('http://alien.example.com', pake.config.node.Aliens(test_node_root))
+        pake.config.node.Aliens(test_node_root).reset().write()
+
+    def testRemovingAlien(self):
+        alien = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
+        pake.config.node.Aliens(test_node_root).set(**alien).write()
+        pake.config.node.Aliens(test_node_root).remove(alien['url']).write()
+        self.assertNotIn('http://alien.example.com', pake.config.node.Aliens(test_node_root))
+
+    def testGettingAlien(self):
+        alien = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
+        pake.config.node.Aliens(test_node_root).set(**alien).write()
+        del alien['url']
+        self.assertEqual(alien, pake.config.node.Aliens(test_node_root).get('http://alien.example.com'))
+        pake.config.node.Aliens(test_node_root).reset().write()
+
+    def testListingAlienURLs(self):
+        foo = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
+        bar = {'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}}
+        baz = {'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}}
+        pake.config.node.Aliens(test_node_root).set(**foo).set(**bar).set(**baz).write()
+        self.assertEqual(['http://alien.example.com', 'http://alien.example.net', 'http://alien.example.org'],
+                             sorted(pake.config.node.Aliens(test_node_root).urls()))
+        pake.config.node.Aliens(test_node_root).reset().write()
+
+    def testListingAliens(self):
+        foo = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
+        bar = {'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}}
+        baz = {'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}}
+        pake.config.node.Aliens(test_node_root).set(**foo).set(**bar).set(**baz).write()
+        aliens = pake.config.node.Aliens(test_node_root).all()
+        self.assertIn(foo, aliens)
+        pake.config.node.Aliens(test_node_root).reset().write()
+
+    def testAddingPackages(self):
+        package = {'name': 'foo', 'license': 'WTFPL', 'version': '0.0.1', 'origin': 'http://pake.example.com'}
+        pake.config.node.Packages(test_node_root).set(package).write()
+        self.assertIn('foo', pake.config.node.Packages(test_node_root).names())
+        pake.config.node.Packages(test_node_root).reset().write()
+
+    def testRemovingPackages(self):
+        package = {'name': 'foo', 'license': 'WTFPL', 'version': '0.0.1', 'origin': 'http://pake.example.com'}
+        pake.config.node.Packages(test_node_root).set(package).write()
+        pake.config.node.Packages(test_node_root).remove('foo').write()
+        self.assertNotIn('foo', pake.config.node.Packages(test_node_root).names())
+
+    def testGettingPackages(self):
+        package = {'name': 'foo', 'license': 'WTFPL', 'version': '0.0.1', 'origin': 'http://pake.example.com'}
+        pake.config.node.Packages(test_node_root).set(package).write()
+        self.assertEqual(package, pake.config.node.Packages(test_node_root).get('foo'))
+        pake.config.node.Packages(test_node_root).reset().write()
 
 
 if __name__ == '__main__': unittest.main()

@@ -39,8 +39,7 @@ class Mirrors(base.Config):
         return self.content
 
     def add(self, url):
-        """Adds URL to mirrors list.
-        Will create duplicates.
+        """Adds URL to mirrors list if it's not already there.
         """
         if url not in self.content: self.content.append(url)
         return self
@@ -108,12 +107,12 @@ class Pushers(base.Config):
 
     def remove(self, url):
         """Removes URL from list of pushers. Part of PAKE fluent API.
+        Why URL? Because it has to be unique. Hostname and cwd can be the same for several URLs.
 
         :returns: index of removed mirror, -1 means that no pusher was removed
         """
         index = self._getindex(url)
-        if index > -1:
-            del self.content[index]
+        if index > -1: del self.content[index]
         return self
 
 
@@ -131,13 +130,10 @@ class Aliens(base.Config):
     content = {}
 
     def __list__(self):
-        return list(self.content.keys())
+        return self.all()
 
     def __contains__(self, url):
         """Checks if nodes.json file contain node of given URL.
-
-        :param node: URL of the node
-        :type node: str
         """
         result = False
         for i in self.content:
@@ -170,6 +166,24 @@ class Aliens(base.Config):
         """
         return self.content[url]
 
+    def urls(self):
+        """Return list of alien URLs registered in node's network.
+        """
+        return list(self.content.keys())
+
+    def all(self):
+        """Return list of all alien nodes.
+        """
+        aliens = []
+        for u in self.urls():
+            # ad -- single "alien dictionary"
+            ad = {'url': u}
+            d = self.get(u)
+            ad['mirrors'] = d['mirrors']
+            ad['meta'] = d['meta']
+            aliens.append(ad)
+        return aliens
+
 
 class Packages(base.Config):
     """Interface to packages.json file.
@@ -180,20 +194,39 @@ class Packages(base.Config):
 
     def set(self, meta):
         """Adds package to the list of provided packages. Part of PAKE fluent API.
+        Name is removed from metadata before storing it.
+
+        :param meta: meta of a package
+        :type meta: dict
         """
-        self.content[meta['name']] = meta
+        # we obtain name of a package and use it as a key
+        name = meta['name']
+        # possible bug in CPython this will delete also from the outside copy
+        del meta['name']
+        self.content[name] = meta
         return self
 
     def remove(self, name):
-        """Removes package
+        """Remove package.
+
+        :param name: remove package of given name
+        :type name: str
         """
         del self.content[name]
         return self
 
     def get(self, name):
-        """Returns package metadata stored in packages.json.
+        """Return package metadata of given package stored in packages.json
+
+        :param name: name of a package
+        :type name: str
         """
         return self.content[name]
+
+    def names(self):
+        """Return names of all packages.
+        """
+        return list(self.content.keys())
 
 
 class Registered(base.Config):

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 
-"""Interface to PAKE package repository.
+"""Interface to PAKE nest.
 
 SYNTAX:
-    pakepackage [global opts...] [mode [mode opts...]]
+    pakenest [global opts...] [mode [mode opts...]]
 
 GLOBAL OPTIONS:
     These options can be placed before or after mode declaration.
@@ -70,7 +70,7 @@ import clap
 import pake
 
 
-uifile = pake.shared.getuipath('repo')
+uifile = pake.shared.getuipath('nest')
 if not uifile: exit('pake: ui: fatal: no ui file found')
 
 formater = clap.formater.Formater(sys.argv[1:])

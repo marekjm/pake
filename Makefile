@@ -1,10 +1,11 @@
 PYTHONVERSION=3.3
 PYTHON_SITEPACKAGES=~/.local/lib/python${PYTHONVERSION}
 
-LOCAL_BIN=~/.local/bin
-LOCAL_SHARE=~/.local/share
+BINDIR=~/.local/bin
+SHAREDIR=~/.local/share
 
 .PHONY: doc test manual clean ui
+
 
 doc:
 	make clean
@@ -26,21 +27,15 @@ install-backend:
 	cp -Rv ./pake/ ${PYTHON_SITEPACKAGES}/site-packages/
 
 install-ui:
-	@echo "Copying JSON descriptions of interfaces..."
-	@cp -v ./ui/*.json ${LOCAL_SHARE}/pake/ui/
-	@echo ""
-	@echo "Installing interface logic code..."
-	@cp -v ./ui/node.py ${LOCAL_BIN}/pakenode && chmod +x ${LOCAL_BIN}/pakenode
-	@cp -v ./ui/repo.py ${LOCAL_BIN}/pakerepo && chmod +x ${LOCAL_BIN}/pakepackage
-	@cp -v ./ui/unified.py ${LOCAL_BIN}/pake && chmod +x ${LOCAL_BIN}/pake
+	@cp -v ./ui/*.json ${SHAREDIR}/pake/ui/
+	@cp -v ./ui/node.py ${BINDIR}/pakenode && chmod +x ${BINDIR}/pakenode
+	@cp -v ./ui/nest.py ${BINDIR}/pakenest && chmod +x ${BINDIR}/pakenest
+	@cp -v ./ui/unified.py ${BINDIR}/pake && chmod +x ${BINDIR}/pake
 
-uninstall-ui:
-	@echo "Removing interface logic code..."
-	@rm -v ${LOCAL_BIN}/pake*
-	@echo ""
-	@echo "Removing JSON descriptions of interfaces..."
-	@rm -rv ${LOCAL_SHARE}/pake/ui/
+install-env-descriptions:
+	@cp -Rv ./env/ ${SHAREDIR}/pake
 
 install:
 	make install-backend
 	make install-ui
+	make install-env-descriptions

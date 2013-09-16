@@ -77,6 +77,20 @@ def getnestpath(check=True, fake=''):
     return path
 
 
+def getenvpath(check=True, fake=''):
+    """Returns path to a directory holding PAKE environment descriptions.
+    Returns empty string if it cannot be found.
+    """
+    if fake: path = fake
+    else:
+        for l in uilocations:
+            if os.path.isdir(os.path.join(l, 'env')):
+                path = os.path.join(l, 'env')
+                break
+    if check and not os.path.isdir(path): path = ''
+    return path
+
+
 def checkinput(options):
     """Checks user input for errors.
     """

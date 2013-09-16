@@ -3,28 +3,12 @@
 """File used to manage local node.
 """
 
+import json
 import os
 import shutil
 import warnings
 
-from pake import config
-
-
-node_directories = ['db',
-                    'cache',
-                    'installing',
-                    'prepared',
-                    ]
-
-
-config_objects = [  config.node.Meta,
-                    config.node.Mirrors,
-                    config.node.Pushers,
-                    config.node.Aliens,
-                    #config.node.Installed,
-                    config.node.Packages,
-                    config.node.Registered,
-                    ]
+from pake import config, shared
 
 
 def makedirs(root):
@@ -35,8 +19,11 @@ def makedirs(root):
     :param root: node root directory
     :type root: str
     """
+    ifstream = open(os.path.join(shared.getenvpath(), 'node', 'required', 'directories.json'))
+    directories = json.loads(ifstream.read())
+    ifstream.close()
     os.mkdir(root)
-    for name in node_directories: os.mkdir(os.path.join(root, name))
+    for name in directories: os.mkdir(os.path.join(root, name))
 
 
 def makeconfig(root):
@@ -47,7 +34,15 @@ def makeconfig(root):
     :param root: node root directory
     :type root: str
     """
-    for o in config_objects: o(root).reset()
+    config.node.Meta(root).reset().write()
+    config.node.Mirrors(root).reset().write()
+    config.node.Pushers(root).reset().write()
+    config.node.Aliens(root).reset().write()
+    # commented because I'm not sure how to
+    # implement this functionality
+    #config.node.Installed(root).reset().write()
+    config.node.Packages(root).reset().write()
+    config.node.Registered(root).reset().write()
 
 
 def remove(root):
