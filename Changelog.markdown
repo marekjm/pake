@@ -19,6 +19,7 @@ Methods of config objects were adapted to create more fluent API where it made s
 * __upd__:  `pake.shared.getrootpath()` renamed to `getnodepath()`,
 * __upd__:  `pake.shared.getrepopath()` renamed to `getnestpath()`,
 * __upd__:  `pake.repository.*` moved to `pake.nest.*`,
+* __upd__:  `pake.config.node.Registered` renamed to `pake.config.node.Nests`,
 
 
 ----

@@ -60,7 +60,7 @@ class NodeInitializationTests(unittest.TestCase):
                     ('pushers.json', []),
                     ('aliens.json', {}),
                     ('packages.json', {}),
-                    ('registered.json', {}),
+                    ('nests.json', {}),
                     ]
         if VERBOSE: print()
         for f, desired in configs:
@@ -201,11 +201,54 @@ class NodeConfigurationTests(unittest.TestCase):
         pake.config.node.Packages(test_node_root).remove('foo').write()
         self.assertNotIn('foo', pake.config.node.Packages(test_node_root).names())
 
-    def testGettingPackages(self):
+    def testGettingPackagesData(self):
         package = {'name': 'foo', 'license': 'WTFPL', 'version': '0.0.1', 'origin': 'http://pake.example.com'}
         pake.config.node.Packages(test_node_root).set(package).write()
         self.assertEqual(package, pake.config.node.Packages(test_node_root).get('foo'))
         pake.config.node.Packages(test_node_root).reset().write()
 
+    def testGettingPackagesNames(self):
+        foo = {'name': 'foo', 'license': 'WTFPL', 'version': '0.0.1', 'origin': 'http://pake.example.com'}
+        bar = {'name': 'bar', 'license': 'WTFPL', 'version': '0.0.1', 'origin': 'http://pake.example.com'}
+        baz = {'name': 'baz', 'license': 'WTFPL', 'version': '0.0.1', 'origin': 'http://pake.example.com'}
+        pake.config.node.Packages(test_node_root).set(foo).set(bar).set(baz).write()
+        self.assertEqual(['bar', 'baz', 'foo'], sorted(pake.config.node.Packages(test_node_root).names()))
+        pake.config.node.Packages(test_node_root).reset().write()
 
+    def testSettingNests(self):
+        nest = {'name': 'foo', 'path': '~/Dev/foo'}
+        pake.config.node.Nests(test_node_root).set(**nest).write()
+        self.assertEqual('~/Dev/foo', pake.config.node.Nests(test_node_root).get('foo'))
+        pake.config.node.Nests(test_node_root).reset().write()
+
+    def testRemovingNests(self):
+        nest = {'name': 'foo', 'path': '~/Dev/foo'}
+        pake.config.node.Nests(test_node_root).set(**nest).write()
+        pake.config.node.Nests(test_node_root).remove('foo').write()
+        self.assertRaises(KeyError, pake.config.node.Nests(test_node_root).get, 'foo')
+        pake.config.node.Nests(test_node_root).reset().write()
+    
+    def testGettingPathOfOneNest(self):
+        foo = {'name': 'foo', 'path': '~/Dev/foo'}
+        bar = {'name': 'bar', 'path': '~/Dev/bar'}
+        baz = {'name': 'baz', 'path': '~/Dev/baz'}
+        pake.config.node.Nests(test_node_root).set(**foo).set(**bar).set(**baz).write()
+        self.assertEqual('~/Dev/foo', pake.config.node.Nests(test_node_root).get('foo'))
+        self.assertEqual('~/Dev/bar', pake.config.node.Nests(test_node_root).get('bar'))
+        self.assertEqual('~/Dev/baz', pake.config.node.Nests(test_node_root).get('baz'))
+        pake.config.node.Nests(test_node_root).reset().write()
+
+    def testGettingPathsOfAllNests(self):
+        foo = {'name': 'foo', 'path': '~/Dev/foo'}
+        bar = {'name': 'bar', 'path': '~/Dev/bar'}
+        baz = {'name': 'baz', 'path': '~/Dev/baz'}
+        pake.config.node.Nests(test_node_root).set(**foo).set(**bar).set(**baz).write()
+        self.assertEqual(['~/Dev/bar', '~/Dev/baz', '~/Dev/foo'], sorted(pake.config.node.Nests(test_node_root).paths()))
+        pake.config.node.Nests(test_node_root).reset().write()
+
+
+class NestConfigurationTests(unittest.TestCase):
+    pass
+
+ 
 if __name__ == '__main__': unittest.main()

@@ -187,6 +187,8 @@ class Aliens(base.Config):
 
 class Packages(base.Config):
     """Interface to packages.json file.
+
+    Packages in this file are visible to users who added you to their aliens list.
     """
     name = 'packages.json'
     default = {}
@@ -226,31 +228,43 @@ class Packages(base.Config):
     def names(self):
         """Return names of all packages.
         """
-        return list(self.content.keys())
+        return list(self.content)
 
 
-class Registered(base.Config):
-    """This is a list of registered repositories.
-    A repository is a directory on your local machine containing
+class Nests(base.Config):
+    """This is a list of registered nests.
+    A nest is a directory on your local machine containing
     files for a package.
     """
-    name = 'registered.json'
+    name = 'nests.json'
     default = {}
     content = {}
 
     def set(self, name, path):
-        """Registers a repository.
+        """Registers a nest.
+
+        :param name: name of a package
+        :param path: path to the nest
         """
         self.content[name] = path
         return self
 
-    def getpath(self, name):
-        """Returns path to the repository.
-        """
-        return self.content[name]
-
     def remove(self, name):
-        """Removes a repository.
+        """Removes a name from the list of registered nests.
+
+        :param name: name of a package whose nest to remove
         """
         del self.content[name]
         return self
+
+    def get(self, name):
+        """Returns path to the nest.
+
+        :param name: name of the package
+        """
+        return self.content[name]
+
+    def paths(self):
+        """Returns list of paths to all nests.
+        """
+        return [self.get(k) for k in self]

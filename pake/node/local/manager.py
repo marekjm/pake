@@ -42,7 +42,7 @@ def makeconfig(root):
     # implement this functionality
     #config.node.Installed(root).reset().write()
     config.node.Packages(root).reset().write()
-    config.node.Registered(root).reset().write()
+    config.node.Nests(root).reset().write()
 
 
 def remove(root):
