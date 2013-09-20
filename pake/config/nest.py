@@ -4,6 +4,10 @@
 """This module contains interfaces to nest configuration files.
 """
 
+import os
+
+# pyversion can be found at: https://github.com/marekjm/pyversion
+import pyversion
 
 from pake.config import base
 
@@ -31,10 +35,28 @@ class Versions(base.Config):
     default = []
     content = []
 
-    def add(self, version):
+    def add(self, version, check=False, strict=True):
         """Adds new version to a list of versions.
+
+        :param version: version string to append
+        :type version: semver version string
+        :param check: decide whether to check if last known version isn't greater than the one we want to add
+        :type check: bool
+        :param strict: whether to use strict semver strings or not (non-strict allow to use more than three digit-words in base version)
+        :type strict: bool
         """
-        if version not in self.content: self.content.append(version)
+        if version not in self.content:
+            if check and pyversion.version.Version(self[-1], strict=strict) > pyversion.version.Version(version, strict=strict):
+                raise ValueError('{0} is lesser version then the last present: {1}'.format(version, self[-1]))
+            self.content.append(version)
+        return self
+
+    def remove(self, version):
+        """Remove version from the list (it will not be visible to outer network).
+
+        :param version: version string to remove
+        """
+        if version in self: self.content.remove(version)
         return self
 
 
@@ -79,10 +101,13 @@ class Files(base.Config):
     default = []
     content = []
 
-    def add(self, string):
+    def add(self, path):
         """Adds file to the list.
         """
-        if string not in self.content: self.content.append(string)
+        if not (os.path.isfile(path) or os.path.isdir(path)): raise FileNotFoundError(path)
+        for i in self:
+            if os.path.abspath(path) == os.path.abspath(i): raise FileExistsError('file already added')
+        self.content.append(path)
         return self
 
     def remove(self, string):

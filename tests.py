@@ -103,6 +103,11 @@ class NestInitializationTests(unittest.TestCase):
 
 
 class NodeConfigurationTests(unittest.TestCase):
+    """Code for Meta() is shared between node and
+    nest configuration interface so it's only tested here.
+
+    Any tests passing for node will also pass for nests.
+    """
     def testSettingKeyInMeta(self):
         pake.config.node.Meta(test_node_root).set('foo', 'bar').write()
         self.assertEqual(pake.config.node.Meta(test_node_root).get('foo'), 'bar')
@@ -248,7 +253,30 @@ class NodeConfigurationTests(unittest.TestCase):
 
 
 class NestConfigurationTests(unittest.TestCase):
-    pass
+    def testAddingVersions(self):
+        pake.config.nest.Versions(test_nest_root).add('0.0.1-alpha.1').add('0.0.1-beta.1').add('0.0.1-rc.1').add('0.0.1').write()
+        self.assertEqual(['0.0.1-alpha.1', '0.0.1-beta.1', '0.0.1-rc.1', '0.0.1'], list(pake.config.nest.Versions(test_nest_root)))
+        pake.config.nest.Versions(test_nest_root).reset().write()
 
- 
+    def testAddingVersionsButChecking(self):
+        pake.config.nest.Versions(test_nest_root).add('0.0.1-beta.1').write()
+        self.assertRaises(ValueError, pake.config.nest.Versions(test_nest_root).add, '0.0.1-alpha.17', check=True)
+        # assertNotRaises -- just run it; if no exception is raise everything's fine
+        pake.config.nest.Versions(test_nest_root).add('0.0.1', check=True)
+        pake.config.nest.Versions(test_nest_root).reset().write()
+
+    def testAddingNewFiles(self):
+        pake.config.nest.Files(test_nest_root).add('./tests.py').write()
+        self.assertIn('./tests.py', pake.config.nest.Files(test_nest_root))
+        pake.config.nest.Files(test_nest_root).reset().write()
+
+    def testRefuseToAddNonexistentFile(self):
+        self.assertRaises(FileNotFoundError, pake.config.nest.Files(test_nest_root).add, './this_file_does_not_exist.py')
+
+    def testRefuseToAddFileThatIsAlreadyPresent(self):
+        pake.config.nest.Files(test_nest_root).add('./tests.py').write()
+        self.assertRaises(FileExistsError, pake.config.nest.Files(test_nest_root).add, './tests.py')
+        pake.config.nest.Files(test_nest_root).reset().write()
+
+
 if __name__ == '__main__': unittest.main()
