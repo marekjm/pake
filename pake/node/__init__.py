@@ -3,4 +3,3 @@
 #flake8: noqa
 
 from pake.node import local
-from pake.node import aliens
