@@ -27,8 +27,8 @@ if os.path.isdir(test_nest_root):
     shutil.rmtree(test_nest_root)
 
 print('+ creating new test node root')
-pake.node.local.manager.makedirs(root=test_node_root)
-pake.node.local.manager.makeconfig(root=test_node_root)
+pake.node.manager.makedirs(root=test_node_root)
+pake.node.manager.makeconfig(root=test_node_root)
 
 print('+ creating new test nest root')
 pake.nest.manager.makedirs(root=test_nest_root)
