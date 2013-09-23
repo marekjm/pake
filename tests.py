@@ -1,11 +1,23 @@
 #!/usr/bin/env python3
 
 
+# Libraries from Python standard library a.k.a. batteries
 import json
 import os
 import shutil
+import tarfile
 import unittest
+import warnings
 
+
+# External libraries PAKE uses
+#
+# "but" can be obtained from: https://github.com/marekjm/but
+# only one object from it is needed: but.scanner.Scanner()
+import but
+
+
+# PAKE import
 import pake
 
 
@@ -265,8 +277,13 @@ class NestConfigurationTests(unittest.TestCase):
         pake.config.nest.Versions(test_nest_root).add('0.0.1', check=True)
         pake.config.nest.Versions(test_nest_root).reset().write()
 
-    def testAddingNewFiles(self):
+    def testAddingNewFilesDirectly(self):
         pake.config.nest.Files(test_nest_root).add('./tests.py').write()
+        self.assertIn('./tests.py', pake.config.nest.Files(test_nest_root))
+        pake.config.nest.Files(test_nest_root).reset().write()
+
+    def testAddingNewFilesViaNestInterface(self):
+        pake.nest.package.addfile(test_nest_root, './tests.py')
         self.assertIn('./tests.py', pake.config.nest.Files(test_nest_root))
         pake.config.nest.Files(test_nest_root).reset().write()
 
@@ -277,6 +294,31 @@ class NestConfigurationTests(unittest.TestCase):
         pake.config.nest.Files(test_nest_root).add('./tests.py').write()
         self.assertRaises(FileExistsError, pake.config.nest.Files(test_nest_root).add, './tests.py')
         pake.config.nest.Files(test_nest_root).reset().write()
+
+
+class NestReleasesTests(unittest.TestCase):
+    def testBuildingNonsignedPackage(self):
+        # first: setup minimal meta needed for build process
+        pake.config.nest.Meta(test_nest_root).set('name', 'test').set('version', '0.0.1').write()
+        # second: create list of files
+        pake.nest.package.addfile(test_nest_root, './tests.py')
+        pake.nest.package.adddir(test_nest_root, './ui/', recursive=True, avoid=['__pycache__'], avoid_exts=['swp', 'pyc'])
+        pake.nest.package.adddir(test_nest_root, './webui/', recursive=True, avoid_exts=['swp', 'pyc'])
+        # third: build package
+        pake.nest.package.build(test_nest_root)
+        # fourth: check if the package was built
+        self.assertIn('test-0.0.1.tar.xz', os.listdir(os.path.join(test_nest_root, 'releases')))
+        # fifth: get names of files included in package
+        test_pkg = tarfile.TarFile(os.path.join(test_nest_root, 'releases', 'test-0.0.1.tar.xz'), 'r')
+        names = test_pkg.getnames()
+        test_pkg.close()
+        # sixth: create list of files we expect to be included
+        expected = ['./tests.py'] + but.scanner.Scanner('./ui/').discardExtension('pyc').scan().files + but.scanner.Scanner('./webui/').scan().files
+        # seventh: check if the two lists are equal
+        self.assertEqual(expected, names)
+        # eighth: cleanup (reset to default, empty state)
+        pake.config.nest.Files(test_nest_root).reset().write()
+        pake.config.nest.Meta(test_nest_root).reset().write()
 
 
 if __name__ == '__main__': unittest.main()

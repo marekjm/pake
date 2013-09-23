@@ -1,2 +1,2 @@
 from pake.nest import manager
-from pake.nest import releases
+from pake.nest import package

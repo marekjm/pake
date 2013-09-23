@@ -10,17 +10,14 @@ import urllib.request
 import warnings
 
 from pake import config
+from pake.aliens import shared
 
 
 def fetchalien(url):
     """Fetches data from alien node and creates a dictionary of it.
     """
     alien = {}
-    for name in ['meta', 'mirrors']:
-        resource = '{0}/{1}.json'.format(url, name)
-        socket = urllib.request.urlopen(resource)
-        alien[name] = json.loads(str(socket.read(), encoding='utf-8'))
-        socket.close()
+    for name in ['meta', 'mirrors']: alien[name] = shared.fetchjson(url, '{0}.json'.format(name))
     return alien
 
 
@@ -35,7 +32,7 @@ def add(root, url):
 
     :returns: main url
     """
-    alien = _fetchalien(url)
+    alien = fetchalien(url)
     if url in alien['mirrors']: url = alien['meta']['url']
     config.node.Aliens(root).set(url, alien)
     return url
