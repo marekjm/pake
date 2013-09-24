@@ -31,29 +31,29 @@ def register(root, path):
     :param root: path to the root of your node
     :param path: path to the root of the nest being registered
     """
-    if not os.path.isabs(path): warnings.warn('path {0} is not absolute'.format(path))
-    path = os.path.abspath(path)
+    if not os.path.isabs(path):
+        warnings.warn('path {0} is not absolute'.format(path))
+        path = os.path.abspath(path)  # make the path absolute
     meta = config.nest.Meta(path)
     _check(meta.content)
-    config.node.Packages(root).set(meta.content)
-    config.node.Registered(root).set(name=meta.get('name'), path=path)
-
-
-def update(root, name):
-    """Updates repository metadata for specified package.
-
-    :param name: name of the package
-    """
-    path = config.node.Registered(root).getpath(name)
-    meta = config.repository.Meta(path)
-    _check(meta.content)
-    config.node.Packages(root).set(meta.content)
+    config.node.Nests(root).set(name=meta.get('name'), path=path).write()
 
 
 def unregister(root, name):
-    """Unregisters repository.
+    """Unregisters a nest.
 
     :param root: path to the root of the node
     :param name: name of the package
     """
-    config.node.Registered(root).remove(name)
+    config.node.Nests(root).remove(name).write()
+
+
+def makelist(root):
+    """Create list of packages available on this node.
+    """
+    nests = config.node.Nests(root)
+    packages = config.node.Packages(root)
+    for name in nests:
+        path = nests.get(name)
+        packages.append(name=config.repository.Meta(path), latest=config.nest.Versions(path)[-1])
+    packages.write()

@@ -56,6 +56,8 @@ def build(root):
     if not files.content:
         warnings.warn('creating empty package')
     name = '{0}-{1}.tar.xz'.format(meta['name'], meta['version'])
+    if meta['name'] == '': raise errors.PAKEError('name is not specified')
+    if meta['version'] == '': raise errors.PAKEError('version is not specified')
     path = os.path.join(root, 'releases', name)
     # raise exception if trying to build a package second time with
     # the same version

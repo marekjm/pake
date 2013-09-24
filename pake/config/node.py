@@ -189,46 +189,31 @@ class Packages(base.Config):
     """Interface to packages.json file.
 
     Packages in this file are visible to users who added you to their aliens list.
+    It is basically a list of names of all available packages.
+
+    **Notice:** this object is designed to be reset and rebuilt each time it's sent to
+    server. Hence, only .append() method is available and not .remove(), .get() etc.
     """
     name = 'packages.json'
-    default = {}
-    content = {}
+    default = []
+    content = []
 
-    def set(self, meta):
-        """Adds package to the list of provided packages. Part of PAKE fluent API.
+    def append(self, name, latest):
+        """Appends package to the list of provided packages. Part of PAKE fluent API.
         Name is removed from metadata before storing it.
 
-        :param meta: meta of a package
-        :type meta: dict
-        """
-        # we obtain name of a package and use it as a key
-        name = meta['name']
-        # possible bug in CPython this will delete also from the outside copy
-        del meta['name']
-        self.content[name] = meta
-        return self
-
-    def remove(self, name):
-        """Remove package.
-
-        :param name: remove package of given name
+        :param name: name of the package
         :type name: str
+        :param latest: most recent version fo the package
+        :type latest: str
         """
-        del self.content[name]
+        self.content.append((name, latest))
         return self
-
-    def get(self, name):
-        """Return package metadata of given package stored in packages.json
-
-        :param name: name of a package
-        :type name: str
-        """
-        return self.content[name]
 
     def names(self):
         """Return names of all packages.
         """
-        return list(self.content)
+        return [name for name, version in self.content]
 
 
 class Nests(base.Config):

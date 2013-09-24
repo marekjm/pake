@@ -71,7 +71,7 @@ class NodeInitializationTests(unittest.TestCase):
                     ('mirrors.json', []),
                     ('pushers.json', []),
                     ('aliens.json', {}),
-                    ('packages.json', {}),
+                    ('packages.json', []),
                     ('nests.json', {}),
                     ]
         if VERBOSE: print()
@@ -207,28 +207,16 @@ class NodeConfigurationTests(unittest.TestCase):
         pake.config.node.Aliens(test_node_root).reset().write()
 
     def testAddingPackages(self):
-        package = {'name': 'foo', 'license': 'WTFPL', 'version': '0.0.1', 'origin': 'http://pake.example.com'}
-        pake.config.node.Packages(test_node_root).set(package).write()
+        package = {'name': 'foo', 'latest': '0.0.1'}
+        pake.config.node.Packages(test_node_root).append(**package).write()
         self.assertIn('foo', pake.config.node.Packages(test_node_root).names())
         pake.config.node.Packages(test_node_root).reset().write()
 
-    def testRemovingPackages(self):
-        package = {'name': 'foo', 'license': 'WTFPL', 'version': '0.0.1', 'origin': 'http://pake.example.com'}
-        pake.config.node.Packages(test_node_root).set(package).write()
-        pake.config.node.Packages(test_node_root).remove('foo').write()
-        self.assertNotIn('foo', pake.config.node.Packages(test_node_root).names())
-
-    def testGettingPackagesData(self):
-        package = {'name': 'foo', 'license': 'WTFPL', 'version': '0.0.1', 'origin': 'http://pake.example.com'}
-        pake.config.node.Packages(test_node_root).set(package).write()
-        self.assertEqual(package, pake.config.node.Packages(test_node_root).get('foo'))
-        pake.config.node.Packages(test_node_root).reset().write()
-
     def testGettingPackagesNames(self):
-        foo = {'name': 'foo', 'license': 'WTFPL', 'version': '0.0.1', 'origin': 'http://pake.example.com'}
-        bar = {'name': 'bar', 'license': 'WTFPL', 'version': '0.0.1', 'origin': 'http://pake.example.com'}
-        baz = {'name': 'baz', 'license': 'WTFPL', 'version': '0.0.1', 'origin': 'http://pake.example.com'}
-        pake.config.node.Packages(test_node_root).set(foo).set(bar).set(baz).write()
+        foo = {'name': 'foo', 'latest': '0.0.1'}
+        bar = {'name': 'bar', 'latest': '0.0.1'}
+        baz = {'name': 'baz', 'latest': '0.0.1'}
+        pake.config.node.Packages(test_node_root).append(**foo).append(**bar).append(**baz).write()
         self.assertEqual(['bar', 'baz', 'foo'], sorted(pake.config.node.Packages(test_node_root).names()))
         pake.config.node.Packages(test_node_root).reset().write()
 
