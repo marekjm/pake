@@ -207,23 +207,18 @@ class NodeConfigurationTests(unittest.TestCase):
         pake.config.node.Aliens(test_node_root).reset().write()
 
     def testAddingPackages(self):
-        package = {'name': 'foo', 'latest': '0.0.1'}
-        pake.config.node.Packages(test_node_root).append(**package).write()
+        pake.config.node.Packages(test_node_root).append(name='foo').write()
         self.assertIn('foo', pake.config.node.Packages(test_node_root).names())
         pake.config.node.Packages(test_node_root).reset().write()
 
     def testGettingPackagesNames(self):
-        foo = {'name': 'foo', 'latest': '0.0.1'}
-        bar = {'name': 'bar', 'latest': '0.0.1'}
-        baz = {'name': 'baz', 'latest': '0.0.1'}
-        pake.config.node.Packages(test_node_root).append(**foo).append(**bar).append(**baz).write()
+        pake.config.node.Packages(test_node_root).append('foo').append('bar').append('baz').write()
         self.assertEqual(['bar', 'baz', 'foo'], sorted(pake.config.node.Packages(test_node_root).names()))
         pake.config.node.Packages(test_node_root).reset().write()
 
     def testSettingNests(self):
-        nest = {'name': 'foo', 'path': '~/Dev/foo'}
-        pake.config.node.Nests(test_node_root).set(**nest).write()
-        self.assertEqual('~/Dev/foo', pake.config.node.Nests(test_node_root).get('foo'))
+        pake.config.node.Nests(root=test_node_root).set('foo', './testdir/.pakenest').write()
+        self.assertEqual('./testdir/.pakenest', pake.config.node.Nests(test_node_root).get('foo'))
         pake.config.node.Nests(test_node_root).reset().write()
 
     def testRemovingNests(self):
@@ -307,6 +302,24 @@ class NestReleasesTests(unittest.TestCase):
         # eighth: cleanup (reset to default, empty state)
         pake.config.nest.Files(test_nest_root).reset().write()
         pake.config.nest.Meta(test_nest_root).reset().write()
+
+
+class NodePackagesTests(unittest.TestCase):
+    def testRegisteringPackages(self):
+        pake.config.nest.Meta(test_nest_root).set('name', 'foo').write()
+        pake.config.nest.Meta(test_nest_root).set('version', '0.0.1').write()
+        pake.config.nest.Meta(test_nest_root).set('license', 'GNU GPL v3+').write()
+        pake.node.packages.register(root=test_node_root, path='./testdir/.pakenest')
+        print('don\'t worry - this warning is supposed to appear in this test')
+        # path smust be absolute to ensure that they are reachable from every other dir
+        self.assertEqual(os.path.abspath('./testdir/.pakenest'), pake.config.node.Nests(test_node_root).get('foo'))
+        pake.config.node.Nests(test_node_root).reset().write()
+        pake.config.nest.Meta(test_nest_root).reset().write()
+
+    def testBuildingPackageList(self):
+        pake.config.nest.Meta(test_nest_root).set('name', 'foo').write()
+        pake.config.node.Nests(test_node_root).set('foo', test_nest_root).write()
+        pake.node.packages.makepkglist(test_node_root)
 
 
 if __name__ == '__main__': unittest.main()

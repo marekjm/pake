@@ -24,7 +24,9 @@ def _uploadconfig(root, remote, installed=False):
         finally:
             remote.storbinary('STOR {0}'.format(name), open(os.path.join(root, name), 'rb'), callback=None)
         """
-        remote.storbinary('STOR {0}'.format(name), open(os.path.join(root, name), 'rb'), callback=None)
+        ifstream = open(os.path.join(root, name), 'rb')
+        remote.storbinary('STOR {0}'.format(name), ifstream.read(), callback=None)
+        ifstream.close()
 
 
 def _uploadpackages(root, remote):
@@ -76,8 +78,8 @@ def push(root, url, username, password, installed):
 
     :param root: node root directory
     :param url: URL of a mirror from which data should be taken
-    :param username: username for the server (not needed if stored)
-    :param password: password for the server (not needed if stored)
+    :param username: username for the server
+    :param password: password for the server
     """
     pusher = config.node.Pushers(root).get(url)
     if pusher is None: raise Exception('no pusher found for URL: {0}'.format(url))

@@ -16,9 +16,9 @@ from pake import config, errors
 
 
 def _check(meta):
-    """Checks if repository in given path has valid meta.json.
+    """Checks if nest in given path has valid meta.json.
     """
-    required_keys = ['name', 'version', 'license', 'origin']
+    required_keys = ['name', 'version', 'license']
     for key in required_keys:
         if key not in meta: raise errors.PAKEError('missing information for this package: {0}'.format(key))
         if not meta[key]: raise errors.PAKEError('missing information for this package: {0}'.format(key))
@@ -48,12 +48,13 @@ def unregister(root, name):
     config.node.Nests(root).remove(name).write()
 
 
-def makelist(root):
+def makepkglist(root):
     """Create list of packages available on this node.
     """
     nests = config.node.Nests(root)
     packages = config.node.Packages(root)
     for name in nests:
-        path = nests.get(name)
-        packages.append(name=config.repository.Meta(path), latest=config.nest.Versions(path)[-1])
+        # if API specs will change to inlcude more data in packages.json this
+        # is the place to add teh code
+        packages.append(config.nest.Meta(nests.get(name)).get('name'))
     packages.write()

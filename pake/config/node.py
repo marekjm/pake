@@ -198,7 +198,7 @@ class Packages(base.Config):
     default = []
     content = []
 
-    def append(self, name, latest):
+    def append(self, name):
         """Appends package to the list of provided packages. Part of PAKE fluent API.
         Name is removed from metadata before storing it.
 
@@ -207,13 +207,13 @@ class Packages(base.Config):
         :param latest: most recent version fo the package
         :type latest: str
         """
-        self.content.append((name, latest))
+        if name not in self: self.content.append(name)
         return self
 
     def names(self):
         """Return names of all packages.
         """
-        return [name for name, version in self.content]
+        return [name for name in self.content]
 
 
 class Nests(base.Config):
@@ -253,3 +253,8 @@ class Nests(base.Config):
         """Returns list of paths to all nests.
         """
         return [self.get(k) for k in self]
+
+    def names(self):
+        """Returns names of registered nests.
+        """
+        return [k for k in self]
