@@ -5,10 +5,13 @@
 
 
 import ftplib
+import os
 import warnings
 
+from pake import config
 
-def _uploadconfig(root, remote, installed=False):
+
+def _uploadconfig(root, remote):
     """Uploads configuration files.
 
     :param remote: is a ftplib.FTP object capable of storing files
@@ -16,16 +19,8 @@ def _uploadconfig(root, remote, installed=False):
     files = ['meta.json', 'packages.json', 'aliens.json', 'mirrors.json']
     if installed: files.append('installed.json')
     for name in files:
-        """
-        try:
-            remote.delete(name)
-        except ftplib.error_perm:
-            pass
-        finally:
-            remote.storbinary('STOR {0}'.format(name), open(os.path.join(root, name), 'rb'), callback=None)
-        """
         ifstream = open(os.path.join(root, name), 'rb')
-        remote.storbinary('STOR {0}'.format(name), ifstream.read(), callback=None)
+        remote.storbinary('STOR {0}'.format(name), ifstream, callback=None)
         ifstream.close()
 
 
@@ -56,7 +51,7 @@ def _uploadpackages(root, remote):
     warnings.warn(NotImplemented)
 
 
-def _upload(root, host, username, password, cwd='', installed=False):
+def _upload(root, host, username, password, cwd=''):
     """Uploads node data to given host.
     
     :root: root directory of the local node
@@ -68,12 +63,12 @@ def _upload(root, host, username, password, cwd='', installed=False):
     remote = ftplib.FTP(host)
     remote.login(username, password)
     if cwd: remote.cwd(cwd)
-    _uploadconfig(root, remote, installed=installed)
+    _uploadconfig(root, remote)
     _uploadpackages(root, remote)
     remote.close()
 
 
-def push(root, url, username, password, installed):
+def push(root, url, username, password):
     """Pushes node to remote server.
 
     :param root: node root directory

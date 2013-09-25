@@ -133,8 +133,8 @@
     "push": [
         {
             "short": "m",
-            "long": "main",
-            "help": "push to main mirror"
+            "long": "only-main",
+            "help": "push only to main mirror"
         },
         {
             "short": "o",

@@ -50,13 +50,20 @@ if '--help' in ui:
     exit()
 
 
-root = pake.shared.getrootpath()
+root = pake.shared.getnodepath()
 fail = False
 
-# this will execute the program if there is no node on which to operate
-# exception is when the program is called in `init` modes
-# because it means that user will be initializing the node
-if not root and str(ui) == 'init': exit('pake: fatal: no root found')
+# this will exit the program if there is no node on which to operate
+# unless the program is called in `init` mode because it means that user will be initializing the node
+if not root and str(ui) != 'init': exit('pake: fatal: no root found')
+
+
+# If everything went fine, which means:
+#   * root was found,
+#   * UI files were found,
+#   * UI has been built.
+#
+# Execute according to user input.
 
 if str(ui) == 'init':
     """This mode is used for initialization of local node.
@@ -64,9 +71,10 @@ if str(ui) == 'init':
     be overwritten.
     """
     if root:
-        if '--debug' in ui: print('pake: debug: node already exists in {0}'.format(root))
+        if '--debug' in ui:
+            print('pake: debug: node already exists in {0}'.format(root))
         if '--force' in ui:
-            pake.node.local.remove(root)
+            pake.node.manager.remove(root)
             message = 'pake: removed old node'
             if '--verbose' in ui: message += ' from {0}'.format(root)
             if '--quiet' not in ui: print(message)
@@ -76,9 +84,9 @@ if str(ui) == 'init':
             if '--quiet' not in ui: print(message)
             fail = True
     if not fail:
-        root = pake.shared.getrootpath(check=False)
-        pake.node.local.makedirs(root)
-        pake.node.local.makeconfig(root)
+        root = pake.shared.getnodepath(check=False)
+        pake.node.manager.makedirs(root)
+        pake.node.manager.makeconfig(root)
         message = 'pake: node initialized'
         if '--verbose' in ui: message += ' in {0}'.format(root)
         if '--quiet' not in ui: print(message)
@@ -87,9 +95,9 @@ elif str(ui) == 'meta':
     """
     if '--set' in ui:
         key, value = ui.get('--set')
-        pake.config.node.Meta(root).set(key, value)
+        pake.config.node.Meta(root).set(key, value).write()
     if '--remove' in ui:
-        pake.config.node.Meta(root).remove(ui.get('--remove'))
+        pake.config.node.Meta(root).remove(ui.get('--remove')).write()
     if '--get' in ui:
         print(pake.config.node.Meta(root).get(ui.get('--get')))
     if '--list-keys' in ui:
@@ -99,7 +107,7 @@ elif str(ui) == 'meta':
         else:
             print(', '.join(sorted(meta.keys())))
     if '--reset' in ui:
-        pake.config.node.Meta(root).reset()
+        pake.config.node.Meta(root).reset().write()
     if '--pretty' in ui:
         #   this should be routine and independent from
         #   every other options to always enable the possibility
@@ -107,47 +115,58 @@ elif str(ui) == 'meta':
         pake.config.node.Meta(root).write(pretty=True)
 elif str(ui) == 'mirrors':
     """This mode is used for management of mirrors and pushers list.
+
+    The process of management of both mirrors and pushers should not be split because they MUST BE
+    synchronized with each other.
+    Otherwise you might end with mirrors not visible to outer network.
     """
     mirrors = pake.config.node.Mirrors(root)
     pushers = pake.config.node.Pushers(root)
+
     if '--add' in ui:
+        """Code used to add mirrors and pushers which are very much alike each other.
+        *Mirrors* are visible to the outside network and are just a list of URLs while
+        *pushers* contain additional data:
+            - host which is used for connection,
+            - directory to which PAKE should go.
+        """
         url = ui.get('--url')
         host = ui.get('--host')
         cwd = ui.get('--cwd')
         if url not in mirrors:
-            mirrors.add(url)
-            pushers.add(url=url, host=host, cwd=cwd)
+            """If URL is not in mirrors everything's fine and we can just add it to the list
+            of pushers and mirrors.
+            """
+            mirrors.add(url).write()
+            pushers.add(url=url, host=host, cwd=cwd).write()
             message = 'pake: node: added mirror'
             if '--verbose' in ui: message += ' {0} on host {1}'.format(url, host)
             if '--quiet' not in ui: print(message)
         else:
-            if '--debug' in ui: print('pake: fail: mirror {0} already exists'.format(url))
-            message = 'pake: node: fatal cannot add mirror'
+            """Otherwise fail and tell user that mirror with this URL already exists.
+            """
+            message = 'pake: node: fatal: mirror already exists'
             if '--verbose' in ui: message += ' {0}'.format(url)
             if '--quiet' not in ui: print(message)
     if '--remove' in ui:
+        """Code used to remove mirrors and pushers.
+        Mirrors and pushers are identified via URLs because they are unique - hostnames and directories may be
+        the same across different mirrors.
+        """
         url = ui.get('--remove')
-        mremoved = mirrors.remove(url)
-        premoved = pushers.remove(url)
-        if mremoved and premoved:
-            message = 'pake: node: mirror removed'
-            if '--verbose' in ui: message += ': {0}'.format(url)
-            if '--quiet' not in ui: print(message)
-        elif mremoved and not premoved and '--debug' in ui:
-            print('pake: fail: pusher does not exist: {0}'.format(url))
-        elif not mremoved and premoved and '--debug' in ui:
-            print('pake: fail: mirror does not exist: {0}'.format(url))
-        else:
-            print('pake: fail: mirror was not existsent')
+        mirrors.remove(url).write()
+        pushers.remove(url).write()
+        message = 'pake: node: mirror removed'
+        if '--verbose' in ui: message += ': {0}'.format(url)
+        if '--quiet' not in ui: print(message)
     if '--list' in ui:
         if '--verbose' in ui:
             for m in pushers:
                 print(' * {0}'.format(m['url']))
-                print('   = host: {0}'.format(m['host']))
-                print('   = cwd:  {0}'.format(m['cwd']))
+                print('   + host: {0}'.format(m['host']))
+                print('   + cwd:  {0}'.format(m['cwd']))
         else:
-            for m in mirrors:
-                print(m)
+            for m in mirrors: print(m)
 elif str(ui) == 'push':
     """This mode is used to push node's contents to mirror servers on the Net.
     """
@@ -164,7 +183,7 @@ elif str(ui) == 'push':
     installed = '--installed' in ui  # whether push also installed.json file
     credentials = []
     if '--only' in ui: urls = [ui.get('--only')]
-    if '--main' in ui: urls = [pake.config.node.Meta(root).get('url')]
+    if '--only-main' in ui: urls = [pake.config.node.Meta(root).get('url')]
     else: urls = [m for m in mirrors]
 
     for url in urls:
@@ -185,10 +204,18 @@ elif str(ui) == 'push':
             print('* pushing to mirror {0}:'.format(url), end='  ')
             username, password = credentials[i]
             try:
-                pake.node.local.push(root, url, username, password, installed=installed)
+                pake.node.pusher.push(root, url, username, password, installed=installed)
                 message = 'OK'
+            except KeyboardInterrupt:
+                message = 'cancelled'
             except Exception as e:
-                message = e
+                if '--debug' in ui:
+                    # if running with --debug option reraise the exception to
+                    # provide stack trace and debug info
+                    raise
+                else:
+                    # otherwise, silence the exception and just show error message
+                    message = 'failed: {0}'.format(e)
             finally:
                 print(message)
 elif str(ui) == 'aliens':
@@ -199,7 +226,7 @@ elif str(ui) == 'aliens':
         url = ui.get('--add')
         if url[-1] == '/': url = url[:-1]
         try:
-            added = pake.node.local.addalien(root, url)
+            added = pake.node.manager.addalien(root, url)
             message = 'pake: alien added: {0}'.format(added)
         except urllib.error.URLError as e:
             message = 'pake: fail: alien was not found: {0}'.format(e)
@@ -228,7 +255,7 @@ elif str(ui) == 'packages':
         try:
             path = os.path.join(ui.get('--register'), '.pakerepo')
             if path[0] == '~': path = os.path.abspath(os.path.expanduser(path))
-            pake.node.local.packages.register(root, path)
+            pake.node.manager.packages.register(root, path)
             meta = pake.config.repository.Meta(path)
             if not os.path.isdir(path): raise pake.errors.PAKEError('repository not found in: {0}'.format(path))
 
@@ -240,7 +267,7 @@ elif str(ui) == 'packages':
             print(report)
     if '--update' in ui:
         try:
-            pake.node.local.packages.update(root, ui.get('--update'))
+            pake.node.manager.packages.update(root, ui.get('--update'))
         except (pake.errors.PAKEError) as e:
             print('pake: fatal: {0}'.format(e))
             fail = True
