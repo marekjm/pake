@@ -172,6 +172,7 @@ elif str(ui) == 'push':
     """
     def getcredentials(url, pushers):
         """Returns two-tuple (username, password) for given URL.
+        Prompting user to enter them.
         """
         username = input('Username for {0}: '.format(url))
         prompt = 'Password for {0}@{1}: '.format(username, pushers.get(url)['host'])
@@ -187,24 +188,33 @@ elif str(ui) == 'push':
     else: urls = [m for m in mirrors]
 
     for url in urls:
+        # check input for invalid mirror URLs
         if url in mirrors:
+            # if a URL is valid ask for credentials
             try:
                 credentials.append(getcredentials(url, pushers))
             except KeyboardInterrupt:
-                credentials.append(())  # append empty credentials - do not push to this mirror
+                # append empty credentials - do not push to this mirror
+                credentials.append(())
                 print()
             except EOFError:
+                # cancel push operation
                 print()
-                exit()  # cancel push operation
+                exit()
         else:
+            # if it's not valid print error message
             print('pake: fail: no such mirror: {0}'.format(url))
+            # and append empty credentials to keep indexes synced
+            credentials.append(())
 
     for i, url in enumerate(urls):
+        # enumeration is required to get index for credentials
+        # they are stored in a list synced with list of URLs
         if credentials[i]:
             print('* pushing to mirror {0}:'.format(url), end='  ')
             username, password = credentials[i]
             try:
-                pake.node.pusher.push(root, url, username, password, installed=installed)
+                pake.node.pusher.push(root, url, username, password)
                 message = 'OK'
             except KeyboardInterrupt:
                 message = 'cancelled'
@@ -212,6 +222,8 @@ elif str(ui) == 'push':
                 if '--debug' in ui:
                     # if running with --debug option reraise the exception to
                     # provide stack trace and debug info
+                    # No message should be set here to throw exception in the `finally` block
+                    # if we would declare the message finally would kick in and silence the error
                     raise
                 else:
                     # otherwise, silence the exception and just show error message
@@ -226,7 +238,7 @@ elif str(ui) == 'aliens':
         url = ui.get('--add')
         if url[-1] == '/': url = url[:-1]
         try:
-            added = pake.node.manager.addalien(root, url)
+            added = pake.aliens.manager.addalien(root, url)
             message = 'pake: alien added: {0}'.format(added)
         except urllib.error.URLError as e:
             message = 'pake: fail: alien was not found: {0}'.format(e)
