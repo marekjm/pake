@@ -260,18 +260,22 @@ elif str(ui) == 'aliens':
             if '--verbose' in ui:
                 amirrors = aliens.get(url)['mirrors']
                 for am in amirrors: print('   + {0}'.format(am))
-elif str(ui) == 'packages':
-    packages = pake.config.node.Packages(root)
-    registered = pake.config.node.Registered(root)
+elif str(ui) == 'nests':
+    """Interface code for nest management.
+    """
+    nests = pake.config.node.Nests(root)
     if '--register' in ui:
+        """Code used to register nests.
+        Nest which is being registered must have a valid meta (containing name and version).
+        """
         try:
-            path = os.path.join(ui.get('--register'), '.pakerepo')
+            path = os.path.join(ui.get('--register'), '.pakenest')
             if path[0] == '~': path = os.path.abspath(os.path.expanduser(path))
-            pake.node.manager.packages.register(root, path)
-            meta = pake.config.repository.Meta(path)
-            if not os.path.isdir(path): raise pake.errors.PAKEError('repository not found in: {0}'.format(path))
+            pake.node.packages.register(root, path)
+            meta = pake.config.nest.Meta(path)
+            if not os.path.isdir(path): raise pake.errors.PAKEError('nest not found in: {0}'.format(path))
 
-            report = 'pake: registered repository'
+            report = 'pake: registered nest'
             if '--verbose' in ui: report += ' for package: {0} (version: {1})'.format(meta.get('name'), meta.get('version'))
         except (pake.errors.PAKEError) as e:
             report = 'pake: fatal: {0}'.format(e)
@@ -286,9 +290,14 @@ elif str(ui) == 'packages':
         finally:
             if '--quiet' not in ui and not fail: print('pake: metadata updated')
     if '--unregister' in ui:
-        pack = ui.get('--unregister')
-        if '--name' in ui: registered.remove(name=pack)
-        else: registered.remove(path=pack)
+        """Used to remove nest from the list of registered nests.
+        """
+        try:
+            nests.remove(name=ui.get('--unregister')).write()
+        except KeyError as e:
+            print('pake: nest for package {0} was not registered'.format(e))
+        finally:
+            pass
     if '--list' in ui:
         for package in packages:
             p = packages.get(package)
@@ -299,4 +308,4 @@ elif str(ui) == 'packages':
             if package not in registered: report += ' (not registered)'
             if '--quiet' not in ui: print(report)
 else:
-    if '--debug' in ui: print('pake: fail: mode `{0}` is implemented yet'.format(str(ui)))
+    if '--debug' in ui: print('pake: fail: mode `{0}` is not implemented yet'.format(str(ui)))

@@ -17,7 +17,7 @@ GLOBAL OPTIONS:
 MODES:
 
 init:
-    Mode used for initalization of the package repository.
+    Mode used for initalization of the package nest.
 
     -f, --force             - force node initialization (used for reinitializing)
 
@@ -91,65 +91,94 @@ if '--help' in ui:
     exit()
 
 
-root = pake.shared.getrepopath()
+root = pake.shared.getnestpath()
 fail = False
 
-# this will execute the program if there is no node on which to operate
+# this will execute the program if there is no nest on which to operate
 # exception is when the program is called in `init` modes
-# because it means that user will be initializing the node
-if not root and str(ui) != 'init': exit('pake: fatal: no repository found in current directory')
+# because it means that user will be initializing the nest
+if not root and str(ui) != 'init': exit('pake: fatal: no nest found in current directory')
 
 if str(ui) == 'init':
-    """This mode is used for initialization of local node.
-    Note, that when you'll reinitialize all config JSON will
+    """This mode is used for initialization of nest.
+    Note, that when you'll reinitialize with --force option all config JSON will
     be overwritten.
     """
     if root:
-        if '--debug' in ui: print('pake: debug: repository already exists in {0}'.format(root))
+        """This means that a nest already exists in current working directory.
+        """
+        if '--debug' in ui: print('pake: debug: nest already exists in {0}'.format(root))
         if '--force' in ui:
-            pake.repository.manager.remove(root)
-            message = 'pake: removed old repository'
+            """If --force option is given remove the old nest.
+            """
+            pake.nest.manager.remove(root)
+            message = 'pake: removed old nest'
             if '--verbose' in ui: message += ' from {0}'.format(root)
             if '--quiet' not in ui: print(message)
         else:
-            message = 'pake: fatal: repository cannot be initialized'
+            """If --force method is not given print error message and
+            set fail flag to True.
+            """
+            message = 'pake: fatal: nest cannot be initialized'
             if '--verbose' in ui: message += ' in {0}'.format(root)
             if '--quiet' not in ui: print(message)
             fail = True
     if not fail:
-        root = pake.shared.getrepopath(check=False)
-        pake.repository.manager.makedirs(root)
-        pake.repository.manager.makeconfig(root)
-        message = 'pake: repository initialized'
+        """If everything went OK so far try to create the nest: directory structure and
+        basic config files.
+        """
+        root = pake.shared.getnestpath(check=False)
+        pake.nest.manager.makedirs(root)
+        pake.nest.manager.makeconfig(root)
+        message = 'pake: nest initialized'
         if '--verbose' in ui: message += ' in {0}'.format(root)
         if '--quiet' not in ui: print(message)
 elif str(ui) == 'meta':
-    """Logic for meta.json manipulation.
+    """Code used for meta.json management.
     """
-    meta = pake.config.repository.Meta(root)
+    meta = pake.config.nest.Meta(root)
     if '--set' in ui:
+        """Used to set values in meta.
+        If a key already exists it will be overwritten.
+        """
         key, value = ui.get('--set')
-        meta.set(key, value)
+        meta.set(key, value).write()
     if '--remove' in ui:
-        meta.remove(ui.get('--remove'))
+        """This is used to remove the key from metadata.
+        """
+        meta.remove(ui.get('--remove')).write()
     if '--get' in ui:
+        """This will print out value fo given key.
+        """
         print(meta.get(ui.get('--get')))
     if '--list-keys' in ui:
+        """This will print contents of meta.json for the nest.
+        """
         if '--verbose' in ui:
+            """If --verbose option is passed print data as '{key}: {value}' pairs, each in new line.
+            """
             for key in sorted(meta.keys()): print('{0}: {1}'.format(key, meta.get(key)))
         else:
+            """If --verbose is not given print a comma separated list of keys.
+            """
             print(', '.join(sorted(meta.keys())))
     if '--reset' in ui:
-        meta.reset()
+        """This will reset meta.json to default (empty) state.
+        """
+        meta.reset().write()
     if '--pretty' in ui:
-        #   this should be routine and independent from
-        #   every other options to always enable the possibility
-        #   to format JSON in pretty way
+        """This should independent from every other option to enable the possibility
+        of formating JSON in pretty way without making any actual changes.
+        """
         meta.write(pretty=True)
 elif str(ui) == 'deps':
-    ui = ui.parser
-    dependencies = pake.config.repository.Dependencies(root)
+    """Code used to manage dependencies for this nest.
+    """
+    ui = ui.parser  # this is needed because deps is a nested mode
+    dependencies = pake.config.nest.Dependencies(root)
     if '--list' in ui:
+        """This will print out all dependencies of current nest.
+        """
         if '--verbose' in ui:
             for d in list(dependencies):
                 dep = dependencies[d]
@@ -167,7 +196,7 @@ elif str(ui) == 'deps':
         dep['origin'] = ui.get('--origin')
         if '--min-version' in ui: dep['min'] = ui.get('-m')
         if '--max-version' in ui: dep['max'] = ui.get('-M')
-        dependencies.set(name=name, dependency=dep)
+        dependencies.set(name=name, dependency=dep).write()
     if str(ui) == 'remove':
         if ui.arguments:
             for i in ui.arguments:
@@ -180,7 +209,7 @@ elif str(ui) == 'deps':
                     pass
 elif str(ui) == 'files':
     ui = ui.parser
-    files = pake.config.repository.Files(root)
+    files = pake.config.nest.Files(root)
 
     """Here are options local to *files* mode and not its sub-modes, e.g. --list.
     """
@@ -189,7 +218,7 @@ elif str(ui) == 'files':
 
     if str(ui) == 'add':
         """If directories are found on arguments list they are added to file list
-        of current repository.
+        of current nest.
         Files inside these directories are added unless --not-recursive option is passed in which
         case only directories are added.
         """
@@ -247,6 +276,6 @@ elif str(ui) == 'release':
     """Logic for managing release archives.
     """
     if '--create' in ui:
-        pake.repository.releases.makepackage(root)
+        pake.nest.releases.makepackage(root)
 else:
     if '--debug' in ui: print('pake: fail: mode `{0}` is implemented yet'.format(str(ui)))

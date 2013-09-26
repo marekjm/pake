@@ -144,13 +144,13 @@
             "help": "push only to selected mirror"
         }
     ],
-    "packages": [
+    "nests": [
         {
             "short": "r",
             "long": "register",
             "arguments": ["str"],
             "conflicts": ["--unregister", "--delete"],
-            "help": "register new package in the node"
+            "help": "register new package in the node (requires path to root directory of nest e.g. the one containing .pakenest directory)"
         },
         {
             "short": "u",
@@ -162,12 +162,6 @@
             "long": "unregister",
             "arguments": ["str"],
             "help": "unregister package from the node"
-        },
-        {
-            "short": "d",
-            "long": "delete",
-            "arguments": ["str"],
-            "help": "delete package from the node"
         },
         {
             "short": "n",

@@ -46,16 +46,6 @@
     "deps": {
         "set": [
             {
-                "short": "m",
-                "long": "min-version",
-                "arguments": ["str"]
-            },
-            {
-                "short": "M",
-                "long": "max-version",
-                "arguments": ["str"]
-            },
-            {
                 "short": "n",
                 "long": "name",
                 "arguments": ["str"],
@@ -66,6 +56,16 @@
                 "long": "origin",
                 "arguments": ["str"],
                 "required": true
+            },
+            {
+                "short": "m",
+                "long": "min-version",
+                "arguments": ["str"]
+            },
+            {
+                "short": "M",
+                "long": "max-version",
+                "arguments": ["str"]
             }
         ],
         "update": [
