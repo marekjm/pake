@@ -25,32 +25,6 @@ class Meta(base.Meta):
     pass
 
 
-class Mirrors(base.Config):
-    """Interface to mirrors.json file.
-    """
-    name = 'mirrors.json'
-    default = []
-    content = []
-
-    def __iter__(self):
-        return iter(self.content)
-
-    def __list__(self):
-        return self.content
-
-    def add(self, url):
-        """Adds URL to mirrors list if it's not already there.
-        """
-        if url not in self.content: self.content.append(url)
-        return self
-
-    def remove(self, url):
-        """Removes URL from list of mirrors.
-        """
-        if url in self.content: self.content.remove(url)
-        return self
-
-
 class Pushers(base.Config):
     """Interface to pushers.json file.
     """
@@ -114,6 +88,12 @@ class Pushers(base.Config):
         index = self._getindex(url)
         if index > -1: del self.content[index]
         return self
+
+    def geturls(self):
+        """Returns list of URLs of all pushers which
+        is, basically, a list of mirrors.
+        """
+        return [pusher['url'] for pusher in self.content]
 
 
 class Aliens(base.Config):
@@ -183,37 +163,6 @@ class Aliens(base.Config):
             ad['meta'] = d['meta']
             aliens.append(ad)
         return aliens
-
-
-class Packages(base.Config):
-    """Interface to packages.json file.
-
-    Packages in this file are visible to users who added you to their aliens list.
-    It is basically a list of names of all available packages.
-
-    **Notice:** this object is designed to be reset and rebuilt each time it's sent to
-    server. Hence, only .append() method is available and not .remove(), .get() etc.
-    """
-    name = 'packages.json'
-    default = []
-    content = []
-
-    def append(self, name):
-        """Appends package to the list of provided packages. Part of PAKE fluent API.
-        Name is removed from metadata before storing it.
-
-        :param name: name of the package
-        :type name: str
-        :param latest: most recent version fo the package
-        :type latest: str
-        """
-        if name not in self: self.content.append(name)
-        return self
-
-    def names(self):
-        """Return names of all packages.
-        """
-        return [name for name in self.content]
 
 
 class Nests(base.Config):

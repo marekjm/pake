@@ -35,13 +35,8 @@ def makeconfig(root):
     :type root: str
     """
     config.node.Meta(root).reset().write()
-    config.node.Mirrors(root).reset().write()
     config.node.Pushers(root).reset().write()
     config.node.Aliens(root).reset().write()
-    # commented because I'm not sure how to
-    # implement this functionality
-    #config.node.Installed(root).reset().write()
-    config.node.Packages(root).reset().write()
     config.node.Nests(root).reset().write()
 
 

@@ -92,6 +92,11 @@
             "long": "list",
             "conflicts": ["--add", "--remove"],
             "help": "list added mirrors"
+        },
+        {
+            "short": "g",
+            "long": "gen-list",
+            "help": "generates list of mirrors that is served to the network (mirrors.json)"
         }
     ],
     "aliens": [
@@ -154,11 +159,6 @@
         },
         {
             "short": "u",
-            "long": "update",
-            "help": "update metadata of registered packages"
-        },
-        {
-            "short": "U",
             "long": "unregister",
             "arguments": ["str"],
             "help": "unregister package from the node"
@@ -172,7 +172,12 @@
         {
             "short": "l",
             "long": "list",
-            "help": "list all packages in the node"
+            "help": "list all registered nests"
+        },
+        {
+            "short": "g",
+            "long": "gen-pkg-list",
+            "help": "generate list of packages which will be available on the network"
         }
     ],
     "__global__": [

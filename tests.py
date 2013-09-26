@@ -68,10 +68,8 @@ class NodeInitializationTests(unittest.TestCase):
         """
         # (filename, desired_content)
         configs = [ ('meta.json', {}),
-                    ('mirrors.json', []),
                     ('pushers.json', []),
                     ('aliens.json', {}),
-                    ('packages.json', []),
                     ('nests.json', {}),
                     ]
         if VERBOSE: print()
@@ -134,17 +132,6 @@ class NodeConfigurationTests(unittest.TestCase):
         self.assertEqual(['bar', 'baz', 'foo'], sorted(pake.config.node.Meta(test_node_root).keys()))
         pake.config.node.Meta(test_node_root).reset().write()
 
-    def testAddingMirror(self):
-        pake.config.node.Mirrors(test_node_root).add('http://pake.example.com').write()
-        self.assertEqual(['http://pake.example.com'], list(pake.config.node.Mirrors(test_node_root)))
-        pake.config.node.Mirrors(test_node_root).reset().write()
-
-    def testRemovingMirror(self):
-        pake.config.node.Mirrors(test_node_root).add('http://pake.example.com').add('http://pake.example.net').add('http://pake.example.org').write()
-        pake.config.node.Mirrors(test_node_root).remove('http://pake.example.net').write()
-        self.assertNotIn('http://pake.example.net', list(pake.config.node.Mirrors(test_node_root)))
-        pake.config.node.Mirrors(test_node_root).reset().write()
-
     def testAddingPusher(self):
         pusher = {'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}
         pake.config.node.Pushers(test_node_root).add(**pusher).write()
@@ -205,16 +192,6 @@ class NodeConfigurationTests(unittest.TestCase):
         aliens = pake.config.node.Aliens(test_node_root).all()
         self.assertIn(foo, aliens)
         pake.config.node.Aliens(test_node_root).reset().write()
-
-    def testAddingPackages(self):
-        pake.config.node.Packages(test_node_root).append(name='foo').write()
-        self.assertIn('foo', pake.config.node.Packages(test_node_root).names())
-        pake.config.node.Packages(test_node_root).reset().write()
-
-    def testGettingPackagesNames(self):
-        pake.config.node.Packages(test_node_root).append('foo').append('bar').append('baz').write()
-        self.assertEqual(['bar', 'baz', 'foo'], sorted(pake.config.node.Packages(test_node_root).names()))
-        pake.config.node.Packages(test_node_root).reset().write()
 
     def testSettingNests(self):
         pake.config.node.Nests(root=test_node_root).set('foo', './testdir/.pakenest').write()
@@ -319,7 +296,20 @@ class NodePackagesTests(unittest.TestCase):
     def testBuildingPackageList(self):
         pake.config.nest.Meta(test_nest_root).set('name', 'foo').write()
         pake.config.node.Nests(test_node_root).set('foo', test_nest_root).write()
-        pake.node.packages.makepkglist(test_node_root)
+        pake.node.packages.genpkglist(test_node_root)
+        ifstream = open(os.path.join(test_node_root, 'packages.json'))
+        self.assertEqual(['foo'], json.loads(ifstream.read()))
+        ifstream.close()
+
+
+class NodePushingTests(unittest.TestCase):
+    def testMirrorlistGeneration(self):
+        pake.config.node.Pushers(test_node_root).add(url='http://pake.example.com', host='example.com', cwd='').write()
+        pake.node.pusher.genmirrorlist(test_node_root)
+        ifstream = open(os.path.join(test_node_root, 'mirrors.json'))
+        self.assertEqual(['http://pake.example.com'], json.loads(ifstream.read()))
+        ifstream.close()
+        pake.config.node.Pushers(test_node_root).reset().write()
 
 
 if __name__ == '__main__': unittest.main()

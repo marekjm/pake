@@ -5,6 +5,7 @@
 
 
 import ftplib
+import json
 import os
 import warnings
 
@@ -17,7 +18,6 @@ def _uploadconfig(root, remote):
     :param remote: is a ftplib.FTP object capable of storing files
     """
     files = ['meta.json', 'packages.json', 'aliens.json', 'mirrors.json']
-    if installed: files.append('installed.json')
     for name in files:
         ifstream = open(os.path.join(root, name), 'rb')
         remote.storbinary('STOR {0}'.format(name), ifstream, callback=None)
@@ -81,3 +81,13 @@ def push(root, url, username, password):
     host = pusher['host']
     cwd = pusher['cwd']
     _upload(root, host=host, username=username, password=password, cwd=cwd)
+
+
+def genmirrorlist(root):
+    """Generates mirror list from pusher.json file.
+    The mirror list is stored on server (pushers.json is not).
+    """
+    pushers = config.node.Pushers(root)
+    ofstream = open(os.path.join(root, 'mirrors.json'), 'w')
+    ofstream.write(json.dumps(pushers.geturls()))
+    ofstream.close()

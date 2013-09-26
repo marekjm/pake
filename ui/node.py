@@ -114,13 +114,8 @@ elif str(ui) == 'meta':
         #   to format JSON in pretty way
         pake.config.node.Meta(root).write(pretty=True)
 elif str(ui) == 'mirrors':
-    """This mode is used for management of mirrors and pushers list.
-
-    The process of management of both mirrors and pushers should not be split because they MUST BE
-    synchronized with each other.
-    Otherwise you might end with mirrors not visible to outer network.
+    """This mode is used for management of pushers list.
     """
-    mirrors = pake.config.node.Mirrors(root)
     pushers = pake.config.node.Pushers(root)
 
     if '--add' in ui:
@@ -137,7 +132,6 @@ elif str(ui) == 'mirrors':
             """If URL is not in mirrors everything's fine and we can just add it to the list
             of pushers and mirrors.
             """
-            mirrors.add(url).write()
             pushers.add(url=url, host=host, cwd=cwd).write()
             message = 'pake: node: added mirror'
             if '--verbose' in ui: message += ' {0} on host {1}'.format(url, host)
@@ -167,6 +161,12 @@ elif str(ui) == 'mirrors':
                 print('   + cwd:  {0}'.format(m['cwd']))
         else:
             for m in mirrors: print(m)
+    if '--gen-list' in ui:
+        """Used to generate mirrors.json list which is sent to server and
+        is served to the network.
+        """
+        pake.node.pusher.genmirrorlist(root)
+        if '--quiet' not in ui: print('pake: generated mirrors.json list...')
 elif str(ui) == 'push':
     """This mode is used to push node's contents to mirror servers on the Net.
     """
@@ -179,8 +179,8 @@ elif str(ui) == 'push':
         password = getpass.getpass(prompt)
         return (username, password)
 
-    mirrors = pake.config.node.Mirrors(root)
     pushers = pake.config.node.Pushers(root)
+    mirrors = pushers.geturls()
     installed = '--installed' in ui  # whether push also installed.json file
     credentials = []
     if '--only' in ui: urls = [ui.get('--only')]
@@ -207,6 +207,10 @@ elif str(ui) == 'push':
             # and append empty credentials to keep indexes synced
             credentials.append(())
 
+    # this is a line break between credentials input and
+    # reports about push status
+    print()
+
     for i, url in enumerate(urls):
         # enumeration is required to get index for credentials
         # they are stored in a list synced with list of URLs
@@ -222,8 +226,8 @@ elif str(ui) == 'push':
                 if '--debug' in ui:
                     # if running with --debug option reraise the exception to
                     # provide stack trace and debug info
-                    # No message should be set here to throw exception in the `finally` block
-                    # if we would declare the message finally would kick in and silence the error
+                    message = 'failed: showing debug trace'
+                    print()
                     raise
                 else:
                     # otherwise, silence the exception and just show error message
@@ -281,14 +285,6 @@ elif str(ui) == 'nests':
             report = 'pake: fatal: {0}'.format(e)
         finally:
             print(report)
-    if '--update' in ui:
-        try:
-            pake.node.manager.packages.update(root, ui.get('--update'))
-        except (pake.errors.PAKEError) as e:
-            print('pake: fatal: {0}'.format(e))
-            fail = True
-        finally:
-            if '--quiet' not in ui and not fail: print('pake: metadata updated')
     if '--unregister' in ui:
         """Used to remove nest from the list of registered nests.
         """
@@ -299,13 +295,21 @@ elif str(ui) == 'nests':
         finally:
             pass
     if '--list' in ui:
-        for package in packages:
-            p = packages.get(package)
-            report = '{0} {1} {2}'.format(p['name'], p['version'], registered.get(p['name']))
+        """List all nests registered in this node.
+        """
+        for package in nests:
+            meta = pake.config.nest.Meta(nests.get(package))
+            report = '{0} {1} {2}'.format(meta['name'], meta['version'], nests.get(package))
             if '--verbose' in ui:
-                report += ' ({0})'.format(p['license'])
+                report += ' (licensed under: {0})'.format(p['license'])
                 if 'description' in p: report += ': {0}'.format(p['description'])
-            if package not in registered: report += ' (not registered)'
-            if '--quiet' not in ui: print(report)
+            print(report)
+    if '--gen-pkg-list' in ui:
+        """This is used to build list of packages that is served on your node.
+
+        It reads data from all registered nests and forges a packages.json data file.
+        """
+        pake.node.packages.genpkglist(root)
+        if '--quiet' not in ui: print('pake: generated packages.json list')
 else:
     if '--debug' in ui: print('pake: fail: mode `{0}` is not implemented yet'.format(str(ui)))

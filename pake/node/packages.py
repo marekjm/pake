@@ -9,6 +9,7 @@ It contains functions that may be used to:
 """
 
 
+import json
 import os
 import warnings
 
@@ -48,13 +49,15 @@ def unregister(root, name):
     config.node.Nests(root).remove(name).write()
 
 
-def makepkglist(root):
+def genpkglist(root):
     """Create list of packages available on this node.
     """
     nests = config.node.Nests(root)
-    packages = config.node.Packages(root)
+    ofstream = open(os.path.join(root, 'packages.json'), 'w')
+    packages = []
     for name in nests:
         # if API specs will change to inlcude more data in packages.json this
         # is the place to add teh code
         packages.append(config.nest.Meta(nests.get(name)).get('name'))
-    packages.write()
+    ofstream.write(json.dumps(packages))
+    ofstream.close()
