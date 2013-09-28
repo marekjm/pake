@@ -239,13 +239,33 @@ elif str(ui) == 'aliens':
     """
     aliens = pake.config.node.Aliens(root)
     if '--add' in ui:
+        """This is used to add an alien to the network.
+        """
         url = ui.get('--add')
         if url[-1] == '/': url = url[:-1]
         try:
-            added = pake.aliens.manager.addalien(root, url)
-            message = 'pake: alien added: {0}'.format(added)
+            added = pake.aliens.manager.add(root, url)
+            message = 'pake: alien added: {0}'.format(added['meta']['url'])
+            if '--verbose' in ui:
+                """Print some additional data about the alien if --verbose option is found.
+                """
+                message = ' (with {0} mirror(s))'.format(len(added['mirrors']))
+        except KeyboardInterrupt as e:
+            """Operation cancelled by user. Just print the message.
+            Empty print if for adding a line break after the ^C (it looks nicer this way).
+            """
+            print()
+            message = 'pake: operation cancelled'
         except urllib.error.URLError as e:
+            """This is most likely 404 error.
+            """
             message = 'pake: fail: alien was not found: {0}'.format(e)
+        except Exception as e:
+            """By default silence all exception and just print out the error message to not scare the user too much.
+            However, if --debug option is found reraise the exception to show stack trace.
+            """
+            message = 'pake: adding alien failed: {0} ({1})'.format(e, type(e))
+            if '--debug' in ui: raise
         finally:
             if '--quiet' not in ui: print(message)
     if '--remove' in ui:

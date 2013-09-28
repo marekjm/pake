@@ -30,9 +30,9 @@ def add(root, url):
     :param url: URL of the alien node
     :type url: str
 
-    :returns: main url
+    :returns: dictionary containing fetched alien data
     """
     alien = fetchalien(url)
     if url in alien['mirrors']: url = alien['meta']['url']
-    config.node.Aliens(root).set(url, alien)
-    return url
+    config.node.Aliens(root).set(url=url, mirrors=alien['mirrors'], meta=alien['meta']).write()
+    return alien
