@@ -1,0 +1,56 @@
+{
+    "search": [
+        {
+            "short": "i",
+            "long": "include",
+            "help": "if more than one keywords are passed include more results (at least one matching)",
+            "conflicts": ["--exclude"]
+        },
+        {
+            "short": "e",
+            "long": "exclude",
+            "help": "if more than one keywords are passed exclude results (every keyword must match)"
+        }
+    ],
+    "install": [
+        {
+            "long": "ver",
+            "help": "install specific version of a package",
+            "arguments": ["str"]
+        }
+    ],
+    "remove": [
+    ],
+    "update": [
+    ],
+    "__global__": [
+        {
+            "short": "h",
+            "long": "help"
+        },
+        {
+            "long": "version",
+            "local": true
+        },
+        {
+            "short": "v",
+            "long": "verbose",
+            "conflicts": ["--quiet"]
+        },
+        {
+            "short": "Q",
+            "long": "quiet",
+            "conflicts": ["--verbose"]
+        },
+        {
+            "short": "D",
+            "long": "debug"
+        },
+        {
+            "short": "g",
+            "long": "gen-index",
+            "help": "generate index of packages",
+            "local": true
+        }
+    ]
+}
