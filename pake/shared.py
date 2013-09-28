@@ -17,6 +17,7 @@ API clarifications:
 
 
 import os
+import urllib.request
 
 import clap
 
@@ -89,6 +90,17 @@ def getenvpath(check=True, fake=''):
                 break
     if check and not os.path.isdir(path): path = ''
     return path
+
+
+def fetchjson(url):
+    """Fetches JSON from alien node and returns decoded data.
+
+    :param url: url from which to fetch data
+    """
+    socket = urllib.request.urlopen(url)
+    fetched = json.loads(str(socket.read(), encoding='utf-8'))
+    socket.close()
+    return fetched
 
 
 def checkinput(options):

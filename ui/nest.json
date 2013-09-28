@@ -113,13 +113,8 @@
             "long": "help"
         },
         {
-            "long": "version"
-        },
-        {
-            "short": "C",
-            "long": "component",
-            "arguments": ["str"],
-            "requires": ["--version"]
+            "long": "version",
+            "local": true
         },
         {
             "short": "v",

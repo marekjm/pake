@@ -331,5 +331,6 @@ elif str(ui) == 'nests':
         """
         pake.node.packages.genpkglist(root)
         if '--quiet' not in ui: print('pake: generated packages.json list')
+elif str(ui) == '': pass
 else:
     if '--debug' in ui: print('pake: fail: mode `{0}` is not implemented yet'.format(str(ui)))

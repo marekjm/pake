@@ -277,5 +277,6 @@ elif str(ui) == 'release':
     """
     if '--create' in ui:
         pake.nest.releases.makepackage(root)
+elif str(ui) == '': pass
 else:
-    if '--debug' in ui: print('pake: fail: mode `{0}` is implemented yet'.format(str(ui)))
+    if '--debug' in ui: print('pake: fail: mode `{0}` is not implemented yet'.format(str(ui)))

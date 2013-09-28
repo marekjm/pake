@@ -10,14 +10,16 @@ import urllib.request
 import warnings
 
 from pake import config
-from pake.aliens import shared
+from pake import shared
 
 
 def fetchalien(url):
     """Fetches data from alien node and creates a dictionary of it.
+
+    :param url: URL to alien root, e.g.: http://pake.example.com/node (without last slash)
     """
     alien = {}
-    for name in ['meta', 'mirrors']: alien[name] = shared.fetchjson(url, '{0}.json'.format(name))
+    for name in ['meta', 'mirrors']: alien[name] = shared.fetchjson(url='{0}/{1}.json'.format(url, name))
     return alien
 
 

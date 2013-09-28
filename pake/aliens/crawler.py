@@ -8,9 +8,8 @@ expand the network.
 import json
 import warnings
 
-from pake.aliens import shared as alshared
-from pake import shared
 from pake import config
+from pake import shared
 
 
 def crawl(root):
