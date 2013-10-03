@@ -29,7 +29,9 @@ def _uploadpackages(root, remote):
 
     :param remote: is a ftplib.FTP object capable of storing files
     """
-    if 'packages' not in [name for name, data in list(remote.mlsd())]: remote.mkd('packages')
+    for name in ['packages', 'cache']:
+        if name not in [name for name, data in list(remote.mlsd())]: remote.mkd(name)
+    #if 'packages' not in [name for name in list(remote.nlst())]: remote.mkd('packages')
     """
     remote.cwd('./packages')
     packages = os.listdir(os.path.join(root, 'packages'))

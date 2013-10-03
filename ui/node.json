@@ -97,6 +97,11 @@
             "short": "g",
             "long": "gen-list",
             "help": "generates list of mirrors that is served to the network (mirrors.json)"
+        },
+        {
+            "short": "p",
+            "long": "pretty",
+            "help": "format JSON in a pretty way (useful for debuging)"
         }
     ],
     "aliens": [
@@ -206,6 +211,10 @@
             "short": "D",
             "long": "debug",
             "help": "display debug messages"
+        },
+        {
+            "long": "gen-cache",
+            "help": "generate list of cached archives"
         }
     ]
 }

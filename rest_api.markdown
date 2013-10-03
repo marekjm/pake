@@ -27,3 +27,11 @@ Files which are provided for single package entry:
     [POINT]/packages/:name/releases/:release.json
     [POINT]/packages/:name/releases/:release.tar.xz
     [POINT]/packages/:name/releases/:release.asc
+
+
+Cached packages (only packages which are not originated from this node, only archives).
+Cache does not provide metadata but MUST provide signatures (if a signature for an archive cannot be found it
+is considered insecure).
+
+    [POINT]/cache.json         - list of cached archives (`foo-0.0.1.tar.xz`)
+    [POINT]/cache/:file

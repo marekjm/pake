@@ -22,20 +22,36 @@ def getindex(root):
     index = []
     errors = []
     for url in aliens:
-        packages = shared.fetchjson('{0}/packages.json'.format(url))
-        indexpart = []
-        for name in packages:
-            pack = {}
-            for i in ['meta', 'dependencies', 'versions']:
-                resource = '{0}/packages/{1}/{2}.json'.format(url, name, i)
-                try:
-                    pack[i] = shared.fetchjson(resource)
-                    indexpart.append(pack)
-                except urllib.error.HTTPError as e:
-                    errors.append('{0}: {1}'.format(e, resource))
-                finally:
-                    pass
-        index.extend(indexpart)
+        mirrors = aliens.get(url)['mirrors']
+        for m in mirrors:
+            print('\t', m)
+            try:
+                packages = shared.fetchjson('{0}/packages.json'.format(m))
+                # if fetch was successful break from loop
+                # the assumption is made that mirrors are up-to-date
+                break
+            except urllib.error.URLError as e:
+                errors.append('pake: fail: {0}: while getting packages from {1}'.format(e, m))
+                packages = []
+            finally:
+                pass
+
+        for m in mirrors:
+            indexpart = []
+            for name in packages:
+                pack = {}
+                for i in ['meta', 'dependencies', 'versions']:
+                    print('trying package: {0}'.format(name))
+                    print('\tfrom mirror: {0}'.format(m))
+                    resource = '{0}/packages/{1}/{2}.json'.format(m, name, i)
+                    try:
+                        pack[i] = shared.fetchjson(resource)
+                        indexpart.append(pack)
+                    except (urllib.error.HTTPError, urllib.error.URLError) as e:
+                        errors.append('{0}: {1}'.format(e, resource))
+                    finally:
+                        pass
+            index.extend(indexpart)
     return (index, errors)
 
 

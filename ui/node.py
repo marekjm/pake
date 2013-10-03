@@ -128,7 +128,7 @@ elif str(ui) == 'mirrors':
         url = ui.get('--url')
         host = ui.get('--host')
         cwd = ui.get('--cwd')
-        if url not in mirrors:
+        if url not in pushers:
             """If URL is not in mirrors everything's fine and we can just add it to the list
             of pushers and mirrors.
             """
@@ -167,6 +167,11 @@ elif str(ui) == 'mirrors':
         """
         pake.node.pusher.genmirrorlist(root)
         if '--quiet' not in ui: print('pake: generated mirrors.json list...')
+    if '--pretty' in ui:
+        """Format pushers.json in a pretty (more human readable form).
+        """
+        pushers.write(pretty=True)
+        if '--verbose' in ui: print('pake: formatted pushers.json')
 elif str(ui) == 'push':
     """This mode is used to push node's contents to mirror servers on the Net.
     """
@@ -215,13 +220,13 @@ elif str(ui) == 'push':
         # enumeration is required to get index for credentials
         # they are stored in a list synced with list of URLs
         if credentials[i]:
-            print('* pushing to mirror {0}:'.format(url), end='  ')
+            print('* pushing to mirror {0}:'.format(url), end=' ')
             username, password = credentials[i]
             try:
                 pake.node.pusher.push(root, url, username, password)
                 message = 'OK'
             except KeyboardInterrupt:
-                message = 'cancelled'
+                message = 'cancelled by user'
             except Exception as e:
                 if '--debug' in ui:
                     # if running with --debug option reraise the exception to
@@ -231,7 +236,7 @@ elif str(ui) == 'push':
                     raise
                 else:
                     # otherwise, silence the exception and just show error message
-                    message = 'failed: {0}'.format(e)
+                    message = 'failed: {0} (cause: {1})'.format(e, str(type(e))[8:-2])
             finally:
                 print(message)
 elif str(ui) == 'aliens':
@@ -331,6 +336,11 @@ elif str(ui) == 'nests':
         """
         pake.node.packages.genpkglist(root)
         if '--quiet' not in ui: print('pake: generated packages.json list')
-elif str(ui) == '': pass
+elif str(ui) == '':
+    """Local options of top mode.
+    """
+    if '--gen-cache' in ui:
+        print('IMPLEMENT ME!')
+        print('pake: generated cache')
 else:
     if '--debug' in ui: print('pake: fail: mode `{0}` is not implemented yet'.format(str(ui)))
