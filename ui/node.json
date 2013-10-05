@@ -4,6 +4,11 @@
             "short": "f",
             "long": "force",
             "help": "force reinitialization, WARNING: deletes all old data"
+        },
+        {
+            "short": "r",
+            "long": "regen",
+            "help": "generate directory structure (for example when updating) but preserve config files"
         }
     ],
     "meta": [

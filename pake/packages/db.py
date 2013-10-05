@@ -61,6 +61,6 @@ def genindex(root):
     package - it's pointless to operate on non-generated (and thus empty)
     index.
     """
-    ofstream = open(os.path.join(root, 'pkg-db.json'), 'w')
+    ofstream = open(os.path.join(root, 'db', 'pkgs.json'), 'w')
     ofstream.write(json.dumps(getindex(root)))
     ofstream.close()

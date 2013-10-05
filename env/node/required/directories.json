@@ -1,6 +1,8 @@
 [
     "cache",
     "db",
+    "db/transactions",
+    "db/transactions/prepared",
     "installing",
     "prepared"
 ]

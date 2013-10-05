@@ -73,21 +73,51 @@ if str(ui) == 'init':
     if root:
         if '--debug' in ui:
             print('pake: debug: node already exists in {0}'.format(root))
-        if '--force' in ui:
+        if '--regen' in ui:
+            """In the regeneration mode we want to preserve config files but generate entirely new directory
+            structure. This is useful when updating.
+            """
+            meta = pake.config.node.Meta(root)
+            nests = pake.config.node.Nests(root)
+            pushers = pake.config.node.Pushers(root)
+            aliens = pake.config.node.Aliens(root)
+            if '--debug' in ui: print('pake: debug: stored config files in memory')
+        if '--force' in ui or '--regen' in ui:
+            """This means that a user wants to reinitialize the node.
+            We will remove everything from the old one so the environment is clean and
+            new node can be initialized.
+            """
             pake.node.manager.remove(root)
-            message = 'pake: removed old node'
-            if '--verbose' in ui: message += ' from {0}'.format(root)
-            if '--quiet' not in ui: print(message)
+            if '--debug' in ui: print('pake: debug: removed old node from {0}'.format(root))
         else:
+            """Node cannot be initialized because it's already present.
+            """
             message = 'pake: fatal: node cannot be initialized'
             if '--verbose' in ui: message += ' in {0}'.format(root)
-            if '--quiet' not in ui: print(message)
+            print(message)
             fail = True
     if not fail:
+        """If everything went fine so far it means that we can try to create a node.
+        """
         root = pake.shared.getnodepath(check=False)
         pake.node.manager.makedirs(root)
-        pake.node.manager.makeconfig(root)
-        message = 'pake: node initialized'
+        if '--regen' in ui:
+            """Write preserved config files to newly created node if
+            --regen option was passed (this means that they were stored in memory before
+            deleting node's directory and can now be written).
+            """
+            meta.write()
+            nests.write()
+            pushers.write()
+            aliens.write()
+        else:
+            """This means that this is hard reinitalization and
+            user doesn't care for config files or
+            that it's a fresh init and we must create empty config.
+            """
+            pake.node.manager.makeconfig(root)
+        if '--force' in ui or '--regen' in ui: message = 'pake: node reinitialized'
+        else: message = 'pake: node reinitialized'
         if '--verbose' in ui: message += ' in {0}'.format(root)
         if '--quiet' not in ui: print(message)
 elif str(ui) == 'meta':
