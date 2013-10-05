@@ -250,23 +250,23 @@ elif str(ui) == 'push':
         # enumeration is required to get index for credentials
         # they are stored in a list synced with list of URLs
         if credentials[i]:
-            print('* pushing to mirror {0}:'.format(url), end=' ')
+            print('* pushing to mirror {0}...'.format(url))
             username, password = credentials[i]
             try:
                 pake.node.pusher.push(root, url, username, password)
-                message = 'OK'
+                message = '* pushing to mirror {0}: OK'.format(url)
             except KeyboardInterrupt:
-                message = 'cancelled by user'
+                message = '* pushing to mirror {0}: cancelled by user'.format(url)
             except Exception as e:
                 if '--debug' in ui:
                     # if running with --debug option reraise the exception to
                     # provide stack trace and debug info
-                    message = 'failed: showing debug trace'
+                    message = '* pushing to mirror {0}: failed: showing debug trace'.format(url)
                     print()
                     raise
                 else:
                     # otherwise, silence the exception and just show error message
-                    message = 'failed: {0} (cause: {1})'.format(e, str(type(e))[8:-2])
+                    message = '* pushing to mirror {0}: failed: {1} (cause: {2})'.format(url, e, str(type(e))[8:-2])
             finally:
                 print(message)
 elif str(ui) == 'aliens':

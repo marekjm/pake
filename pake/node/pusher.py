@@ -13,9 +13,11 @@ from pake import config
 
 
 def _uploadconfig(root, remote):
-    """Uploads configuration files.
+    """Uploads configuration files from ~/.pakenode to the
+    root of a mirror. Root of a mirror is set by "cwd" field in pusher.
 
     :param remote: is a ftplib.FTP object capable of storing files
+    :param root: root of the node
     """
     files = ['meta.json', 'packages.json', 'aliens.json', 'mirrors.json']
     for name in files:
@@ -31,26 +33,32 @@ def _uploadpackages(root, remote):
     """
     for name in ['packages', 'cache']:
         if name not in [name for name, data in list(remote.mlsd())]: remote.mkd(name)
-    #if 'packages' not in [name for name in list(remote.nlst())]: remote.mkd('packages')
-    """
+    print('+ pake: debug: switching to "packages" directory')
     remote.cwd('./packages')
-    packages = os.listdir(os.path.join(root, 'packages'))
-    for pack in packages:
-        if pack not in [name for name, data in list(remote.mlsd())]: remote.mkd(pack)
-        remote.cwd(pack)
-        contents = os.listdir(os.path.join(root, 'packages', pack))
-        try:
-            if fallback: remote.rename('meta.json', 'fallback.meta.json')
-            else: remote.delete('meta.json')
-        except ftplib.error_perm:
-            pass
-        finally:
-            for item in contents:
-                if item not in remote.mlsd():
-                    remote.storbinary('STOR {}'.format(item), open(os.path.join(root, 'packages', pack, item), 'rb'))
-        remote.cwd('..')
-    """
-    warnings.warn(NotImplemented)
+    pkgs = config.node.Nests(root)
+    for name in pkgs:
+        print('+ pake: debug: uploading: {0}'.format(name))
+        if name not in [name for name, data in list(remote.mlsd())]:
+            print('+ pake: debug: creating "{0}" directory'.format(name))
+            remote.mkd(name)
+        print('+ pake: debug: switching to "{0}" directory'.format(name))
+        remote.cwd('./{0}'.format(name))
+        ifstream = open(os.path.join(pkgs.get(name), 'versions.json'), 'rb')
+        remote.storbinary('STOR {0}'.format('versions.json'), ifstream, callback=None)
+        ifstream.close()
+        print('+ pake: debug: uploaded "versions.json" file')
+        if 'versions' not in [name for name, data in list(remote.mlsd())]:
+            print('+ pake: debug: creating "versions" directory'.format(name))
+            remote.mkd('versions')
+        print('+ pake: debug: switching to "versions" directory'.format(name))
+        remote.cwd('./versions')
+        versions = config.nest.Versions(pkgs.get(name))
+        for v in versions:
+            if v not in [name for name, data in list(remote.mlsd())]:
+                print('+ pake: debug: creating "versions/{0}" directory'.format(v))
+                remote.mkd(v)
+        print('+ pake: debug: uploaded: {0}'.format(name))
+        print(remote.pwd())
 
 
 def _upload(root, host, username, password, cwd=''):
