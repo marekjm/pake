@@ -22,9 +22,24 @@ def _uploadconfig(root, remote):
     files = ['meta.json', 'packages.json', 'aliens.json', 'mirrors.json']
     for name in files:
         ifstream = open(os.path.join(root, name), 'rb')
-        remote.storbinary('STOR {0}'.format(name), ifstream, callback=None)
+        remote.storlines('STOR {0}'.format(name), ifstream, callback=None)
         ifstream.close()
 
+def _lsdir(remote, directory='.'):
+    """Returns directory listing.
+    .nlst() method is deprecated but some servers (VSFTPd for example) don't accept
+    .mlsd().
+    Returns a list of strings.
+    """
+    listing = []
+    try:
+        listing = [name for name, data in remote.mlsd(directory)]
+    except fptblib.error_perm as e:
+        warnings.warn('{0} was returned by .mlsd(): trying to use .nlst()'.format(e))
+        listing = remote.nlst()
+        warnings.warn(DeprecationWarning)
+    finally:
+        return listing
 
 def _uploadpackages(root, remote):
     """Uploads packages.
@@ -32,29 +47,30 @@ def _uploadpackages(root, remote):
     :param remote: is a ftplib.FTP object capable of storing files
     """
     for name in ['packages', 'cache']:
-        if name not in [name for name, data in list(remote.mlsd())]: remote.mkd(name)
+        if name not in _lsdir(remote):
+            remote.mkd(name)
     print('+ pake: debug: switching to "packages" directory')
     remote.cwd('./packages')
     pkgs = config.node.Nests(root)
     for name in pkgs:
         print('+ pake: debug: uploading: {0}'.format(name))
-        if name not in [name for name, data in list(remote.mlsd())]:
+        if name not in _lsdir(remote):
             print('+ pake: debug: creating "{0}" directory'.format(name))
             remote.mkd(name)
         print('+ pake: debug: switching to "{0}" directory'.format(name))
         remote.cwd('./{0}'.format(name))
         ifstream = open(os.path.join(pkgs.get(name), 'versions.json'), 'rb')
-        remote.storbinary('STOR {0}'.format('versions.json'), ifstream, callback=None)
+        remote.storlines('STOR {0}'.format('versions.json'), ifstream, callback=None)
         ifstream.close()
         print('+ pake: debug: uploaded "versions.json" file')
-        if 'versions' not in [name for name, data in list(remote.mlsd())]:
+        if 'versions' not in _lsdir(remote):
             print('+ pake: debug: creating "versions" directory'.format(name))
             remote.mkd('versions')
         print('+ pake: debug: switching to "versions" directory'.format(name))
         remote.cwd('./versions')
         versions = config.nest.Versions(pkgs.get(name))
         for v in versions:
-            if v not in [name for name, data in list(remote.mlsd())]:
+            if v not in _lsdir(remote):
                 print('+ pake: debug: creating "versions/{0}" directory'.format(v))
                 remote.mkd(v)
         print('+ pake: debug: uploaded: {0}'.format(name))
