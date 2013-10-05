@@ -275,8 +275,15 @@ elif str(ui) == 'files':
 elif str(ui) == 'release':
     """Logic for managing release archives.
     """
-    if '--create' in ui:
-        pake.nest.releases.makepackage(root)
+    meta = pake.config.nest.Meta(root)
+    if '--build' in ui:
+        try:
+            pake.nest.package.build(root)
+            message = 'pake: nest: built {0}-{1}'.format(meta['name'], meta['version'])
+        except FileExistsError as e:
+            message = 'pake: fatal: build for version {0} already exists'.format(meta['version'])
+        finally:
+            if '--quiet' not in ui: print(message)
 elif str(ui) == '': pass
 else:
     if '--debug' in ui: print('pake: fail: mode `{0}` is not implemented yet'.format(str(ui)))

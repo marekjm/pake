@@ -97,16 +97,19 @@
             }
         ]
     },
-    "release": [
-        {
-            "short": "c",
-            "long": "create"
-        },
-        {
-            "short": "l",
-            "long": "list"
-        }
-    ],
+    "release": {
+        "__global__": [
+            {
+                "short": "b",
+                "long": "build",
+                "help": "build package release"
+            },
+            {
+                "short": "l",
+                "long": "list"
+            }
+        ]
+    },
     "__global__": [
         {
             "short": "h",
