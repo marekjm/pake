@@ -59,6 +59,9 @@ def _uploadpackages(root, remote):
                 remote.mkd(v)
         print('+ pake: debug: uploaded: {0}'.format(name))
         print(remote.pwd())
+        remote.cwd('../../')
+        print('+ pake: debug: returning to main package directory...')
+        print(remote.pwd())
 
 
 def _upload(root, host, username, password, cwd=''):
