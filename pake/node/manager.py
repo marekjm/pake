@@ -6,7 +6,6 @@
 import json
 import os
 import shutil
-import warnings
 
 from pake import config, shared
 

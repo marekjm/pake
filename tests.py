@@ -258,18 +258,23 @@ class NestConfigurationTests(unittest.TestCase):
 
 class NestReleasesTests(unittest.TestCase):
     def testBuildingNonsignedPackage(self):
-        # first: setup minimal meta needed for build process
+        # 1: setup minimal meta needed for build process
         pake.config.nest.Meta(test_nest_root).set('name', 'test').set('version', '0.0.1').write()
-        # second: create list of files
+        # 2: create list of files
         pake.nest.package.addfile(test_nest_root, './tests.py')
         pake.nest.package.adddir(test_nest_root, './ui/', recursive=True, avoid=['__pycache__'], avoid_exts=['swp', 'pyc'])
         pake.nest.package.adddir(test_nest_root, './webui/', recursive=True, avoid_exts=['swp', 'pyc'])
-        # third: build package
+        # 3: run build routine
         pake.nest.package.build(test_nest_root)
-        # fourth: check if the package was built
-        self.assertIn('test-0.0.1.tar.xz', os.listdir(os.path.join(test_nest_root, 'releases')))
-        # fifth: get names of files included in package
-        test_pkg = tarfile.TarFile(os.path.join(test_nest_root, 'releases', 'test-0.0.1.tar.xz'), 'r')
+        # 4: check if the package was built
+        # 4.1: check if the directory was created
+        self.assertIn('0.0.1', os.listdir(os.path.join(test_nest_root, 'versions')))
+        # 4.2: check if the meta has been copied
+        self.assertIn('meta.json', os.listdir(os.path.join(test_nest_root, 'versions', '0.0.1')))
+        # 4.3: check if the dependencies.json has been copied
+        self.assertIn('dependencies.json', os.listdir(os.path.join(test_nest_root, 'versions', '0.0.1')))
+        # 5: get names of files included in package
+        test_pkg = tarfile.TarFile(os.path.join(test_nest_root, 'versions', '0.0.1', 'build.tar.xz'), 'r')
         names = test_pkg.getnames()
         test_pkg.close()
         # sixth: create list of files we expect to be included

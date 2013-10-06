@@ -5,14 +5,14 @@ adding/removing files and directories.
 """
 
 import os
-import re
+import shutil
 import tarfile
 import warnings
 
 #   but can be obtained from: https://github.com/marekjm/but
 from but import scanner as butscanner
 
-from pake import config
+from pake import config, errors
 
 
 def adddir(root, path, recursive=True, avoid=[], avoid_exts=[]):
@@ -78,4 +78,4 @@ def build(root):
     package.close()
 
     for name in ['meta.json', 'dependencies.json']:
-        os.copy(os.path.join(root, name), os.path.join(path, name))
+        shutil.copy(os.path.join(root, name), os.path.join(path, name))

@@ -25,6 +25,7 @@ def _uploadconfig(root, remote):
         remote.storlines('STOR {0}'.format(name), ifstream, callback=None)
         ifstream.close()
 
+
 def _lsdir(remote, directory='.'):
     """Returns directory listing.
     .nlst() method is deprecated but some servers (VSFTPd for example) don't accept
@@ -34,12 +35,13 @@ def _lsdir(remote, directory='.'):
     listing = []
     try:
         listing = [name for name, data in remote.mlsd(directory)]
-    except fptblib.error_perm as e:
+    except ftplib.error_perm as e:
         warnings.warn('{0} was returned by .mlsd(): trying to use .nlst()'.format(e))
         listing = remote.nlst()
         warnings.warn(DeprecationWarning)
     finally:
         return listing
+
 
 def _uploadpackages(root, remote):
     """Uploads packages.
@@ -47,8 +49,7 @@ def _uploadpackages(root, remote):
     :param remote: is a ftplib.FTP object capable of storing files
     """
     for name in ['packages', 'cache']:
-        if name not in _lsdir(remote):
-            remote.mkd(name)
+        if name not in _lsdir(remote): remote.mkd(name)
     print('+ pake: debug: switching to "packages" directory')
     remote.cwd('./packages')
     pkgs = config.node.Nests(root)
@@ -82,7 +83,7 @@ def _uploadpackages(root, remote):
 
 def _upload(root, host, username, password, cwd=''):
     """Uploads node data to given host.
-    
+
     :root: root directory of the local node
     :host: url of host server
     :username: FTP server username
