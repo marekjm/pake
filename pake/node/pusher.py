@@ -12,20 +12,7 @@ import warnings
 from pake import config
 
 
-def _uploadconfig(root, remote):
-    """Uploads configuration files from ~/.pakenode to the
-    root of a mirror. Root of a mirror is set by "cwd" field in pusher.
-
-    :param remote: is a ftplib.FTP object capable of storing files
-    :param root: root of the node
-    """
-    files = ['meta.json', 'packages.json', 'aliens.json', 'mirrors.json']
-    for name in files:
-        ifstream = open(os.path.join(root, name), 'rb')
-        remote.storlines('STOR {0}'.format(name), ifstream, callback=None)
-        ifstream.close()
-
-
+# helper FTP functions
 def _lsdir(remote, directory='.'):
     """Returns directory listing.
     .nlst() method is deprecated but some servers (VSFTPd for example) don't accept
@@ -43,7 +30,43 @@ def _lsdir(remote, directory='.'):
         return listing
 
 
-def _uploadpackages(root, remote):
+def _sendlines(connection, path):
+    """Send file as lines.
+    File is sent to the current working directory set in remote.
+
+    :param remote: ftplib.FTP object
+    :param path: path to a file
+    """
+    ifstream = open(path, 'rb')
+    connection.storlines('STOR {0}'.format(os.path.split(path)[-1]), ifstream, callback=None)
+    ifstream.close()
+
+
+def _sendbinary(connection, path):
+    """Send file as binary.
+    File is sent to the current working directory set in remote.
+
+    :param remote: ftplib.FTP object
+    :param path: path to a file
+    """
+    ifstream = open(path, 'rb')
+    connection.storbinary('STOR {0}'.format(os.path.split(path)[-1]), ifstream, callback=None)
+    ifstream.close()
+
+
+# Class methods
+def _uploadconfig(root, remote):
+    """Uploads configuration files from ~/.pakenode to the
+    root of a mirror. Root of a mirror is set by "cwd" field in pusher.
+
+    :param remote: is a ftplib.FTP object capable of storing files
+    :param root: root of the node
+    """
+    files = ['meta.json', 'packages.json', 'aliens.json', 'mirrors.json']
+    for name in files: _sendlines(connection=remote, path=os.path.join(root, name))
+
+
+def _uploadpackages(root, remote, reupload=False):
     """Uploads packages.
 
     :param remote: is a ftplib.FTP object capable of storing files
@@ -60,9 +83,7 @@ def _uploadpackages(root, remote):
             remote.mkd(name)
         print('+ pake: debug: switching to "{0}" directory'.format(name))
         remote.cwd('./{0}'.format(name))
-        ifstream = open(os.path.join(pkgs.get(name), 'versions.json'), 'rb')
-        remote.storlines('STOR {0}'.format('versions.json'), ifstream, callback=None)
-        ifstream.close()
+        _sendlines(connection=remote, path=os.path.join(pkgs.get(name), 'versions.json'))
         print('+ pake: debug: uploaded "versions.json" file')
         if 'versions' not in _lsdir(remote):
             print('+ pake: debug: creating "versions" directory'.format(name))
@@ -71,17 +92,22 @@ def _uploadpackages(root, remote):
         remote.cwd('./versions')
         versions = config.nest.Versions(pkgs.get(name))
         for v in versions:
-            if v not in _lsdir(remote):
+            absent = v not in _lsdir(remote)
+            if absent or reupload:
                 print('+ pake: debug: creating "versions/{0}" directory'.format(v))
-                remote.mkd(v)
-        print('+ pake: debug: uploaded: {0}'.format(name))
-        print(remote.pwd())
+                if absent: remote.mkd(v)
+                remote.cwd(v)
+                for conffile in ['meta.json', 'dependencies.json']:
+                    print('+ pake: debug: uploading "{0}" for version {1}'.format(conffile, v))
+                    _sendlines(connection=remote, path=os.path.join(pkgs.get(name), 'versions', v, conffile))
+                print('+ pake: debug: uploading build for version {0}'.format(v))
+                _sendbinary(connection=remote, path=os.path.join(pkgs.get(name), 'versions', v, 'build.tar.xz'))
+        print('+ pake: debug: uploaded package: {0}'.format(name))
         remote.cwd('../../')
         print('+ pake: debug: returning to main package directory...')
-        print(remote.pwd())
 
 
-def _upload(root, host, username, password, cwd=''):
+def _upload(root, host, username, password, cwd='', reupload=False):
     """Uploads node data to given host.
 
     :root: root directory of the local node
@@ -94,11 +120,11 @@ def _upload(root, host, username, password, cwd=''):
     remote.login(username, password)
     if cwd: remote.cwd(cwd)
     _uploadconfig(root, remote)
-    _uploadpackages(root, remote)
+    _uploadpackages(root, remote, reupload=reupload)
     remote.close()
 
 
-def push(root, url, username, password):
+def push(root, url, username, password, reupload=False):
     """Pushes node to remote server.
 
     :param root: node root directory
@@ -110,7 +136,7 @@ def push(root, url, username, password):
     if pusher is None: raise Exception('no pusher found for URL: {0}'.format(url))
     host = pusher['host']
     cwd = pusher['cwd']
-    _upload(root, host=host, username=username, password=password, cwd=cwd)
+    _upload(root, host=host, username=username, password=password, cwd=cwd, reupload=reupload)
 
 
 def genmirrorlist(root):

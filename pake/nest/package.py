@@ -79,3 +79,5 @@ def build(root):
 
     for name in ['meta.json', 'dependencies.json']:
         shutil.copy(os.path.join(root, name), os.path.join(path, name))
+
+    config.nest.Versions(root).add(meta['version']).write()

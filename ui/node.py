@@ -253,7 +253,7 @@ elif str(ui) == 'push':
             print('* pushing to mirror {0}...'.format(url))
             username, password = credentials[i]
             try:
-                pake.node.pusher.push(root, url, username, password)
+                pake.node.pusher.push(root, url, username, password, reupload=('--reupload' in ui))
                 message = '* pushing to mirror {0}: OK'.format(url)
             except KeyboardInterrupt:
                 message = '* pushing to mirror {0}: cancelled by user'.format(url)

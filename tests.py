@@ -282,6 +282,7 @@ class NestReleasesTests(unittest.TestCase):
         # seventh: check if the two lists are equal
         self.assertEqual(expected, names)
         # eighth: cleanup (reset to default, empty state)
+        self.assertIn('0.0.1', pake.config.nest.Versions(test_nest_root))
         pake.config.nest.Files(test_nest_root).reset().write()
         pake.config.nest.Meta(test_nest_root).reset().write()
 

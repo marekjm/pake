@@ -157,6 +157,11 @@
             "conflicts": ["--main"],
             "arguments": ["str"],
             "help": "push only to selected mirror"
+        },
+        {
+            "short": "r",
+            "long": "reupload",
+            "help": "reuploads all package files"
         }
     ],
     "nests": [
