@@ -6,6 +6,7 @@ management and distribution software for Python.
 Its main and only purpose is to make queries on the filesystem - e.g. creating directories,
 moving files, removing directory trees etc.
 
+----
 
 ### Syntax
 
@@ -14,6 +15,8 @@ FSRL has simple syntax:
     DIRECTIVE operand [operand ...]
 
 where directive is a keyword known to your FSRL implementation and operands are arguments required by it.
+
+----
 
 ### Directives
 
@@ -28,6 +31,8 @@ Reference implementation supports following directives:
 * `RMTREE /path/to/directoy`,
 
 &nbsp;
+
+#### `CP` - copy a file
 
     CP ./foo/__init__.py /usr/lib/python3.3/site-packages/foo/__init__.py
 
@@ -50,11 +55,13 @@ This does not neccessarily give greater control over files but is more explicit.
 
 &nbsp;
 
-    MOVE ./foo/__init__.py /usr/lib/python3.3/site-packages/__init__.py
+#### `MV` - move a file
+
+    MV ./foo/__init__.py /usr/lib/python3.3/site-packages/__init__.py
 
 This will move a file from one location to another.
 
-    MOVE ./foo/__init__.py /usr/lib/python3.3/site-packages/
+    MV ./foo/__init__.py /usr/lib/python3.3/site-packages/
 
 If second path is a directory name will be taken from first path.
 If a destination directory does not exist transaction will fail.
@@ -68,6 +75,17 @@ and (as in `CP` the `AS` part is optional).
 
 &nbsp;
 
+#### `RM` - remove a file
+
+    RM ./some/file.txt
+
+Removes a file.
+Fails if the path given is not a file.
+
+&nbsp;
+
+#### `MKD` - make directory
+
     MKD /path/to/directory/you/want/to/create
 
 Creates a directory.
@@ -75,16 +93,26 @@ This directive will fail if at least one of the intermediate directories does no
 will fail if only `/path/to/directory` exists and `/you/want/to` does not exist.
 In case the destination directory already exists directive does not fail but counts as succeded.
 
+&nbsp;
+
+#### `MKDS` - make directories
+
     MKDS /path/to/directory/you/want/to/create
 
 This is extended version of `MKD` directive - it will create all required intermediate directories.
 
 &nbsp;
 
+#### `RMD` - remove directory
+
     RMD /path/to/directory/you/want/to/remove
 
 This will remove the directory the path points to.
 Directive will fail if the directory is not empty.
+
+&nbsp;
+
+#### `RMTREE` - remove whole tree of diretcories and files
 
     RMTREE /path/to/directory/you/want/to/remove
 
