@@ -1,6 +1,6 @@
-### FSQL - File System Query Language
+### FSRL - File System Request Language
 
-FSQL was originally designed as a meta-langiage for PAKE, a distributed package
+FSRL was originally designed as a meta-langiage for PAKE, a distributed package
 management and distribution software for Python.
 
 It has SQL-like syntax, no flow-control keywords and is not Turing complete.
@@ -9,11 +9,11 @@ moving files, removing directory trees etc.
 
 ### Syntax
 
-FSQL has simple syntax:
+FSRL has simple syntax:
 
     DIRECTIVE operand [operand ...]
 
-where directive is a keyword known to your FSQL implementation and operands are arguments required by it.
+where directive is a keyword known to your FSRL implementation and operands are arguments required by it.
 
 ### Directives
 
@@ -39,6 +39,15 @@ If second path is a directory name will be taken from first path.
 If a directory destination does not exist transaction will fail.
 If the destination file exists it will be overwritten.
 
+Full syntax:
+
+    CP {:filename} FROM {:source_dir} TO {:destination_dir} AS {:desired_filename}
+
+The `AS {:filename}` is optional and defaults to `{:filename}` of original file.
+This does not neccessarily give greater control over files but is more explicit.
+
+    CP __init__.py FROM ./foo/ TO /usr/lib/python3.3/site-packages/foo/
+
 &nbsp;
 
     MOVE ./foo/__init__.py /usr/lib/python3.3/site-packages/__init__.py
@@ -50,6 +59,12 @@ This will move a file from one location to another.
 If second path is a directory name will be taken from first path.
 If a destination directory does not exist transaction will fail.
 If the destination file exists it will be overwritten.
+
+Full syntax is the same as for `CP` directive.
+
+    MV ./__init__.py FROM ./foo TO /usr/lib/python3.3/site-packages/foo
+
+and (as in `CP` the `AS` part is optional).
 
 &nbsp;
 
@@ -81,8 +96,8 @@ In both cases the directive will fail if path is not a directory.
 
 ### Absolute and relative paths
 
-FSQL files contain directives that may work with either absolute or relative paths.
-Interpreters for FSQL should provide a way to set arbitrary directory as current working
+FSRL files contain directives that may work with either absolute or relative paths.
+Interpreters for FSRL should provide a way to set arbitrary directory as current working
 directory.
 
 

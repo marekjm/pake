@@ -228,7 +228,7 @@ Currently, PAKE does not contain any mechanism specifically designed to handle u
 "*remove old/install new*" version of the specified software package.
 
 However, in future, such mechanism may be implemented. If it will turn out to be so, statements for updates will
-be contained in `update.transaction` file. Main point against implementing such mechanism is that FSQL language
+be contained in `update.transaction` file. Main point against implementing such mechanism is that FSRL language
 used to handle low level transactions does not contain flow-control directives which means it would be hard to
 write updates that would work well with majority of versions.
 
@@ -244,18 +244,18 @@ build of package being installed at the given moment which means it was written 
 Low level transactions are user-generated.
 They manage installation, updates and deinstallation of the software.
 
-They are written in an SQL-like meta language which
+They are written in a meta language which
 was designed to handle queries to a filesystem, e.g. creating directories,
 moving files etc.
 
-FQSL syntax and directives are described in [fsql.markdown](fsql.mdown) file.
+FSRL syntax and directives are described in [fsrl.markdown](fsrl.mdown) file.
 Please, refer to it to get more information.
 
 
 #### 2.1 Installing - `install.transaction`
 
 These transactions are contined in `install.transaction` files which contain
-FSQL directives that must be performed to install the software.
+FSRL directives that must be performed to install the software.
 
 These transactions are executed by PAKE high-level transaction directive `INSTALL`.
 
