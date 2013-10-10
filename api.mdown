@@ -1,0 +1,293 @@
+### PAKE REST API
+
+This is the API that is exposed by your mirrors and
+other people aliens (in this case *mirror* and *alien* are used as
+parts of PAKE terminology).
+
+API is created by structure of directories and does not require any
+exotic software to run (no Python, Perl, Ruby or even PHP) - just a
+server to provide access to them (simple nginx or Apache).
+
+----
+
+### Terminology
+
+PAKE uses some terminology to describe its repositories, mirrors etc.
+It is explained below.
+
+* `nest`    - directory (`.pakenest`) located in a directory of a project (similar to `.git`),
+* `node`    - directory (`.pakenode`) located in home directory (`~`) of a user - used to generate mirrors and
+manage packages,
+* `mirror`  - place on the net which 1) exposes PAKE alien API and 2) is generated from your node,
+* `alien`   - place on the net which 1) exposes PAKE alien API and 2) is not generated from your node,
+
+
+----
+
+### Alien API structure
+
+Here are shown paths that can be used to access various information on an alien or
+(mirror if you are interaction with alien originating from your node).
+`:foo`-like strings describe variable endpoints.
+
+    ROOT = http://pake.example.com
+
+    # obligatory part of the API (net expanding alien a.k.a. NEA)
+    ROOT/meta.json
+    ROOT/mirrors.json
+    ROOT/alines.json
+    ROOT/packages.json
+
+    # API exposed by aliens which provide downloadable packages
+    ROOT/packages/:name/versions.json
+    ROOT/packages/:name/versions/:version/meta.json
+    ROOT/packages/:name/versions/:version/dependencies.json
+    ROOT/packages/:name/versions/:version/build.tar.xz
+    ROOT/packages/:name/versions/:version/signature.asc [**not implemented**]
+
+    # optional part of the API (caching is done as a last-hope mechanism when trying to obtain
+    # a package whose alien of origin is no longer available and all its mirror are down)
+    ROOT/cached.json
+    ROOT/cached/{name}-{version}.tar.xz
+    ROOT/cached/{name}-{version}.asc
+
+
+Files from `ROOT/packages/:name/:version:/build.tar.xz` is downloaded to a file named `{:name}-{:version}.tar.xz`.
+
+----
+
+### Node API structure
+
+Here is shown API of the node. Arrows (`->`) show that a part of alien API is generated from such and such file.
+If no arrow is located after the file it means that the file is sent to the net.
+
+    ROOT = ~/.pakenode
+
+    ROOT/aliens.json
+    ROOT/meta.json
+    ROOT/nests.json -> packages.json
+    ROOT/pushers.json -> mirrors.json
+
+    # optional files that may be sent to the net
+    ROOT/cached.json
+    ROOT/cached/
+
+    # these files and directories are not sent to the net
+    ROOT/installing/
+    ROOT/db/pkgs.json
+    ROOT/db/transactions/pkgs/:name/remove.transaction
+    ROOT/db/transactions/prepared/:hash.transaction
+
+    # these are not sent to the net and
+    # may be not even implemented
+    ROOT/db/keys/
+    ROOT/db/keys/local/
+    ROOT/db/keys/imported/
+
+> `ROOT/db/keys` may be not even needed as keys should be imported from and to global `~/.gnupg` directory.
+
+`packages.json` must be generated from `nests.json` before pushing, otherwise your node will
+contain empty package list.
+
+    pake node nests --gen-pkg-list
+
+`mirrors.json` must be generated from `pushers.json` beforepushing, otherwise your node will
+contain empty mirrors list. You can use `--pretty` option to enable pretty formatting.
+
+    pake mirrors --gen-list [--pretty]
+
+----
+
+### Nest API structure
+
+Here is shown API exposed by the nest.
+
+    ROOT = ./.pakenest
+
+    ROOT/meta.json
+    ROOT/dependencies.json
+    ROOT/files.json
+    ROOT/install.transaction
+    ROOT/update.transaction
+    ROOT/remove.transaction
+    ROOT/versions.json
+    ROOT/versions/:version/meta.json
+    ROOT/versions/:version/dependencies.json
+    ROOT/versions/:version/build.tar.xz
+
+
+`build.tar.xz` contains:
+
+* files and directories listed in `files.json`,
+* `meta.json` and `dependencies.json` files,
+* `install.transaction`, `update.transaction` and `remove.transaction` files,
+
+&nbsp;
+
+#### Dependencies
+
+Dependencies are packages which must be installed with the selected package to ensure its
+proper working. `dependencies.json` is a file containing a list of these packages.
+Each dependency (or *dep*) is a dictionary containing few pieces of data:
+
+* `name`        - name of the package,
+* `origin`      - URL of the origin of the package,
+* `min-version` - minimal version of the dependency that must installed,
+* `max-version` - maximal version of the dependency that should be installed,
+
+List of mirrors of the origin are generated dynamically by looking up origin URL in
+`aliens.json` file.
+
+Each dependency may have its own dependencies which then will be processed.
+After full list of deps is created (no more dependencies can be found) an install transaction is
+prepared and executed.
+
+----
+
+### Transactions
+
+Transactions are files describing actions that are taken by PAKE.
+There are several types of transactions that are created and executed by PAKE.
+
+#### 1. High level transactions
+
+These transactions are created when PAKE is *downloading and installing* packages and
+can be stored in `~/.pakenode/db/transactions/prepared`.
+
+This type of transactions may contain following types of directives:
+
+* `FETCH {:name}`
+* `FETCH {:name} FROM {:origin}` (recommended)
+* `FETCH {:name} VERSION {:version} FROM {:origin}` (recommended)
+* `INSTALL {:name}`
+* `INSTALL {:name} VERSION {:version}`
+* `REMOVE {:name}`
+* `UPDATE {:name}`
+
+&nbsp;
+
+    FETCH foo
+
+This will try to download package named `foo` from the network. However, this relies on
+package search feature which can find two packages with the same name (which is not a problem with
+manual installs as humans can read the descriptions) and this can lead to conflicts.
+
+Faster and more secure way to define such transaction is to set an origin to download from:
+
+    FETCH foo FROM http://pake.example.com
+
+this will eliminate possible name conflicts. When using above directives most recent version of the software
+if fetched. It is possible to set a version to fetch using this syntax:
+
+    FETCH foo VERSION 0.0.1 FROM http://pake.example.com
+
+If the specified version cannot be fetched the transaction will fail.
+
+In every case fetched packages are saved to `~/.pakenode/cached/` directory.
+
+&nbsp;
+
+    INSTALL foo
+
+This directive will install downloaded package named `foo`. PAKE will look for it in `~/.pakenode/cached` directory.
+If no build can be found transaction will fail and PAKE will exit.
+If more than one build is found latest version is installed.
+It is possible to use extended form of `INSTALL` directive:
+
+    INSTALL foo VERSION 0.0.1
+
+which will try to install specified versionof the package. If this version cannot be found transacion will fail and
+PAKE will exit.
+
+`INSTALL` directive will try to extract contents of package with name `~/.pakenode/cached/{:name}-{:version}.tar.xz` to
+`~/.pakenode/installing/` directory and exectute `install.transaction` file.
+
+
+&nbsp;
+
+    REMOVE foo
+
+This will try to remove package named *foo* from your system.
+When user wants to remove a package PAKE will execute `remove.transaction` file located in
+`~/.pakenode/db/transactions/pkgs/:name/remove.transaction`.
+If such file cannot be found transaction will fail.
+
+> Should PAKE warn about missing `remove.transaction` files during installation process?
+> What should be done if such file cannot be found?
+
+&nbsp;
+
+    UPDATE foo
+
+"compiles" to two statements:
+
+    REMOVE foo
+    INSTALL foo (VERSION 0.0.1)
+
+Currently, PAKE does not contain any mechanism specifically designed to handle updates other than
+"*remove old/install new*" version of the specified software package.
+
+However, in future, such mechanism may be implemented. If it will turn out to be so, statements for updates will
+be contained in `update.transaction` file. Main point against implementing such mechanism is that FSQL language
+used to handle low level transactions does not contain flow-control directives which means it would be hard to
+write updates that would work well with majority of versions.
+
+On the contrary, remove/install mechanism will handle everything gracefully since `remove.transaction`  and
+`install.transaction` are always tailored to the specific versions of the software (`remove.transaction` is stored in
+local database so it always refers to the version currently installed and `install.transaction` is taken from the release
+build of package being installed at the given moment which means it was written with this specific version in mind).
+
+&nbsp;
+
+#### 2. Low level transactions
+
+Low level transactions are user-generated.
+They manage installation, updates and deinstallation of the software.
+
+They are written in an SQL-like meta language which
+was designed to handle queries to a filesystem, e.g. creating directories,
+moving files etc.
+
+FQSL syntax and directives are described in [fsql.markdown](fsql.mdown) file.
+Please, refer to it to get more information.
+
+
+#### 2.1 Installing - `install.transaction`
+
+These transactions are contined in `install.transaction` files which contain
+FSQL directives that must be performed to install the software.
+
+These transactions are executed by PAKE high-level transaction directive `INSTALL`.
+
+#### 2.2 Removing - `remove.transaction`
+
+Directives for these transactions are contained in `remove.transaction` file in every
+release build. This file (for installed version of the software) is stored in local PAKE database to remove
+the need to extract each build archive to obtain remove transaction directives.
+
+These transactions are exectuted by PAKE high-level transaction directive `REMOVE`.
+
+#### 2.3 Updating - `update.transaction`
+
+These transactions are contained in `update.transaction` file in every release build but
+are **not** executed.
+
+----
+
+### Security
+
+Security is provided by digital signing of packages.
+In order to use PAKE each user must have a PGP (GPG) key which will be used to sign packages.
+
+* imported keys are not sent to the net,
+* user's private key is not sent to the net,
+* user's public key is sent to the net (people must be able to import it),
+* build signatures are sent to the net,
+* `nests.json` is not sent to the net, generated `packages.json` is sent,
+* `pushers.json` is not sent to the net, generated `mirrors.json` is sent.
+
+----
+
+&nbsp;
+
+**Copyright 2013 (c) Marek Marecki**

@@ -1,0 +1,93 @@
+### FSQL - File System Query Language
+
+FSQL was originally designed as a meta-langiage for PAKE, a distributed package
+management and distribution software for Python.
+
+It has SQL-like syntax, no flow-control keywords and is not Turing complete.
+It main and only purpose is to make queries on the filesystem - e.g. creating directories,
+moving files, removing directory trees etc.
+
+### Syntax
+
+FSQL has simple syntax:
+
+    DIRECTIVE operand [operand ...]
+
+where directive is a keyword known to your FSQL implementation and operands are arguments required by it.
+
+### Directives
+
+Reference implementation supports following directives:
+
+* `CP {:file} {:destination}`,
+* `MV {:file} {:destination}`,
+* `RM /path/to/file`,
+* `MKD /path/to/directory`,
+* `MKDS /path/to/directory`,
+* `RMD /path/to/directory`,
+* `RMTREE /path/to/directoy`,
+
+&nbsp;
+
+    CP ./foo/__init__.py /usr/lib/python3.3/site-packages/foo/__init__.py
+
+This will copy a file from one location to another.
+
+    CP ./foo/__init__.py /usr/lib/python3.3/site-packages/foo/
+
+If second path is a directory name will be taken from first path.
+If a directory destination does not exist transaction will fail.
+If the destination file exists it will be overwritten.
+
+&nbsp;
+
+    MOVE ./foo/__init__.py /usr/lib/python3.3/site-packages/__init__.py
+
+This will move a file from one location to another.
+
+    MOVE ./foo/__init__.py /usr/lib/python3.3/site-packages/
+
+If second path is a directory name will be taken from first path.
+If a destination directory does not exist transaction will fail.
+If the destination file exists it will be overwritten.
+
+&nbsp;
+
+    MKD /path/to/directory/you/want/to/create
+
+Creates a directory.
+This directive will fail if at least one of the intermediate directories does not exist e.g.
+will fail if only `/path/to/directory` exists and `/you/want/to` does not exist.
+In case the destination directory already exists directive does not fail but counts as succeded.
+
+    MKDS /path/to/directory/you/want/to/create
+
+This is extended version of `MKD` directive - it will create all required intermediate directories.
+
+&nbsp;
+
+    RMD /path/to/directory/you/want/to/remove
+
+This will remove the directory the path points to.
+Directive will fail if the directory is not empty.
+
+    RMTREE /path/to/directory/you/want/to/remove
+
+is extended version of `RMD` and will remove the path even if it's not empty.
+
+In both cases the directive will fail if path is not a directory.
+
+----
+
+### Absolute and relative paths
+
+FSQL files contain directives that may work with either absolute or relative paths.
+Interpreters for FSQL should provide a way to set arbitrary directory as current working
+directory.
+
+
+----
+
+&nbsp;
+
+**Copyright 2013 (c) Marek Marecki**
