@@ -1,11 +1,11 @@
-### FSRL - File System Request Language
+### FSRL - File System Requests Language
 
-FSRL was originally designed as a meta-langiage for PAKE, a distributed package
+FSRL was originally designed as a meta-language for PAKE, a distributed package
 management and distribution software for Python.
 
-It has SQL-like syntax, no flow-control keywords and is not Turing complete.
-It main and only purpose is to make queries on the filesystem - e.g. creating directories,
+Its main and only purpose is to make queries on the filesystem - e.g. creating directories,
 moving files, removing directory trees etc.
+
 
 ### Syntax
 
