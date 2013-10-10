@@ -245,11 +245,11 @@ Low level transactions are user-generated.
 They manage installation, updates and deinstallation of the software.
 
 They are written in a meta language which
-was designed to handle queries to a filesystem, e.g. creating directories,
+was designed to handle requests to a filesystem, e.g. creating directories,
 moving files etc.
 
-FSRL syntax and directives are described in [fsrl.markdown](fsrl.mdown) file.
-Please, refer to it to get more information.
+Filesystem Requests Language syntax and directives are described in [fsrl.markdown](fsrl.mdown) file.
+Please, refer to it to get more information about the FSRL.
 
 
 #### 2.1 Installing - `install.transaction`
@@ -271,6 +271,9 @@ These transactions are exectuted by PAKE high-level transaction directive `REMOV
 
 These transactions are contained in `update.transaction` file in every release build but
 are **not** executed.
+
+Updating is done in two steps: removing currently installed version and installing new one.
+This is triggered by PAKE high-level directive `UPDATE`.
 
 ----
 
