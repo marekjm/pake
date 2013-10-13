@@ -76,7 +76,7 @@ If no arrow is located after the file it means that the file is sent to the net.
     # these files and directories are not sent to the net
     ROOT/installing/
     ROOT/db/pkgs.json
-    ROOT/db/transactions/pkgs/:name/remove.transaction
+    ROOT/db/transactions/pkgs/:name/remove.fsrl
     ROOT/db/transactions/prepared/:hash.transaction
 
     # these are not sent to the net and
@@ -214,7 +214,7 @@ which will try to install specified versionof the package. If this version canno
 PAKE will exit.
 
 `INSTALL` directive will try to extract contents of package with name `~/.pakenode/cached/{:name}-{:version}.tar.xz` to
-`~/.pakenode/installing/` directory and exectute `install.transaction` file.
+`~/.pakenode/installing/` directory and exectute `install.fsrl` file.
 
 
 &nbsp;
@@ -222,11 +222,11 @@ PAKE will exit.
     REMOVE foo
 
 This will try to remove package named *foo* from your system.
-When user wants to remove a package PAKE will execute `remove.transaction` file located in
-`~/.pakenode/db/transactions/pkgs/:name/remove.transaction`.
+When user wants to remove a package PAKE will execute `remove.fsrl` file located in
+`~/.pakenode/db/transactions/pkgs/:name/remove.fsrl`.
 If such file cannot be found transaction will fail.
 
-> Should PAKE warn about missing `remove.transaction` files during installation process?
+> Should PAKE warn about missing `remove.fsrl` files during installation process?
 > What should be done if such file cannot be found?
 
 &nbsp;
@@ -236,19 +236,19 @@ If such file cannot be found transaction will fail.
 "compiles" to two statements:
 
     REMOVE foo
-    INSTALL foo (VERSION 0.0.1)
+    INSTALL foo
 
 Currently, PAKE does not contain any mechanism specifically designed to handle updates other than
 "*remove old/install new*" version of the specified software package.
 
 However, in future, such mechanism may be implemented. If it will turn out to be so, statements for updates will
-be contained in `update.transaction` file. Main point against implementing such mechanism is that FSRL language
+be contained in `update.fsrl` file. Main point against implementing such mechanism is that FSRL language
 used to handle low level transactions does not contain flow-control directives which means it would be hard to
 write updates that would work well with majority of versions.
 
-On the contrary, remove/install mechanism will handle everything gracefully since `remove.transaction`  and
-`install.transaction` are always tailored to the specific versions of the software (`remove.transaction` is stored in
-local database so it always refers to the version currently installed and `install.transaction` is taken from the release
+On the contrary, remove/install mechanism will handle everything gracefully since `remove.fsrl`  and
+`install.fsrl` are always tailored to the specific versions of the software (`remove.fsrl` is stored in
+local database so it always refers to the version currently installed and `install.fsrl` is taken from the release
 build of package being installed at the given moment which means it was written with this specific version in mind).
 
 &nbsp;
@@ -265,14 +265,14 @@ PyFSRL project which is a reference implementation of the FSRL language.
 
 #### 2.1 Installing - `install.fsrl`
 
-These transactions are contined in `install.transaction` files which contain
+These transactions are contined in `install.fsrl` files which contain
 FSRL directives that must be performed to install the software.
 
 These transactions are executed by PAKE high-level transaction directive `INSTALL`.
 
 #### 2.2 Removing - `remove.fsrl`
 
-Directives for these transactions are contained in `remove.transaction` file in every
+Directives for these transactions are contained in `remove.fsrl` file in every
 release build. This file (for installed version of the software) is stored in local PAKE database to remove
 the need to extract each build archive to obtain remove transaction directives.
 
@@ -280,7 +280,7 @@ These transactions are exectuted by PAKE high-level transaction directive `REMOV
 
 #### 2.3 Updating - `update.fsrl`
 
-These transactions are contained in `update.transaction` file in every release build but
+These transactions are contained in `update.fsrl` file in every release build but
 are **not** executed.
 
 Updating is done in two steps: removing currently installed version and installing new one.
