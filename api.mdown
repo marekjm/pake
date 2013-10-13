@@ -150,18 +150,23 @@ prepared and executed.
 Transactions are files describing actions that are taken by PAKE.
 There are several types of transactions that are created and executed by PAKE.
 
-> Why use transactions when these things are not too difficult to hardcode?  
-> There are several good things about them:
-> 1) Using transactions allow for more flexibility (e.g. creating non-standard transactions and
-> easy expansion if transaction feature-set).
-> 2) Transactions can be cached and executed later - this means that you can manage your software
-> even while being disconnected from the Net. Transactions that can be commited in the cope
-> of your current network will in such situation created and dumped to `.transaction` file in
-> `~/.pakenode/db/transactions/cached/` directory. When a connection becomes available you can
-> simply tell PAKE to load and commit previously stored transaction and it will do it.
-> 3) Transactions based on editable text-files can be crafted by humans. This means that you do not
-> have to rely on PAKE's built-in functionality for doing different things but you can write your own
-> transaction and tell PAKE to execute it.
+Why use a meta language for transaction if they are not too difficult to hardcode?  
+There are several good things about them:  
+
+* Using transactions allow for more flexibility (e.g. creating non-standard transactions and
+easy expansion if transaction feature-set).  
+
+* Transactions can be cached and executed later - this means that you can manage your software 
+even while being disconnected from the Net. Transactions that can be commited in the scope
+of your current network will in such situation created and dumped to `.transaction` files in
+`~/.pakenode/db/transactions/cached/` directory. When a connection becomes available you can
+simply tell PAKE to load and commit previously stored transaction and it will do it.  
+
+* Transactions based on editable text-files can be crafted by humans. This means that you do not
+have to rely on PAKE's built-in functionality for doing different things but you can write your own
+transaction and tell PAKE to execute it.
+
+&nbsp;
 
 #### 1. High level transactions
 
