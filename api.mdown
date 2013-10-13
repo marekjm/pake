@@ -255,15 +255,12 @@ build of package being installed at the given moment which means it was written 
 
 #### 2. Low level transactions
 
-Low level transactions are user-generated.
-They manage installation, updates and deinstallation of the software.
+Low level transactions manage software installation, update and removal processes and
+are written by developers who use PAKE system to distribute their software.
 
-They are written in a meta language which
-was designed to handle requests to a filesystem, e.g. creating directories,
-moving files etc.
-
-Filesystem Requests Language syntax and directives are described in [fsrl.markdown](fsrl.mdown) file.
-Please, refer to it to get more information about the FSRL.
+FSRL (*Filesystem Requests Language*) is used for writing low-level transactions.
+Information about its syntax and features can be found in [GitHub repository](https://github.com/marekjm/pyfsrl) of
+PyFSRL project which is a reference implementation of the FSRL language.
 
 
 #### 2.1 Installing - `install.fsrl`
