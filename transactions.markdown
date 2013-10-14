@@ -91,57 +91,18 @@ Transactions operating on files.
     # and then compiled.
 
 
-
-    # ACTIONS ON FILES
-
-    # copy a file
-    COPY foo.py /usr/lib/python3.3/site-packages/foo/__init__.py
-
-    # copy few files into a directory
-    COPY ./*.py /usr/lib/python3.3/site-packages/foo/
-
-
-    # remove a file
-    RM foo.py
-
-    # remove all files in a directory
-    RM /usr/lib/python3.3/site-packages/foo/*
-
-
-    # move a file
-    MV foo.py bar.py
-
-
-
-    # ACTIONS ON DIRECTORIES
-
-    # make a directory
-    MKDIR /usr/lib/python3.3/site-packages/foo
-
-
-    # make a directory and all required directories
-    MKDIRS /usr/lib/python3.3/site-packages/foo/bar/baz
-
-
-    # remove a directory
-    # will fail if a directory is not empty
-    RMDIR /usr/lib/python3.3/site-packages/foo
-
-
-    # remove a directory and all subdirectories and files in them
-    RMTREE /usr/lib/python3.3/site-packages/foo
-
+For more information about file-transactions refer to [FSRL](https://github.com/marekjm/pyfsrl) project.
 
 ----
 
 #### Sandboxing of file-transactions
 
     {
-        "COPY": ["/"],
-        "RM": ["."],
-        "MV": ["."],
-        "MKDIR": ["/"],
-        "MKDIRS": ["/"],
-        "RMDIR": ["."],
-        "RMTREE": ["."]
+        "cp": ["/"],
+        "rm": ["."],
+        "mv": ["."],
+        "mkd": ["/"],
+        "mkds": ["/"],
+        "rmd": ["."],
+        "rmtree": ["."]
     }
