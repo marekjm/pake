@@ -171,17 +171,15 @@ transaction and tell PAKE to execute it.
 #### 1. High level transactions
 
 These transactions are created when PAKE is *downloading and installing* packages and
-can be stored in `~/.pakenode/db/transactions/prepared`.
+can be immediately executed or stored in `~/.pakenode/db/transactions/prepared`.
 
-This type of transactions may contain following types of directives:
+Advanced users are given a tool for fine-grained control of PAKE because they can write
+transaction manually.
 
-* `FETCH {:name}`
-* `FETCH {:name} FROM {:origin}` (recommended)
-* `FETCH {:name} VERSION {:version} FROM {:origin}` (recommended)
-* `INSTALL {:name}`
-* `INSTALL {:name} VERSION {:version}`
-* `REMOVE {:name}`
-* `UPDATE {:name}`
+Syntax and rules of PAKE transaction files make it very easy to create new keywords and thus
+expanding range of things transactions are capable of.
+
+&nbsp;
 
 #### 1.1 Parsing high-level transactions
 
@@ -192,7 +190,7 @@ Comments are lines that start with `#` character.
 Parsing is very simple.
 After reading the lines of the file, split lines by spaces (it's safe as neither package-names nor
 versions nor keywords can contain spaces), analyze resulting lists.
-First item (at 0 index) will always be main directive, the second (at index 1) its target.
+First item (at 0 index) will always be main statement, the second (at index 1) its target.
 
 Syntax error should be raised when line contains less than two items.
 
@@ -202,24 +200,51 @@ Each line is translated into statements (in form of dictionaries) understood by 
 then iterates through the parsed file line by line (transactions are procedural) and
 executes statements in the order they are found in file.
 
-#### 1.2 High-level transactions
+&nbsp;
 
-These transactions are usually created by PAKE itself but can be also created by users.
+#### 1.1.1 Statements and syntax
 
-#### 1.2.1 Keywords
+All statements follow this syntax:
 
-These keywords are understood by PAKE transaction parser and interpreter.
+    KEYWORD package_name
 
-#### 1.2.1 Keywords - `FETCH`
+Package name must appear immediately after main keyword (before any optional arguments).
+Context in which it is used (whether it points to remote/local or (not)installed
+package) depends on the keyword.
 
-This keyword is used to fetch a package from the PAKE network.
-Fetched packages are saved to `~/.pakenode/cached/` directory.
+Keywords **MUST** be written in all capitals. Transactions are case-sensitive.  
+All arguments (sub-keywords) **MUST** be written in capitals.  
+All keywords and arguments take a target of some kind (package name, version string, URL etc.).
 
+----
+
+#### 1.2 List of all available statements
+
+Here are listed all statements that are understood by PAKE interpreter and
+are available for developers.
+The list will be expanding to cover not only package management but also more
+aspects of PAKE functionality.
+
+Quick list:
+
+* `FETCH` - fetch package from the net and save it to the `~/.pakenode/cached/`
+* `INSTALL` - install previously cached package
+* `REMOVE` - remove a package
+
+&nbsp;
+
+#### 1.2.1 `FETCH`
+
+**Meaning**: *Fetch package named `foo` from the network*
+
+**Description**:
+*Download package named `foo` from the network and save it in `~/.pakenode/cached/` directory.
+Downloaded archive is named `{name}-{version}.tar.xz`*
+
+Basic syntax:
 
     FETCH foo
 
-This will try to download package named `foo` from the network.
-Name of the package must appear immediately after the `FETCH` keyword.
 However, this relies on package search feature which can find two packages with the same name (which is not a problem with
 manual installs as humans can read the descriptions) what can lead to conflicts.  
 Also, this means that PAKE must resolve both the origin of the package and find newest version of it.
@@ -228,45 +253,63 @@ Faster and more secure way to define such transaction is to set an origin to dow
 
     FETCH foo FROM http://pake.example.com
 
-this will eliminate possible name conflicts. When using above directives most recent version of the software
+this will eliminate possible name conflicts. When using above statements most recent version of the software
 if fetched. It is possible to set a version to fetch using this syntax:
 
     FETCH foo VERSION 0.0.1 FROM http://pake.example.com
 
 If the specified version cannot be fetched the transaction will fail.
 
+&nbsp;
 
-#### 1.2.1 Keywords - `INSTALL`
+#### 1.2.2 `INSTALL`
+
+**Meaning**: *Install package named `foo` in `site-packages` directory of my Python installation*
+
+**Description**:
+*Take package named `foo` from `~/.pakenode/cached/` directory and extract it to `~/.pakenode/installing/` directory.
+Then, execute `install.fsrl` which contains installation instructions.*
+
+Basic syntax:
 
     INSTALL foo
 
-This directive will install downloaded package named `foo`. PAKE will look for it in `~/.pakenode/cached` directory.
 If no build can be found transaction will fail and PAKE will exit.
 If more than one build is found latest version is installed.
-It is possible to use extended form of `INSTALL` directive:
+It is possible to use extended form of `INSTALL` statement:
 
     INSTALL foo VERSION 0.0.1
 
-which will try to install specified versionof the package. If this version cannot be found transacion will fail and
-PAKE will exit.
-
-`INSTALL` directive will try to extract contents of package with name `~/.pakenode/cached/{:name}-{:version}.tar.xz` to
-`~/.pakenode/installing/` directory and exectute `install.fsrl` file.
-
+which will try to install specified version of the package. If this version cannot be found transaction will fail.
 
 &nbsp;
 
+#### 1.2.3 `REMOVE`
+
+**Meaning**: *Remove package named `foo` from `site-packages` of my Pyhton installation.*
+
+**Description**:
+*Remove the package named `foo` by executing removal procedure described in `~/.pakenode/db/transactions/pkgs/:name/remove.fsrl` file.*
+
+Basic syntax:
+
     REMOVE foo
 
-This will try to remove package named *foo* from your system.
-When user wants to remove a package PAKE will execute `remove.fsrl` file located in
-`~/.pakenode/db/transactions/pkgs/:name/remove.fsrl`.
 If such file cannot be found transaction will fail.
 
 > Should PAKE warn about missing `remove.fsrl` files during installation process?
 > What should be done if such file cannot be found?
 
 &nbsp;
+
+#### 1.2.4 `UPDATE`
+
+**Meaning**: *Update package named `foo`.*
+
+**Description**:
+*Remove old version of package named `foo` (check: `REMOVE`) and install newest version (check: `INSTALL`).*
+
+Basic syntax:
 
     UPDATE foo
 
@@ -280,7 +323,7 @@ Currently, PAKE does not contain any mechanism specifically designed to handle u
 
 However, in future, such mechanism may be implemented. If it will turn out to be so, statements for updates will
 be contained in `update.fsrl` file. Main point against implementing such mechanism is that FSRL language
-used to handle low level transactions does not contain flow-control directives which means it would be hard to
+used to handle low level transactions does not contain flow-control statements which means it would be hard to
 write updates that would work well with majority of versions.
 
 On the contrary, remove/install mechanism will handle everything gracefully since `remove.fsrl`  and
@@ -289,6 +332,12 @@ local database so it always refers to the version currently installed and `insta
 build of package being installed at the given moment which means it was written with this specific version in mind).
 
 &nbsp;
+
+#### 1.3 PAKE generated transactions
+
+Transactions generated by PAKE are generated already in the middle-form understood by interpreter so
+PAKE does not create the source code when it does not have to.
+When stored transactions are encoded as JSON files.
 
 #### 2. Low level transactions
 
@@ -303,17 +352,17 @@ PyFSRL project which is a reference implementation of the FSRL language.
 #### 2.1 Installing - `install.fsrl`
 
 These transactions are contined in `install.fsrl` files which contain
-FSRL directives that must be performed to install the software.
+FSRL statements that must be performed to install the software.
 
-These transactions are executed by PAKE high-level transaction directive `INSTALL`.
+These transactions are executed by PAKE high-level transaction statement `INSTALL`.
 
 #### 2.2 Removing - `remove.fsrl`
 
 Directives for these transactions are contained in `remove.fsrl` file in every
 release build. This file (for installed version of the software) is stored in local PAKE database to remove
-the need to extract each build archive to obtain remove transaction directives.
+the need to extract each build archive to obtain remove transaction statements.
 
-These transactions are exectuted by PAKE high-level transaction directive `REMOVE`.
+These transactions are exectuted by PAKE high-level transaction statement `REMOVE`.
 
 #### 2.3 Updating - `update.fsrl`
 
@@ -321,7 +370,7 @@ These transactions are contained in `update.fsrl` file in every release build bu
 are **not** executed.
 
 Updating is done in two steps: removing currently installed version and installing new one.
-This is triggered by PAKE high-level directive `UPDATE`.
+This is triggered by PAKE high-level statement `UPDATE`.
 
 ----
 

@@ -351,4 +351,16 @@ class TransactionParserTests(unittest.TestCase):
                    ]
         self.assertEqual(desired, parsed)
 
+
+class TransactionEncoderTests(unittest.TestCase):
+    def testEncodingFETCH(self):
+        parser = pake.transactions.parser.Parser(path='./testfiles/fetch.transaction').load().parse()
+        desired = [['FETCH', 'foo'],
+                   ['FETCH', 'foo', 'FROM', 'http://pake.example.com'],
+                   ['FETCH', 'foo', 'VERSION', '0.0.1'],
+                   ['FETCH', 'foo', 'VERSION', '0.0.1', 'FROM', 'http://pake.example.com'],
+                   ]
+        encoder = pake.transactions.parser.Encoder(parsed=parser.getparsed()).encode()
+        self.assertEqual(desired, encoder.getsource(joined=False))
+
 if __name__ == '__main__': unittest.main()

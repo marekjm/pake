@@ -41,33 +41,14 @@ class Parser():
         self._splitlines()
         return self
 
-    def _parsefetch(self, line):
-        """Takes list of words found in line containing FETCH statement and
-        returns request dictionary built from them.
-        """
-        args = [('FROM', 'origin'), ('VERSION', 'version')]
-        request = {'req': 'fetch'}
-        if len(line) < 2: raise SyntaxError('no package name to fetch: {0}'.format(self._path))
-        if line[1] in args: raise SyntaxError('no package name to fetch: {0}'.format(self._path))
-        request['name'] = line[1]
-        line = line[2:]  # removing obligatory elements of the line
-        for arg, req in args:  # checking for optional elements
-            if arg in line:
-                n = line.index(arg)
-                target = line[n+1]
-                request[req] = target
-            else:
-                n = -1
-            # remove used words from the line
-            if n > -1: del line[n:n+2]
-        return request
+    def _parseline(self, line, req_name, args=[]):
+        """Parse line and returns dictionary representing request.
 
-    def _parseinstall(self, line):
-        """Takes list of words found in line containing INSTALL statement and
-        returns request dictionary built from them.
+        args are list of two-tuples containg `ARGUMENT_NAME` and `request_name`.
+        `ARGUMENT_NAME` is a string looke for in list of words passed and
+        `request_name` is a name under which it is saved in request dictionary.
         """
-        args = [('VERSION', 'version')]
-        request = {'req': 'install'}
+        request = {'req': req_name}
         if len(line) < 2: raise SyntaxError('no package name to install: {0}'.format(self._path))
         if line[1] in args: raise SyntaxError('no package name to install: {0}'.format(self._path))
         request['name'] = line[1]
@@ -76,12 +57,31 @@ class Parser():
             if arg in line:
                 n = line.index(arg)
                 target = line[n+1]
+                if target in args: # check whether target is another argument - it's a syntax error
+                    raise SyntaxError('argument without target in file: {0}: {1}'.format(self._path, arg))
                 request[req] = target
             else:
-                n = -1
-            # remove used words from the line
-            if n > -1: del line[n:n+2]
+                n = -1  # indicate that given arg was not found
+            if n > -1: del line[n:n+2]  # remove used words from the line
+        # if any words can be found in the statement it means that
+        # it is invalid as it contains words that were not caught by parser
+        if line:
+            raise SyntaxError('invalid FETCH statement in file: {0}'.format(self._path))
         return request
+
+    def _parsefetch(self, line):
+        """Takes list of words found in line containing FETCH statement and
+        returns request dictionary built from them.
+        """
+        args = [('FROM', 'origin'), ('VERSION', 'version')]
+        return self._parseline(line=line, req_name='fetch', args=args)
+
+    def _parseinstall(self, line):
+        """Takes list of words found in line containing INSTALL statement and
+        returns request dictionary built from them.
+        """
+        args = [('VERSION', 'version')]
+        return self._parseline(line=line, req_name='install', args=args)
 
     def parse(self):
         """This method parses read lines into a form that can be understood by
@@ -110,3 +110,53 @@ class Parser():
         """Returns parsed code.
         """
         return self._parsed
+
+
+class Encoder():
+    """This object can encode middle-form representation of transactions
+    back to the source code.
+    """
+    def __init__(self, parsed):
+        self._parsed = parsed  # this is middle-form of transaction
+        self._source = []
+
+    def _encodefetch(self, statement):
+        """Create list of words in source code line encoded from
+        middle form statement.
+        """
+        line = ['FETCH']
+        line.append(statement['name'])
+        args = [('VERSION', 'version'), ('FROM', 'origin')]
+        for arg, req in args:
+            if req in statement:
+                line.append(arg)
+                line.append(statement[req])
+        return line
+
+    def encode(self):
+        """Create source code from the middle-form representation of
+        the transaction.
+        """
+        source = []
+        for statement in self._parsed:
+            st = statement['req']
+            if st == 'fetch': source.append(self._encodefetch(statement))
+            else: raise errors.EncodingError('does not know how to encode \'{0}\' statement'.format(st))
+        self._source = source
+        return self
+
+    def getsource(self, joined=True):
+        """Get lines of source generated code.
+
+        :param joined: if True words will be joined with whitespace
+        """
+        if joined: return [' '.join(l) for l in self._source]
+        else: return [l for l in self._source]
+
+    def dump(self, path):
+        """Write source to the file specified during initialization
+        of the object.
+        """
+        ofstream = open(path, 'w')
+        for line in self.getsource(): ofstream.write('{0}\n'.format(line))
+        ofstream.close()
