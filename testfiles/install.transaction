@@ -1,0 +1,7 @@
+# this will install latest vesrion of foo that
+# can be found in ~/.pakenode/cached
+INSTALL foo
+
+# this will install foo version 0.0.1
+# if this version cannot be found in ~/.pakenode/cached
+INSTALL foo VERSION 0.0.1

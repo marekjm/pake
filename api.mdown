@@ -183,13 +183,46 @@ This type of transactions may contain following types of directives:
 * `REMOVE {:name}`
 * `UPDATE {:name}`
 
-&nbsp;
+#### 1.1 Parsing high-level transactions
+
+PAKE transaction files are line-oriented.
+Each physical line is also logical line.
+Comments are lines that start with `#` character.
+
+Parsing is very simple.
+After reading the lines of the file, split lines by spaces (it's safe as neither package-names nor
+versions nor keywords can contain spaces), analyze resulting lists.
+First item (at 0 index) will always be main directive, the second (at index 1) its target.
+
+Syntax error should be raised when line contains less than two items.
+
+If line contains more than two items it is analyzed to extract extra data that was given.
+
+Each line is translated into statements (in form of dictionaries) understood by interpreter which
+then iterates through the parsed file line by line (transactions are procedural) and
+executes statements in the order they are found in file.
+
+#### 1.2 High-level transactions
+
+These transactions are usually created by PAKE itself but can be also created by users.
+
+#### 1.2.1 Keywords
+
+These keywords are understood by PAKE transaction parser and interpreter.
+
+#### 1.2.1 Keywords - `FETCH`
+
+This keyword is used to fetch a package from the PAKE network.
+Fetched packages are saved to `~/.pakenode/cached/` directory.
+
 
     FETCH foo
 
-This will try to download package named `foo` from the network. However, this relies on
-package search feature which can find two packages with the same name (which is not a problem with
-manual installs as humans can read the descriptions) and this can lead to conflicts.
+This will try to download package named `foo` from the network.
+Name of the package must appear immediately after the `FETCH` keyword.
+However, this relies on package search feature which can find two packages with the same name (which is not a problem with
+manual installs as humans can read the descriptions) what can lead to conflicts.  
+Also, this means that PAKE must resolve both the origin of the package and find newest version of it.
 
 Faster and more secure way to define such transaction is to set an origin to download from:
 
@@ -202,9 +235,8 @@ if fetched. It is possible to set a version to fetch using this syntax:
 
 If the specified version cannot be fetched the transaction will fail.
 
-In every case fetched packages are saved to `~/.pakenode/cached/` directory.
 
-&nbsp;
+#### 1.2.1 Keywords - `INSTALL`
 
     INSTALL foo
 

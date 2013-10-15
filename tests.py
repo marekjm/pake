@@ -318,4 +318,37 @@ class NodePushingTests(unittest.TestCase):
         pake.config.node.Pushers(test_node_root).reset().write()
 
 
+class TransactionParserTests(unittest.TestCase):
+    def testLoadingFETCH(self):
+        parsed = pake.transactions.parser.Parser(path='./testfiles/fetch.transaction').load().getlines()
+        desired = [['FETCH', 'foo'],
+                   ['FETCH', 'foo', 'FROM', 'http://pake.example.com'],
+                   ['FETCH', 'foo', 'VERSION', '0.0.1'],
+                   ['FETCH', 'foo', 'VERSION', '0.0.1', 'FROM', 'http://pake.example.com'],
+                   ]
+        self.assertEqual(desired, parsed)
+
+    def testLoadingINSTALL(self):
+        parsed = pake.transactions.parser.Parser(path='./testfiles/install.transaction').load().getlines()
+        desired = [['INSTALL', 'foo'],
+                   ['INSTALL', 'foo', 'VERSION', '0.0.1'],
+                   ]
+        self.assertEqual(desired, parsed)
+
+    def testParsingFETCH(self):
+        parsed = pake.transactions.parser.Parser(path='./testfiles/fetch.transaction').load().parse().getparsed()
+        desired = [{'req': 'fetch', 'name': 'foo'},
+                   {'req': 'fetch', 'name': 'foo', 'origin': 'http://pake.example.com'},
+                   {'req': 'fetch', 'name': 'foo', 'version': '0.0.1'},
+                   {'req': 'fetch', 'name': 'foo', 'version': '0.0.1', 'origin': 'http://pake.example.com'},
+                   ]
+        self.assertEqual(desired, parsed)
+
+    def testParsingINSTALL(self):
+        parsed = pake.transactions.parser.Parser(path='./testfiles/install.transaction').load().parse().getparsed()
+        desired = [{'req': 'install', 'name': 'foo'},
+                   {'req': 'install', 'name': 'foo', 'version': '0.0.1'},
+                   ]
+        self.assertEqual(desired, parsed)
+
 if __name__ == '__main__': unittest.main()
