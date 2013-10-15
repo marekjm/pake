@@ -84,6 +84,13 @@ class Parser():
         args = [('VERSION', 'version')]
         return self._parseline(line=line, req_name='install', args=args)
 
+    def _parseremove(self, line):
+        """Takes list of words found in line containing REMOVE statement and
+        returns request dictionary built from them.
+        """
+        args = []  # this statement does not take any arguments
+        return self._parseline(line=line, req_name='remove')
+
     def parse(self):
         """This method parses read lines into a form that can be understood by
         interpreter.
@@ -96,6 +103,8 @@ class Parser():
                 request = self._parsefetch(line)
             elif keyword == 'INSTALL':
                 request = self._parseinstall(line)
+            elif keyword == 'REMOVE':
+                request = self._parseremove(line)
             else:
                 raise SyntaxError('unknown keyword found in file: {0}: {1}'.format(self._path, keyword))
             parsed.append(request)
@@ -145,6 +154,12 @@ class Encoder():
         args = [('VERSION', 'version'), ('FROM', 'origin')]
         return self._encodeline(statement=statement, st_name='INSTALL', args=args)
 
+    def _encoderemove(self, statement):
+        """Encode INSTALL statement.
+        """
+        args = []  # this statement does not take any arguments
+        return self._encodeline(statement=statement, st_name='REMOVE', args=args)
+
     def encode(self):
         """Create source code from the middle-form representation of
         the transaction.
@@ -152,8 +167,12 @@ class Encoder():
         source = []
         for statement in self._parsed:
             st = statement['req']
-            if st == 'fetch': source.append(self._encodefetch(statement))
-            elif st == 'install': source.append(self._encodeinstall(statement))
+            if st == 'fetch':
+                source.append(self._encodefetch(statement))
+            elif st == 'install':
+                source.append(self._encodeinstall(statement))
+            elif st == 'remove':
+                source.append(self._encoderemove(statement))
             else: raise errors.EncodingError('does not know how to encode \'{0}\' statement'.format(st))
         self._source = source
         return self

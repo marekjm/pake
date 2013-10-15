@@ -335,6 +335,11 @@ class TransactionParserTests(unittest.TestCase):
                    ]
         self.assertEqual(desired, parsed)
 
+    def testLoadingREMOVE(self):
+        parsed = pake.transactions.parser.Parser(path='./testfiles/remove.transaction').load().getlines()
+        desired = [['REMOVE', 'foo']]
+        self.assertEqual(desired, parsed)
+
     def testParsingFETCH(self):
         parsed = pake.transactions.parser.Parser(path='./testfiles/fetch.transaction').load().parse().getparsed()
         desired = [{'req': 'fetch', 'name': 'foo'},
@@ -349,6 +354,11 @@ class TransactionParserTests(unittest.TestCase):
         desired = [{'req': 'install', 'name': 'foo'},
                    {'req': 'install', 'name': 'foo', 'version': '0.0.1'},
                    ]
+        self.assertEqual(desired, parsed)
+
+    def testParsingREMOVE(self):
+        parsed = pake.transactions.parser.Parser(path='./testfiles/remove.transaction').load().parse().getparsed()
+        desired = [{'req': 'remove', 'name': 'foo'}]
         self.assertEqual(desired, parsed)
 
 
@@ -368,6 +378,12 @@ class TransactionEncoderTests(unittest.TestCase):
         desired = [['INSTALL', 'foo'],
                    ['INSTALL', 'foo', 'VERSION', '0.0.1'],
                    ]
+        encoder = pake.transactions.parser.Encoder(parsed=parser.getparsed()).encode()
+        self.assertEqual(desired, encoder.getsource(joined=False))
+
+    def testEncodingREMOVE(self):
+        parser = pake.transactions.parser.Parser(path='./testfiles/remove.transaction').load().parse()
+        desired = [['REMOVE', 'foo']]
         encoder = pake.transactions.parser.Encoder(parsed=parser.getparsed()).encode()
         self.assertEqual(desired, encoder.getsource(joined=False))
 
