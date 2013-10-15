@@ -20,3 +20,9 @@ class PackageError(PAKEError):
     """Generic exception for package-related operations.
     """
     pass
+
+
+class EncodingError(PAKEError):
+    """Exception raised by encoder when it does not know how to encode a statement.
+    """
+    pass

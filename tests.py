@@ -363,4 +363,13 @@ class TransactionEncoderTests(unittest.TestCase):
         encoder = pake.transactions.parser.Encoder(parsed=parser.getparsed()).encode()
         self.assertEqual(desired, encoder.getsource(joined=False))
 
+    def testEncodingINSTALL(self):
+        parser = pake.transactions.parser.Parser(path='./testfiles/install.transaction').load().parse()
+        desired = [['INSTALL', 'foo'],
+                   ['INSTALL', 'foo', 'VERSION', '0.0.1'],
+                   ]
+        encoder = pake.transactions.parser.Encoder(parsed=parser.getparsed()).encode()
+        self.assertEqual(desired, encoder.getsource(joined=False))
+
+
 if __name__ == '__main__': unittest.main()

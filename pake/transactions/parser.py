@@ -3,6 +3,7 @@
 """This file contains PAKE transactions parser code.
 """
 
+from pake import errors
 
 class Parser():
     """This object can be used to parse PAKE transaction files.
@@ -120,18 +121,29 @@ class Encoder():
         self._parsed = parsed  # this is middle-form of transaction
         self._source = []
 
-    def _encodefetch(self, statement):
+    def _encodeline(self, statement, st_name, args=[]):
         """Create list of words in source code line encoded from
-        middle form statement.
+        moddle form of translated statement.
         """
-        line = ['FETCH']
+        line = [st_name]
         line.append(statement['name'])
-        args = [('VERSION', 'version'), ('FROM', 'origin')]
         for arg, req in args:
             if req in statement:
                 line.append(arg)
                 line.append(statement[req])
         return line
+
+    def _encodefetch(self, statement):
+        """Encode FETCH statement.
+        """
+        args = [('VERSION', 'version'), ('FROM', 'origin')]
+        return self._encodeline(statement=statement, st_name='FETCH', args=args)
+
+    def _encodeinstall(self, statement):
+        """Encode INSTALL statement.
+        """
+        args = [('VERSION', 'version'), ('FROM', 'origin')]
+        return self._encodeline(statement=statement, st_name='INSTALL', args=args)
 
     def encode(self):
         """Create source code from the middle-form representation of
@@ -141,6 +153,7 @@ class Encoder():
         for statement in self._parsed:
             st = statement['req']
             if st == 'fetch': source.append(self._encodefetch(statement))
+            elif st == 'install': source.append(self._encodeinstall(statement))
             else: raise errors.EncodingError('does not know how to encode \'{0}\' statement'.format(st))
         self._source = source
         return self
