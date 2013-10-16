@@ -441,5 +441,17 @@ class TransactionEncoderTests(unittest.TestCase):
         encoder = pake.transactions.encoder.Encoder(parsed=parser.getparsed()).encode()
         self.assertEqual(desired, encoder.getsource(joined=False))
 
+    def testEncodingMETAset(self):
+        parser = pake.transactions.parser.Parser(path='./testfiles/meta.set.transaction').load().parse()
+        desired = [['META', "'set'", 'KEY', "'foo'", 'VALUE', "'bar baz'"]]
+        encoder = pake.transactions.encoder.Encoder(parsed=parser.getparsed()).encode()
+        self.assertEqual(desired, encoder.getsource(joined=False))
+
+
+@unittest.skip('runner must be implemented')
+class TransactionRunnerTests(unittest.TestCase):
+    def testRunning(self):
+        warnings.warn('implement me!')
+
 
 if __name__ == '__main__': unittest.main()
