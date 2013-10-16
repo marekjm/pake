@@ -186,19 +186,22 @@ expanding range of things transactions are capable of.
 PAKE transaction files are line-oriented.
 Each physical line is also logical line.
 Comments are lines that start with `#` character.
-
-Parsing is very simple.
-After reading the lines of the file, split lines by spaces (it's safe as neither package-names nor
-versions nor keywords can contain spaces), analyze resulting lists.
-First item (at 0 index) will always be main statement, the second (at index 1) its target.
+Comments MUST NOT appear after a statement.
 
 Syntax error should be raised when line contains less than two items.
 
-If line contains more than two items it is analyzed to extract extra data that was given.
+Parsing procedure:
 
-Each line is translated into statements (in form of dictionaries) understood by interpreter which
-then iterates through the parsed file line by line (transactions are procedural) and
-executes statements in the order they are found in file.
+0. open a file for reading,
+0. read lines of the file,
+0. strip whitespace from the ends of each line,
+0. purge empty lines,
+0. purge every line which first character is `#` (comments),
+0. tokenize any lines left,
+
+Each logical line is then translated into a statement (in form of a dictionary) understood by runner which
+iterates through the translated file statement by statement (transactions are completely procedural) executing
+each request.
 
 &nbsp;
 

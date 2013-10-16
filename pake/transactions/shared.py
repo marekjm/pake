@@ -16,6 +16,12 @@
 # Similarly, when encoding back to source code, second element is looked for in
 # middle-form dict and first is used when SUBKEYWORD is inserted into source code
 # being created.
-fetch_statement_subkeywords =  [('VERSION', 'version'), ('FROM', 'origin')]
-install_statement_subkeywords = [('VERSION', 'version')]
-remove_statement_subkeywords = []
+#
+# First element of the list of subkeywords must be main keyword of the statement.
+# It is used to determine name of the package (for INSTALL, REMOVE and FETCH statements),
+# action to perform (for META, NEST, ALIEN and MIRROR statements).
+
+fetch_statement_subkeywords =  [('FETCH', 'name'), ('VERSION', 'version'), ('FROM', 'origin')]
+install_statement_subkeywords = [('INSTALL', 'name'), ('VERSION', 'version')]
+remove_statement_subkeywords = [('REMOVE', 'name')]
+meta_statement_subkeywords = [('META', 'action'), ('KEY', 'key'), ('VALUE', 'value')]

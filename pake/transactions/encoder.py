@@ -19,14 +19,22 @@ class Encoder():
 
     def _encodeline(self, statement, st_name, args=[]):
         """Create list of words in source code line encoded from
-        moddle form of translated statement.
+        middle form of translated statement.
+
+        This method uses repr() function on all arguments so they will be enquoted.
+        It is required for correct encoding of META statements where VALUE subkeywords can
+        have arguments containing spaces.
         """
-        line = [st_name]
-        line.append(statement['name'])
-        for arg, req in args:
+        line = [st_name]  # set main KEYWORD
+        req_name = ''
+        for kw, req in args:
+            if kw == st_name: req_name = req
+        line.append(repr(statement[req_name]))  # append argument for main KEYWORD
+        for kw, req in args:
+            if kw == st_name: continue  # don't add it second time - it's the main KEYWORD
             if req in statement:
-                line.append(arg)
-                line.append(statement[req])
+                line.append(kw)
+                line.append(repr(statement[req]))
         return line
 
     def _encodefetch(self, statement):
@@ -44,6 +52,11 @@ class Encoder():
         """
         return self._encodeline(statement=statement, st_name='REMOVE', args=shared.remove_statement_subkeywords)
 
+    def _encodemeta(self, statement):
+        """Encode META statement.
+        """
+        return self._encodeline(statement=statement, st_name='META', args=shared.meta_statement_subkeywords)
+
     def encode(self):
         """Create source code from the middle-form representation of
         the transaction.
@@ -57,7 +70,10 @@ class Encoder():
                 source.append(self._encodeinstall(statement))
             elif st == 'remove':
                 source.append(self._encoderemove(statement))
-            else: raise errors.EncodingError('does not know how to encode \'{0}\' statement'.format(st))
+            elif st == 'meta':
+                source.append(self._encodemeta(statement))
+            else:
+                raise errors.EncodingError('does not know how to encode \'{0}\' statement'.format(st))
         self._source = source
         return self
 

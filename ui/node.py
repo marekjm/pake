@@ -123,10 +123,15 @@ if str(ui) == 'init':
 elif str(ui) == 'meta':
     """Logic for meta.json manipulation.
     """
+    warnings.warn('rewrite to use pake.transactions.runner requests')
     if '--set' in ui:
         key, value = ui.get('--set')
+        #request = {'req': 'meta.set', 'key': key, 'value': value}
+        #pake.transactions.runner.execute(request)
         pake.config.node.Meta(root).set(key, value).write()
     if '--remove' in ui:
+        #request = {'req': 'meta.remove', 'key': ui.get('--remove')}
+        #pake.transactions.runner.execute(request)
         pake.config.node.Meta(root).remove(ui.get('--remove')).write()
     if '--get' in ui:
         print(pake.config.node.Meta(root).get(ui.get('--get')))

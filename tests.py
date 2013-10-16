@@ -328,6 +328,24 @@ class NodePushingTests(unittest.TestCase):
         pake.config.node.Pushers(test_node_root).reset().write()
 
 
+class TokenizationTests(unittest.TestCase):
+    def testSimpleTokenization(self):
+        tokens = pake.transactions.parser.tokenize('foo bar')
+        self.assertEqual(['foo', 'bar'], tokens)
+
+    def testTokenizationWithMultipleWhitespaceBetweenWords(self):
+        tokens = pake.transactions.parser.tokenize('foo     bar')
+        self.assertEqual(['foo', 'bar'], tokens)
+
+    def testTokenizationWithQuotedStringsContainingWhitespace(self):
+        tokens = pake.transactions.parser.tokenize('foo "  bar baz "', dequoted=True)
+        self.assertEqual(['foo', '  bar baz '], tokens)
+
+    def testTokenizationWithEmptyStrings(self):
+        tokens = pake.transactions.parser.tokenize('foo "" bar \'\'', dequoted=True)
+        self.assertEqual(['foo', '', 'bar', ''], tokens)
+
+
 class TransactionParserTests(unittest.TestCase):
     def testLoadingFETCH(self):
         parsed = pake.transactions.parser.Parser(path='./testfiles/fetch.transaction').load().getlines()
@@ -348,6 +366,16 @@ class TransactionParserTests(unittest.TestCase):
     def testLoadingREMOVE(self):
         parsed = pake.transactions.parser.Parser(path='./testfiles/remove.transaction').load().getlines()
         desired = [['REMOVE', 'foo']]
+        self.assertEqual(desired, parsed)
+
+    def testLoadingMETAset(self):
+        parsed = pake.transactions.parser.Parser(path='./testfiles/meta.set.transaction').load().getlines()
+        desired = [['META', 'set', 'KEY', 'foo', 'VALUE', 'bar baz']]
+        self.assertEqual(desired, parsed)
+
+    def testLoadingMETAremove(self):
+        parsed = pake.transactions.parser.Parser(path='./testfiles/meta.remove.transaction').load().getlines()
+        desired = [['META', 'remove', 'KEY', 'foo']]
         self.assertEqual(desired, parsed)
 
     def testParsingFETCH(self):
@@ -371,29 +399,45 @@ class TransactionParserTests(unittest.TestCase):
         desired = [{'req': 'remove', 'name': 'foo'}]
         self.assertEqual(desired, parsed)
 
+    def testParsingMETAset(self):
+        parsed = pake.transactions.parser.Parser(path='./testfiles/meta.set.transaction').load().parse().getparsed()
+        desired = [{'req': 'meta', 'action': 'set', 'key': 'foo', 'value': 'bar baz'}]
+        self.assertEqual(desired, parsed)
+
+    def testParsingMETAremove(self):
+        parsed = pake.transactions.parser.Parser(path='./testfiles/meta.remove.transaction').load().parse().getparsed()
+        desired = [{'req': 'meta', 'action': 'remove', 'key': 'foo'}]
+        self.assertEqual(desired, parsed)
+
 
 class TransactionEncoderTests(unittest.TestCase):
     def testEncodingFETCH(self):
         parser = pake.transactions.parser.Parser(path='./testfiles/fetch.transaction').load().parse()
-        desired = [['FETCH', 'foo'],
-                   ['FETCH', 'foo', 'FROM', 'http://pake.example.com'],
-                   ['FETCH', 'foo', 'VERSION', '0.0.1'],
-                   ['FETCH', 'foo', 'VERSION', '0.0.1', 'FROM', 'http://pake.example.com'],
+        desired = [['FETCH', "'foo'"],
+                   ['FETCH', "'foo'", 'FROM', "'http://pake.example.com'"],
+                   ['FETCH', "'foo'", 'VERSION', "'0.0.1'"],
+                   ['FETCH', "'foo'", 'VERSION', "'0.0.1'", 'FROM', "'http://pake.example.com'"],
                    ]
         encoder = pake.transactions.encoder.Encoder(parsed=parser.getparsed()).encode()
         self.assertEqual(desired, encoder.getsource(joined=False))
 
     def testEncodingINSTALL(self):
         parser = pake.transactions.parser.Parser(path='./testfiles/install.transaction').load().parse()
-        desired = [['INSTALL', 'foo'],
-                   ['INSTALL', 'foo', 'VERSION', '0.0.1'],
+        desired = [['INSTALL', "'foo'"],
+                   ['INSTALL', "'foo'", 'VERSION', "'0.0.1'"],
                    ]
         encoder = pake.transactions.encoder.Encoder(parsed=parser.getparsed()).encode()
         self.assertEqual(desired, encoder.getsource(joined=False))
 
     def testEncodingREMOVE(self):
         parser = pake.transactions.parser.Parser(path='./testfiles/remove.transaction').load().parse()
-        desired = [['REMOVE', 'foo']]
+        desired = [['REMOVE', "'foo'"]]
+        encoder = pake.transactions.encoder.Encoder(parsed=parser.getparsed()).encode()
+        self.assertEqual(desired, encoder.getsource(joined=False))
+
+    def testEncodingMETAremove(self):
+        parser = pake.transactions.parser.Parser(path='./testfiles/meta.remove.transaction').load().parse()
+        desired = [['META', "'remove'", 'KEY', "'foo'"]]
         encoder = pake.transactions.encoder.Encoder(parsed=parser.getparsed()).encode()
         self.assertEqual(desired, encoder.getsource(joined=False))
 

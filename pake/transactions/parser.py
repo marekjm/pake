@@ -6,6 +6,46 @@
 from pake import errors
 from pake.transactions import shared
 
+
+def dequote(s):
+    """Remove quotes from string ends.
+    """
+    if not s: return s  # return empty string
+    if len(s) == 1: return s  # string is single char and thus can't be dequoted
+    if s[0] == '"' and s[-1] == '"': s = s[1:-1]
+    elif s[0] == "'" and s[-1] == "'": s = s[1:-1]
+    return s
+
+
+def tokenize(line, dequoted=False):
+    """This function will tokenize the line.
+
+    :param dequoted: if True - strings will have surrounding quotes removed
+    :type dequoted: bool
+    """
+    tokens, word = [], ''
+    for i in range(len(line)):
+        char = line[i]
+        if char == '"' and word and word[0] == '"':
+            word += char
+            if word: tokens.append(word)  # just don't append empty words
+            word = ''  # reset word
+        elif char == "'" and word and word[0] == "'":
+            word += char
+            if word: tokens.append(word)  # just don't append empty words
+            word = ''  # reset word
+        elif char == ' ' and word and word[0] in ['"', "'"]:
+            word += char
+        elif char == ' ':
+            if word: tokens.append(word)  # just don't append empty words
+            word = ''  # reset word
+        else:
+            word += char
+    if word: tokens.append(word)
+    if dequoted: tokens = [dequote(word) for word in tokens]
+    return tokens
+
+
 class Parser():
     """This object can be used to parse PAKE transaction files.
 
@@ -30,17 +70,17 @@ class Parser():
         self._lines = [l for l in self._lines if l != '']       # purge empty lines
         self._lines = [l for l in self._lines if l[0] != '#']   # purge comments
 
-    def _splitlines(self):
-        """Splits read lines.
+    def _tokenizelines(self):
+        """Tokenize read lines.
         """
-        self._lines = [l.split(' ') for l in self._lines]
+        self._lines = [tokenize(l, dequoted=True) for l in self._lines]
 
     def load(self):
         """Load file lines into object's memory.
         """
         self._readlines()
         self._purgelines()
-        self._splitlines()
+        self._tokenizelines()
         return self
 
     def _parseline(self, line, req_name, args=[]):
@@ -53,8 +93,6 @@ class Parser():
         request = {'req': req_name}
         if len(line) < 2: raise SyntaxError('no package name to install: {0}'.format(self._path))
         if line[1] in args: raise SyntaxError('no package name to install: {0}'.format(self._path))
-        request['name'] = line[1]
-        line = line[2:]  # removing obligatory elements of the line
         for arg, req in args:  # checking for optional elements
             if arg in line:
                 n = line.index(arg)  # index of the subkeyword
@@ -89,6 +127,12 @@ class Parser():
         """
         return self._parseline(line=line, req_name='remove', args=shared.remove_statement_subkeywords)
 
+    def _parsemeta(self, line):
+        """Parse meta manipulation request and
+        return appropriate translation into middle-form.
+        """
+        return self._parseline(line=line, req_name='meta', args=shared.meta_statement_subkeywords)
+
     def parse(self):
         """This method parses read lines into a form that can be understood by
         interpreter.
@@ -96,13 +140,15 @@ class Parser():
         parsed = []
         for line in self._lines:
             request = {}
-            keyword = line[0]
+            keyword = line[0]  # main keyword is always first - if it's not it's a SyntaxError
             if keyword == 'FETCH':
                 request = self._parsefetch(line)
             elif keyword == 'INSTALL':
                 request = self._parseinstall(line)
             elif keyword == 'REMOVE':
                 request = self._parseremove(line)
+            elif keyword == 'META':
+                request = self._parsemeta(line)
             else:
                 raise SyntaxError('unknown keyword found in file: {0}: {1}'.format(self._path, keyword))
             parsed.append(request)
