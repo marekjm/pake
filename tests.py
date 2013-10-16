@@ -23,11 +23,21 @@ import pake
 
 # Flags
 VERBOSE = False
+# end: Flags
 
 
 # Global variables
+
 test_node_root = pake.shared.getnodepath(check=False, fake=os.path.abspath('./testdir'))
 test_nest_root = pake.shared.getnestpath(check=False, fake=os.path.abspath('./testdir'))
+
+# if it's local server it will provide you with
+# the ability to test while offline
+# if you want to skip tests that require alien server
+# leave this variable blank
+test_alien_server_url = 'http://127.0.0.1/pakenode' 
+
+# end: Global variables
 
 
 # Test environment setup
@@ -370,7 +380,7 @@ class TransactionEncoderTests(unittest.TestCase):
                    ['FETCH', 'foo', 'VERSION', '0.0.1'],
                    ['FETCH', 'foo', 'VERSION', '0.0.1', 'FROM', 'http://pake.example.com'],
                    ]
-        encoder = pake.transactions.parser.Encoder(parsed=parser.getparsed()).encode()
+        encoder = pake.transactions.encoder.Encoder(parsed=parser.getparsed()).encode()
         self.assertEqual(desired, encoder.getsource(joined=False))
 
     def testEncodingINSTALL(self):
@@ -378,13 +388,13 @@ class TransactionEncoderTests(unittest.TestCase):
         desired = [['INSTALL', 'foo'],
                    ['INSTALL', 'foo', 'VERSION', '0.0.1'],
                    ]
-        encoder = pake.transactions.parser.Encoder(parsed=parser.getparsed()).encode()
+        encoder = pake.transactions.encoder.Encoder(parsed=parser.getparsed()).encode()
         self.assertEqual(desired, encoder.getsource(joined=False))
 
     def testEncodingREMOVE(self):
         parser = pake.transactions.parser.Parser(path='./testfiles/remove.transaction').load().parse()
         desired = [['REMOVE', 'foo']]
-        encoder = pake.transactions.parser.Encoder(parsed=parser.getparsed()).encode()
+        encoder = pake.transactions.encoder.Encoder(parsed=parser.getparsed()).encode()
         self.assertEqual(desired, encoder.getsource(joined=False))
 
 

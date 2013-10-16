@@ -4,6 +4,7 @@
 """
 
 from pake import errors
+from pake.transactions import shared
 
 class Parser():
     """This object can be used to parse PAKE transaction files.
@@ -56,8 +57,8 @@ class Parser():
         line = line[2:]  # removing obligatory elements of the line
         for arg, req in args:  # checking for optional elements
             if arg in line:
-                n = line.index(arg)
-                target = line[n+1]
+                n = line.index(arg)  # index of the subkeyword
+                target = line[n+1]   # argument comes next
                 if target in args: # check whether target is another argument - it's a syntax error
                     raise SyntaxError('argument without target in file: {0}: {1}'.format(self._path, arg))
                 request[req] = target
@@ -74,22 +75,19 @@ class Parser():
         """Takes list of words found in line containing FETCH statement and
         returns request dictionary built from them.
         """
-        args = [('FROM', 'origin'), ('VERSION', 'version')]
-        return self._parseline(line=line, req_name='fetch', args=args)
+        return self._parseline(line=line, req_name='fetch', args=shared.fetch_statement_subkeywords)
 
     def _parseinstall(self, line):
         """Takes list of words found in line containing INSTALL statement and
         returns request dictionary built from them.
         """
-        args = [('VERSION', 'version')]
-        return self._parseline(line=line, req_name='install', args=args)
+        return self._parseline(line=line, req_name='install', args=shared.install_statement_subkeywords)
 
     def _parseremove(self, line):
         """Takes list of words found in line containing REMOVE statement and
         returns request dictionary built from them.
         """
-        args = []  # this statement does not take any arguments
-        return self._parseline(line=line, req_name='remove')
+        return self._parseline(line=line, req_name='remove', args=shared.remove_statement_subkeywords)
 
     def parse(self):
         """This method parses read lines into a form that can be understood by
@@ -120,75 +118,3 @@ class Parser():
         """Returns parsed code.
         """
         return self._parsed
-
-
-class Encoder():
-    """This object can encode middle-form representation of transactions
-    back to the source code.
-    """
-    def __init__(self, parsed):
-        self._parsed = parsed  # this is middle-form of transaction
-        self._source = []
-
-    def _encodeline(self, statement, st_name, args=[]):
-        """Create list of words in source code line encoded from
-        moddle form of translated statement.
-        """
-        line = [st_name]
-        line.append(statement['name'])
-        for arg, req in args:
-            if req in statement:
-                line.append(arg)
-                line.append(statement[req])
-        return line
-
-    def _encodefetch(self, statement):
-        """Encode FETCH statement.
-        """
-        args = [('VERSION', 'version'), ('FROM', 'origin')]
-        return self._encodeline(statement=statement, st_name='FETCH', args=args)
-
-    def _encodeinstall(self, statement):
-        """Encode INSTALL statement.
-        """
-        args = [('VERSION', 'version'), ('FROM', 'origin')]
-        return self._encodeline(statement=statement, st_name='INSTALL', args=args)
-
-    def _encoderemove(self, statement):
-        """Encode INSTALL statement.
-        """
-        args = []  # this statement does not take any arguments
-        return self._encodeline(statement=statement, st_name='REMOVE', args=args)
-
-    def encode(self):
-        """Create source code from the middle-form representation of
-        the transaction.
-        """
-        source = []
-        for statement in self._parsed:
-            st = statement['req']
-            if st == 'fetch':
-                source.append(self._encodefetch(statement))
-            elif st == 'install':
-                source.append(self._encodeinstall(statement))
-            elif st == 'remove':
-                source.append(self._encoderemove(statement))
-            else: raise errors.EncodingError('does not know how to encode \'{0}\' statement'.format(st))
-        self._source = source
-        return self
-
-    def getsource(self, joined=True):
-        """Get lines of source generated code.
-
-        :param joined: if True words will be joined with whitespace
-        """
-        if joined: return [' '.join(l) for l in self._source]
-        else: return [l for l in self._source]
-
-    def dump(self, path):
-        """Write source to the file specified during initialization
-        of the object.
-        """
-        ofstream = open(path, 'w')
-        for line in self.getsource(): ofstream.write('{0}\n'.format(line))
-        ofstream.close()
