@@ -26,9 +26,7 @@ class Encoder():
         have arguments containing spaces.
         """
         line = [st_name]  # set main KEYWORD
-        req_name = ''
-        for kw, req in args:
-            if kw == st_name: req_name = req
+        req_name = [req for kw, req in args if kw == st_name][0]
         line.append(repr(statement[req_name]))  # append argument for main KEYWORD
         for kw, req in args:
             if kw == st_name: continue  # don't add it second time - it's the main KEYWORD
