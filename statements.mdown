@@ -1,0 +1,46 @@
+First word is **main statement keyword** which will define how the line will be parsed and
+translated.  
+Second word has two functions: it serves a **context** for the main keyword and
+is a casual keyword which will take part in the transalation process.
+
+
+    PKG FETCH "foo" (FROM "http://pake.example.com" VERSION "0.0.1")
+    PKG INSTALL "foo" (VERSION "0.0.1")
+    PKG REMOVE "foo"
+
+
+    NODE MNGR "init"
+    NODE MNGR "remove"
+    NODE MNGR "regenerate"
+
+    NODE META "set" KEY "foo" VALUE "bar baz"
+    NODE META "remove" KEY "foo"
+    # this pushes the value to the stack
+    NODE META "get" KEY "foo"
+
+    NODE MIRRORS "add" URL "http://pake.example.com" HOST "example.com" CWD "/domains/example.com/public_html/pake"
+    NODE MIRRORS "remove" URL "http://pake.example.com"
+    NODE MIRRORS "push" (TO "http://pake.example.com")
+    NODE MIRRORS "build"
+
+    NODE ALIENS "add" URL "http://pake.example.com"
+    NODE ALIENS "remove" URL "http://pake.example.com"
+    NODE ALIENS "purge"
+    NODE ALIENS "refresh"
+    NODE ALIENS "expand"
+
+    NODE PKGS "build"
+    NODE PKGS "register" FROM "/path/to/the/.pakenest"
+
+    
+    NEST MNGR "init"
+    NEST MNGR "remove"
+
+    NEST META "set" KEY "foo" VALUE "bar baz"
+    NEST META "remove" KEY "foo"
+    # this pushes the value to the stack
+    NEST META "get" KEY "foo"
+
+    NEST PKG "build"
+    NEST PKG "add" FILE "/path/to/the.file"
+    NEST PKG "add" DIRECTORY "/path/to/the.file" (RECURSIVE)

@@ -83,17 +83,18 @@ class Parser():
         self._tokenizelines()
         return self
 
-    def _parseline(self, line, req_name, args=[]):
+    def _parseline(self, line, args=[]):
         """Parse line and returns dictionary representing request.
 
         args are list of two-tuples containg `ARGUMENT_NAME` and `request_name`.
         `ARGUMENT_NAME` is a string looke for in list of words passed and
         `request_name` is a name under which it is saved in request dictionary.
         """
-        request = {'req': req_name}
-        if len(line) < 2: raise SyntaxError('no package name to install: {0}'.format(self._path))
-        if line[1] in args: raise SyntaxError('no package name to install: {0}'.format(self._path))
-        for kw, req, argno in args:  # checking for optional elements
+        if len(line) < 3: raise SyntaxError('syntax error in: {0}'.format(self._path))
+        request = {}
+        request['req'] = line.pop(0)
+        request['context'] = line[0]
+        for kw, req, argno, conflicts in args:
             if kw in line:
                 n = line.index(kw)  # index of the subkeyword
                 target = line[n+argno]   # argument comes next
@@ -103,12 +104,20 @@ class Parser():
             else:
                 n = -1  # indicate that given arg was not found
             if n > -1:
-                del line[n:n+argno+1]  # remove used words from the line
+                if argno: m = 2
+                else: m = 1
+                del line[n:n+m]  # remove used words from the line
         # if any words can be found in the statement it means that
         # it is invalid as it contains words that were not caught by parser
         if line:
-            raise SyntaxError('invalid {0} statement in file: {1}'.format(req_name, self._path))
+            print(line)
+            raise SyntaxError('invalid {0} statement in file: {1}'.format(request['req'], self._path))
         return request
+
+    def _parsepkg(self, line):
+        """Parses lines for PKG statements.
+        """
+        return self._parseline(line, args=shared.statement_subkeywords_for_pkg)
 
     def _parsefetch(self, line):
         """Takes list of words found in line containing FETCH statement and
@@ -148,14 +157,12 @@ class Parser():
         for line in self._lines:
             request = {}
             keyword = line[0]  # main keyword is always first - if it's not it's a SyntaxError
-            if keyword == 'FETCH':
-                request = self._parsefetch(line)
+            if keyword == 'PKG':
+                request = self._parsepkg(line)
             elif keyword == 'INSTALL':
                 request = self._parseinstall(line)
             elif keyword == 'REMOVE':
                 request = self._parseremove(line)
-            #elif keyword == 'NODE':
-            #    request = self._parsenode(line)
             elif keyword == 'META':
                 request = self._parsemeta(line)
             else:

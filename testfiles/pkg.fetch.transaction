@@ -1,0 +1,11 @@
+# this will determine newest version and origin
+PKG FETCH foo
+
+# this will determine only version
+PKG FETCH foo FROM http://pake.example.com
+
+# this will determine only origin
+PKG FETCH foo VERSION 0.0.1
+
+# this is recommended form
+PKG FETCH foo VERSION 0.0.1 FROM http://pake.example.com

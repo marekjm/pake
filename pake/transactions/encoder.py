@@ -18,7 +18,7 @@ class Encoder():
         self._parsed = parsed  # this is middle-form of transaction
         self._source = []
 
-    def _encodeline(self, statement, st_name, args=[]):
+    def _encodeline(self, statement, args=[]):
         """Create list of words in source code line encoded from
         middle form of translated statement.
 
@@ -26,15 +26,21 @@ class Encoder():
         It is required for correct encoding of META statements where VALUE subkeywords can
         have arguments containing spaces.
         """
-        line = [st_name]  # set main KEYWORD
-        req_name = [req for kw, req, argno in args if kw == st_name][0]
-        line.append(repr(statement[req_name]))  # append argument for main KEYWORD
-        for kw, req, argno in args:
-            if kw == st_name: continue  # don't add it second time - it's the main KEYWORD
+        line = [statement['req']]  # set main KEYWORD
+        line.append(statement['context'])  # set context
+        req_name = [kw for kw, req, argno, conflicts in args if kw == statement['req']][0]
+        line.append(repr(statement[statement['context'].lower()]))  # append argument for context
+        for kw, req, argno, conflicts in args:
+            if kw in [statement['context'], statement['req']]: continue  # don't add it second time - it's the main KEYWORD or context
             if req in statement:
                 line.append(kw)
                 line.append(repr(statement[req]))
         return line
+
+    def _encodepkg(self, statement):
+        """Encodes PKG statements.
+        """
+        return self._encodeline(statement=statement, args=shared.statement_subkeywords_for_pkg)
 
     def _encodefetch(self, statement):
         """Encode FETCH statement.
@@ -71,6 +77,8 @@ class Encoder():
                 source.append(self._encoderemove(statement))
             elif st == 'meta':
                 source.append(self._encodemeta(statement))
+            elif st == 'PKG':
+                source.append(self._encodepkg(statement))
             else:
                 raise errors.EncodingError('does not know how to encode \'{0}\' statement'.format(st))
         self._source = source
