@@ -356,11 +356,10 @@ class TransactionParserTests(unittest.TestCase):
                    ]
         self.assertEqual(desired, parsed)
 
-    @unittest.skip('due to redesigned transaction syntax')
     def testLoadingPKGinstall(self):
-        parsed = pake.transactions.parser.Parser(path='./testfiles/install.transaction').load().getlines()
-        desired = [['INSTALL', 'foo'],
-                   ['INSTALL', 'foo', 'VERSION', '0.0.1'],
+        parsed = pake.transactions.parser.Parser(path='./testfiles/pkg.install.transaction').load().getlines()
+        desired = [['PKG', 'INSTALL', 'foo'],
+                   ['PKG', 'INSTALL', 'foo', 'VERSION', '0.0.1'],
                    ]
         self.assertEqual(desired, parsed)
 
@@ -391,11 +390,10 @@ class TransactionParserTests(unittest.TestCase):
                    ]
         self.assertEqual(desired, parsed)
 
-    @unittest.skip('due to redesigned transaction syntax')
-    def testParsingINSTALL(self):
-        parsed = pake.transactions.parser.Parser(path='./testfiles/install.transaction').load().parse().getparsed()
-        desired = [{'req': 'install', 'name': 'foo'},
-                   {'req': 'install', 'name': 'foo', 'version': '0.0.1'},
+    def testParsingPKGinstall(self):
+        parsed = pake.transactions.parser.Parser(path='./testfiles/pkg.install.transaction').load().parse().getparsed()
+        desired = [{'req': 'PKG', 'context': 'INSTALL', 'install': 'foo'},
+                   {'req': 'PKG', 'context': 'INSTALL', 'install': 'foo', 'version': '0.0.1'},
                    ]
         self.assertEqual(desired, parsed)
 
@@ -429,11 +427,10 @@ class TransactionEncoderTests(unittest.TestCase):
         encoder = pake.transactions.encoder.Encoder(parsed=parser.getparsed()).encode()
         self.assertEqual(desired, encoder.getsource(joined=False))
 
-    @unittest.skip('due to redesigned transaction syntax')
-    def testEncodingINSTALL(self):
-        parser = pake.transactions.parser.Parser(path='./testfiles/install.transaction').load().parse()
-        desired = [['INSTALL', "'foo'"],
-                   ['INSTALL', "'foo'", 'VERSION', "'0.0.1'"],
+    def testEncodingPKGinstall(self):
+        parser = pake.transactions.parser.Parser(path='./testfiles/pkg.install.transaction').load().parse()
+        desired = [['PKG', 'INSTALL', "'foo'"],
+                   ['PKG', 'INSTALL', "'foo'", 'VERSION', "'0.0.1'"],
                    ]
         encoder = pake.transactions.encoder.Encoder(parsed=parser.getparsed()).encode()
         self.assertEqual(desired, encoder.getsource(joined=False))
