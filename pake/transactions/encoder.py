@@ -9,6 +9,7 @@ created by parser or PAKE itself.
 from pake import errors
 from pake.transactions import shared
 
+
 class Encoder():
     """This object can encode middle-form representation of transactions
     back to the source code.
@@ -26,9 +27,9 @@ class Encoder():
         have arguments containing spaces.
         """
         line = [st_name]  # set main KEYWORD
-        req_name = [req for kw, req in args if kw == st_name][0]
+        req_name = [req for kw, req, argno in args if kw == st_name][0]
         line.append(repr(statement[req_name]))  # append argument for main KEYWORD
-        for kw, req in args:
+        for kw, req, argno in args:
             if kw == st_name: continue  # don't add it second time - it's the main KEYWORD
             if req in statement:
                 line.append(kw)

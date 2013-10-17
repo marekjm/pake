@@ -93,20 +93,21 @@ class Parser():
         request = {'req': req_name}
         if len(line) < 2: raise SyntaxError('no package name to install: {0}'.format(self._path))
         if line[1] in args: raise SyntaxError('no package name to install: {0}'.format(self._path))
-        for arg, req in args:  # checking for optional elements
-            if arg in line:
-                n = line.index(arg)  # index of the subkeyword
-                target = line[n+1]   # argument comes next
+        for kw, req, argno in args:  # checking for optional elements
+            if kw in line:
+                n = line.index(kw)  # index of the subkeyword
+                target = line[n+argno]   # argument comes next
                 if target in args: # check whether target is another argument - it's a syntax error
-                    raise SyntaxError('argument without target in file: {0}: {1}'.format(self._path, arg))
+                    raise SyntaxError('keyword without an argument in file: {0}: {1}'.format(self._path, arg))
                 request[req] = target
             else:
                 n = -1  # indicate that given arg was not found
-            if n > -1: del line[n:n+2]  # remove used words from the line
+            if n > -1:
+                del line[n:n+argno+1]  # remove used words from the line
         # if any words can be found in the statement it means that
         # it is invalid as it contains words that were not caught by parser
         if line:
-            raise SyntaxError('invalid FETCH statement in file: {0}'.format(self._path))
+            raise SyntaxError('invalid {0} statement in file: {1}'.format(req_name, self._path))
         return request
 
     def _parsefetch(self, line):
@@ -133,6 +134,12 @@ class Parser():
         """
         return self._parseline(line=line, req_name='meta', args=shared.meta_statement_subkeywords)
 
+    def _parsenode(self, line):
+        """Parse node manipulation request and
+        return appropriate translation into middle-form.
+        """
+        return self._parseline(line=line, req_name='node', args=shared.meta_statement_subkeywords)
+
     def parse(self):
         """This method parses read lines into a form that can be understood by
         interpreter.
@@ -147,6 +154,8 @@ class Parser():
                 request = self._parseinstall(line)
             elif keyword == 'REMOVE':
                 request = self._parseremove(line)
+            #elif keyword == 'NODE':
+            #    request = self._parsenode(line)
             elif keyword == 'META':
                 request = self._parsemeta(line)
             else:

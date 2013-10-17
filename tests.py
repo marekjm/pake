@@ -448,10 +448,12 @@ class TransactionEncoderTests(unittest.TestCase):
         self.assertEqual(desired, encoder.getsource(joined=False))
 
 
-@unittest.skip('runner must be implemented')
+@unittest.skip('parsing and encoding must be implemented first')
 class TransactionRunnerTests(unittest.TestCase):
-    def testRunning(self):
-        warnings.warn('implement me!')
+    def testRunningMETAset(self):
+        request = {'req': 'meta', 'action': 'set', 'key': 'foo', 'value': 'bar'}
+        pake.transactions.runner.Runner(reqs=[request]).finalize().run()
+        self.assertEqual(pake.config.node.Meta(test_node_root).get('foo'), 'bar')
 
 
 if __name__ == '__main__': unittest.main()
