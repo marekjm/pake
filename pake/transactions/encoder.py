@@ -42,26 +42,6 @@ class Encoder():
         """
         return self._encodeline(statement=statement, args=shared.statement_subkeywords_for_pkg)
 
-    def _encodefetch(self, statement):
-        """Encode FETCH statement.
-        """
-        return self._encodeline(statement=statement, st_name='FETCH', args=shared.fetch_statement_subkeywords)
-
-    def _encodeinstall(self, statement):
-        """Encode INSTALL statement.
-        """
-        return self._encodeline(statement=statement, st_name='INSTALL', args=shared.install_statement_subkeywords)
-
-    def _encoderemove(self, statement):
-        """Encode INSTALL statement.
-        """
-        return self._encodeline(statement=statement, st_name='REMOVE', args=shared.remove_statement_subkeywords)
-
-    def _encodemeta(self, statement):
-        """Encode META statement.
-        """
-        return self._encodeline(statement=statement, st_name='META', args=shared.meta_statement_subkeywords)
-
     def encode(self):
         """Create source code from the middle-form representation of
         the transaction.
@@ -69,15 +49,7 @@ class Encoder():
         source = []
         for statement in self._parsed:
             st = statement['req']
-            if st == 'fetch':
-                source.append(self._encodefetch(statement))
-            elif st == 'install':
-                source.append(self._encodeinstall(statement))
-            elif st == 'remove':
-                source.append(self._encoderemove(statement))
-            elif st == 'meta':
-                source.append(self._encodemeta(statement))
-            elif st == 'PKG':
+            if st == 'PKG':
                 source.append(self._encodepkg(statement))
             else:
                 raise errors.EncodingError('does not know how to encode \'{0}\' statement'.format(st))

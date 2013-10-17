@@ -3,10 +3,23 @@ translated.
 Second word has two functions: it serves a **context** for the main keyword and
 is a casual keyword which will take part in the transalation process.
 
+This statements can be parsed, translated and reencoded by PAKE.
+In the first public alpha they will be even executable by transaction runner.
+
 
     PKG FETCH "foo" (FROM "http://pake.example.com" VERSION "0.0.1")
     PKG INSTALL "foo" (VERSION "0.0.1")
     PKG REMOVE "foo"
+
+
+----
+
+These statements are not working and are just ideas.
+Don't take for granted that they will be implemented.
+Only thing sure in the matter of meta-languages in PAKE is the FSRL language used
+for filesystem operations.
+Syntax and features of PAKE-specific meta-language can (and probably will) change at any time as
+they are in the very early stage of the evolution.
 
 
     NODE MNGR "init"

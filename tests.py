@@ -368,18 +368,6 @@ class TransactionParserTests(unittest.TestCase):
         desired = [['PKG', 'REMOVE', 'foo']]
         self.assertEqual(desired, parsed)
 
-    @unittest.skip('due to redesigned transaction syntax')
-    def testLoadingMETAset(self):
-        parsed = pake.transactions.parser.Parser(path='./testfiles/meta.set.transaction').load().getlines()
-        desired = [['META', 'set', 'KEY', 'foo', 'VALUE', 'bar baz']]
-        self.assertEqual(desired, parsed)
-
-    @unittest.skip('due to redesigned transaction syntax')
-    def testLoadingMETAremove(self):
-        parsed = pake.transactions.parser.Parser(path='./testfiles/meta.remove.transaction').load().getlines()
-        desired = [['META', 'remove', 'KEY', 'foo']]
-        self.assertEqual(desired, parsed)
-
     def testParsingPKGfetch(self):
         parsed = pake.transactions.parser.Parser(path='./testfiles/pkg.fetch.transaction').load().parse().getparsed()
         desired = [{'req': 'PKG', 'context': 'FETCH', 'fetch': 'foo'},
@@ -399,18 +387,6 @@ class TransactionParserTests(unittest.TestCase):
     def testParsingPKGremove(self):
         parsed = pake.transactions.parser.Parser(path='./testfiles/pkg.remove.transaction').load().parse().getparsed()
         desired = [{'req': 'PKG', 'context': 'REMOVE', 'remove': 'foo'}]
-        self.assertEqual(desired, parsed)
-
-    @unittest.skip('due to redesigned transaction syntax')
-    def testParsingMETAset(self):
-        parsed = pake.transactions.parser.Parser(path='./testfiles/meta.set.transaction').load().parse().getparsed()
-        desired = [{'req': 'meta', 'action': 'set', 'key': 'foo', 'value': 'bar baz'}]
-        self.assertEqual(desired, parsed)
-
-    @unittest.skip('due to redesigned transaction syntax')
-    def testParsingMETAremove(self):
-        parsed = pake.transactions.parser.Parser(path='./testfiles/meta.remove.transaction').load().parse().getparsed()
-        desired = [{'req': 'meta', 'action': 'remove', 'key': 'foo'}]
         self.assertEqual(desired, parsed)
 
 
@@ -436,20 +412,6 @@ class TransactionEncoderTests(unittest.TestCase):
     def testEncodingPKGremove(self):
         parser = pake.transactions.parser.Parser(path='./testfiles/pkg.remove.transaction').load().parse()
         desired = [['PKG', 'REMOVE', "'foo'"]]
-        encoder = pake.transactions.encoder.Encoder(parsed=parser.getparsed()).encode()
-        self.assertEqual(desired, encoder.getsource(joined=False))
-
-    @unittest.skip('due to redesigned transaction syntax')
-    def testEncodingMETAremove(self):
-        parser = pake.transactions.parser.Parser(path='./testfiles/meta.remove.transaction').load().parse()
-        desired = [['META', "'remove'", 'KEY', "'foo'"]]
-        encoder = pake.transactions.encoder.Encoder(parsed=parser.getparsed()).encode()
-        self.assertEqual(desired, encoder.getsource(joined=False))
-
-    @unittest.skip('due to redesigned transaction syntax')
-    def testEncodingMETAset(self):
-        parser = pake.transactions.parser.Parser(path='./testfiles/meta.set.transaction').load().parse()
-        desired = [['META', "'set'", 'KEY', "'foo'", 'VALUE', "'bar baz'"]]
         encoder = pake.transactions.encoder.Encoder(parsed=parser.getparsed()).encode()
         self.assertEqual(desired, encoder.getsource(joined=False))
 

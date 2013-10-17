@@ -119,36 +119,6 @@ class Parser():
         """
         return self._parseline(line, args=shared.statement_subkeywords_for_pkg)
 
-    def _parsefetch(self, line):
-        """Takes list of words found in line containing FETCH statement and
-        returns request dictionary built from them.
-        """
-        return self._parseline(line=line, req_name='fetch', args=shared.fetch_statement_subkeywords)
-
-    def _parseinstall(self, line):
-        """Takes list of words found in line containing INSTALL statement and
-        returns request dictionary built from them.
-        """
-        return self._parseline(line=line, req_name='install', args=shared.install_statement_subkeywords)
-
-    def _parseremove(self, line):
-        """Takes list of words found in line containing REMOVE statement and
-        returns request dictionary built from them.
-        """
-        return self._parseline(line=line, req_name='remove', args=shared.remove_statement_subkeywords)
-
-    def _parsemeta(self, line):
-        """Parse meta manipulation request and
-        return appropriate translation into middle-form.
-        """
-        return self._parseline(line=line, req_name='meta', args=shared.meta_statement_subkeywords)
-
-    def _parsenode(self, line):
-        """Parse node manipulation request and
-        return appropriate translation into middle-form.
-        """
-        return self._parseline(line=line, req_name='node', args=shared.meta_statement_subkeywords)
-
     def parse(self):
         """This method parses read lines into a form that can be understood by
         interpreter.
@@ -159,12 +129,6 @@ class Parser():
             keyword = line[0]  # main keyword is always first - if it's not it's a SyntaxError
             if keyword == 'PKG':
                 request = self._parsepkg(line)
-            elif keyword == 'INSTALL':
-                request = self._parseinstall(line)
-            elif keyword == 'REMOVE':
-                request = self._parseremove(line)
-            elif keyword == 'META':
-                request = self._parsemeta(line)
             else:
                 raise SyntaxError('unknown keyword found in file: {0}: {1}'.format(self._path, keyword))
             parsed.append(request)
