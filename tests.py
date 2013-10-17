@@ -363,10 +363,9 @@ class TransactionParserTests(unittest.TestCase):
                    ]
         self.assertEqual(desired, parsed)
 
-    @unittest.skip('due to redesigned transaction syntax')
     def testLoadingPKGremove(self):
-        parsed = pake.transactions.parser.Parser(path='./testfiles/remove.transaction').load().getlines()
-        desired = [['REMOVE', 'foo']]
+        parsed = pake.transactions.parser.Parser(path='./testfiles/pkg.remove.transaction').load().getlines()
+        desired = [['PKG', 'REMOVE', 'foo']]
         self.assertEqual(desired, parsed)
 
     @unittest.skip('due to redesigned transaction syntax')
@@ -397,10 +396,9 @@ class TransactionParserTests(unittest.TestCase):
                    ]
         self.assertEqual(desired, parsed)
 
-    @unittest.skip('due to redesigned transaction syntax')
-    def testParsingREMOVE(self):
-        parsed = pake.transactions.parser.Parser(path='./testfiles/remove.transaction').load().parse().getparsed()
-        desired = [{'req': 'remove', 'name': 'foo'}]
+    def testParsingPKGremove(self):
+        parsed = pake.transactions.parser.Parser(path='./testfiles/pkg.remove.transaction').load().parse().getparsed()
+        desired = [{'req': 'PKG', 'context': 'REMOVE', 'remove': 'foo'}]
         self.assertEqual(desired, parsed)
 
     @unittest.skip('due to redesigned transaction syntax')
@@ -435,10 +433,9 @@ class TransactionEncoderTests(unittest.TestCase):
         encoder = pake.transactions.encoder.Encoder(parsed=parser.getparsed()).encode()
         self.assertEqual(desired, encoder.getsource(joined=False))
 
-    @unittest.skip('due to redesigned transaction syntax')
-    def testEncodingREMOVE(self):
-        parser = pake.transactions.parser.Parser(path='./testfiles/remove.transaction').load().parse()
-        desired = [['REMOVE', "'foo'"]]
+    def testEncodingPKGremove(self):
+        parser = pake.transactions.parser.Parser(path='./testfiles/pkg.remove.transaction').load().parse()
+        desired = [['PKG', 'REMOVE', "'foo'"]]
         encoder = pake.transactions.encoder.Encoder(parsed=parser.getparsed()).encode()
         self.assertEqual(desired, encoder.getsource(joined=False))
 
