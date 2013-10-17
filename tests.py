@@ -416,12 +416,13 @@ class TransactionEncoderTests(unittest.TestCase):
         self.assertEqual(desired, encoder.getsource(joined=False))
 
 
-@unittest.skip('parsing and encoding must be implemented first')
+@unittest.skip('before transaction runner implement package indexing')
 class TransactionRunnerTests(unittest.TestCase):
-    def testRunningMETAset(self):
-        request = {'req': 'meta', 'action': 'set', 'key': 'foo', 'value': 'bar'}
-        pake.transactions.runner.Runner(reqs=[request]).finalize().run()
-        self.assertEqual(pake.config.node.Meta(test_node_root).get('foo'), 'bar')
+    def testFinalizingPackageFetch(self):
+        request = {'req': 'PKG', 'context': 'FETCH', 'fetch': 'foo'}
+        desired = {'req': 'PKG', 'context': 'FETCH', 'fetch': 'foo', 'version': '0.0.1', 'origin': 'http://pake.example.com'}
+        runner = pake.transactions.runner.Runner(reqs=[request]).finalize()
+        self.assertEqual(desired, runner._reqs[0])
 
 
 if __name__ == '__main__': unittest.main()
