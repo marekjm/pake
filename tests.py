@@ -29,7 +29,7 @@ import testconf
 
 
 # Flags
-VERBOSE = False
+VERBOSE = True
 # end: Flags
 
 
@@ -290,10 +290,12 @@ class NestReleasesTests(unittest.TestCase):
         test_pkg.close()
         # sixth: create list of files we expect to be included
         expected = ['./tests.py'] + but.scanner.Scanner('./ui/').discardExtension('pyc').scan().files + but.scanner.Scanner('./webui/').scan().files
+        if VERBOSE: [print(i) for i in expected]
         # seventh: check if the two lists are equal
         self.assertEqual(expected, names)
-        # eighth: cleanup (reset to default, empty state)
         self.assertIn('0.0.1', pake.config.nest.Versions(test_nest_root))
+        # eighth: cleanup (reset to default, empty state)
+        shutil.rmtree(os.path.join(test_nest_root, 'versions', '0.0.1'))
         pake.config.nest.Files(test_nest_root).reset().write()
         pake.config.nest.Meta(test_nest_root).reset().write()
 
@@ -329,6 +331,13 @@ class NodePushingTests(unittest.TestCase):
         pake.config.node.Pushers(test_node_root).reset().write()
 
     def testPushingToNode(self):
+        pake.config.nest.Meta(test_nest_root).set('name', 'test').set('version', '0.0.1').write()
+        pake.nest.package.addfile(test_nest_root, './tests.py')
+        pake.nest.package.adddir(test_nest_root, './ui/', recursive=True, avoid=['__pycache__'], avoid_exts=['swp', 'pyc'])
+        pake.nest.package.adddir(test_nest_root, './webui/', recursive=True, avoid_exts=['swp', 'pyc'])
+        pake.nest.package.build(test_nest_root)
+        pake.config.node.Nests(root=test_node_root).set('foo', './testdir/.pakenest').write()
+
         if testconf.SERVER_ENABLED_TESTS:
             url = testconf.test_server_url
             host = testconf.test_server_host
@@ -337,8 +346,22 @@ class NodePushingTests(unittest.TestCase):
             username = testconf.test_server_username
             password = testconf.test_server_password
             pake.node.pusher.push(root=test_node_root, url=url, username=username, password=password, reupload=True)
+            remote = ftplib.FTP(testconf.test_server_host)
+            remote.login(testconf.test_server_username, testconf.test_server_password)
+            if cwd: remote.cwd(cwd)
+            remote.cwd('./packages/foo/versions/0.0.1')
+            files = pake.node.pusher._lsdir(remote)
+            if VERBOSE: print(files)
+            self.assertIn('build.tar.xz', files)
+            self.assertIn('meta.json', files)
+            self.assertIn('dependencies.json', files)
+            remote.close()
         else:
             warnings.warn('test not run: SERVER_ENABLED_TESTS is False')
+        # cleanup (reset to default, empty state)
+        pake.config.node.Nests(test_node_root).reset().write()
+        pake.config.nest.Files(test_nest_root).reset().write()
+        pake.config.nest.Meta(test_nest_root).reset().write()
 
 
 class NetworkTests(unittest.TestCase):
