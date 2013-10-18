@@ -6,3 +6,7 @@
 *.swp
 
 __pycache__/
+
+
+# test configuration file may contain sensitive data don't push it
+testconf.py

@@ -2,6 +2,7 @@
 
 
 # Libraries from Python standard library a.k.a. batteries
+import ftplib
 import json
 import os
 import shutil
@@ -15,10 +16,16 @@ import warnings
 # "but" can be obtained from: https://github.com/marekjm/but
 # only one object from it is needed: but.scanner.Scanner()
 import but
+# "clap" (UI library used by PAKE) can be obtained from: https://github.com/marekjm/clap
+import clap
 
 
 # PAKE import
 import pake
+
+
+# import test configuration
+import testconf
 
 
 # Flags
@@ -30,12 +37,6 @@ VERBOSE = False
 
 test_node_root = pake.shared.getnodepath(check=False, fake=os.path.abspath('./testdir'))
 test_nest_root = pake.shared.getnestpath(check=False, fake=os.path.abspath('./testdir'))
-
-# if it's local server it will provide you with
-# the ability to test while offline
-# if you want to skip tests that require alien server
-# leave this variable blank
-test_alien_server_url = 'http://127.0.0.1/pakenode' 
 
 # end: Global variables
 
@@ -326,6 +327,22 @@ class NodePushingTests(unittest.TestCase):
         self.assertEqual(['http://pake.example.com'], json.loads(ifstream.read()))
         ifstream.close()
         pake.config.node.Pushers(test_node_root).reset().write()
+
+    def testPushingToNode(self):
+        if testconf.SERVER_ENABLED_TESTS:
+            url = testconf.test_server_url
+            host = testconf.test_server_host
+            cwd = testconf.test_server_cwd
+            pake.config.node.Pushers(test_node_root).add(url=url, host=host, cwd=cwd).write()
+            username = testconf.test_server_username
+            password = testconf.test_server_password
+            pake.node.pusher.push(root=test_node_root, url=url, username=username, password=password, reupload=True)
+        else:
+            warnings.warn('test not run: SERVER_ENABLED_TESTS is False')
+
+
+class NetworkTests(unittest.TestCase):
+    pass
 
 
 class TokenizationTests(unittest.TestCase):

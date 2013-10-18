@@ -1,0 +1,16 @@
+`testconf.py` is a file containg additional data needed for tests such as
+usernames and passowrds for servers (for pushing tests)
+
+Here is shown example `testconf.py` file:
+
+
+    # if it's local server it will provide you with
+    # the ability to test while offline
+    # if you want to skip tests that require server
+    # leave this variable blank
+    SERVER_ENABLED_TESTS = True
+    test_server_url = 'http://127.0.0.1/pakenode'
+    test_server_host = '127.0.0.1'
+    test_server_cwd = 'pakenode'
+    test_server_username = 'username123'
+    test_server_password = 'password123'
