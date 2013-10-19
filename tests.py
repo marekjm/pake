@@ -42,23 +42,98 @@ test_nest_root = pake.shared.getnestpath(check=False, fake=os.path.abspath('./te
 
 
 # Test environment setup
+print('* preparing local test environment...')
 if os.path.isdir(test_node_root):
-    print('- removing old test node root')
+    print('  * removing old test node root', end='  ')
     shutil.rmtree(test_node_root)
+    print('[  OK  ]')
 if os.path.isdir(test_nest_root):
-    print('- removing old test nest root')
+    print('  * removing old test nest root', end='  ')
     shutil.rmtree(test_nest_root)
+    print('[  OK  ]')
 
-print('+ creating new test node root')
+print(' * creating new test node root')
 pake.node.manager.makedirs(root=test_node_root)
+print('   * created directories...')
 pake.node.manager.makeconfig(root=test_node_root)
+print('   * wrote config files...')
+pake.node.packages.genpkglist(root=test_node_root)
+print('   * generated (empty) packages list')
+pake.node.pusher.genmirrorlist(root=test_node_root)
+print('   * generated (empty) mirror list')
+print(' + created new test node root')
 
-print('+ creating new test nest root')
+print(' * creating new test nest root')
+print('   * creating directories...')
 pake.nest.manager.makedirs(root=test_nest_root)
+print('   * writing config files...')
 pake.nest.manager.makeconfig(root=test_nest_root)
+print(' + created new test nest root')
 
-print('\nSuccessfully created test environment in {0}'.format(os.path.abspath('./testdir')))
+print('+ successfully created test environment in {0}'.format(os.path.abspath('./testdir')))
 print()  # to make a one-line break between setup messages and actual test messages
+
+
+# Creating test network
+test_network_url = 'http://127.0.0.1'  # without trailing slash
+test_network_host = '127.0.0.1'
+test_network_wd = 'paketest'
+test_network_user = 'marekjm'
+test_network_pass = 'pass'
+
+print('* creating test network...')
+remote = ftplib.FTP(test_network_host)
+remote.login(test_network_user, test_network_pass)
+if test_network_wd: remote.cwd(test_network_wd)
+print('* creating test network in \'{0}\''.format(remote.pwd()))
+ls = pake.node.pusher._lsdir(remote)
+print(ls)
+for i in range(8):  # create dummy aliens
+    name = 'alien{0}'.format(i)
+    # 1. create the directory if it does not exist
+    if name not in ls: remote.mkd(name)
+    # 2. change directory to this alien's directory
+    remote.cwd(name)
+    # 3. create fake meta file
+    ofsmeta = open('./testfiles/tmp/meta.json', 'w')
+    url = '{0}/{1}/{2}'.format(test_network_url, test_network_wd, name)
+    if i % 2 == 0: ofsmeta.write(json.dumps({'url': url}))
+    else: ofsmeta.write(json.dumps({'url': '{0}/{1}/alien{2}'.format(test_network_url, test_network_wd, i-1)}))
+    ofsmeta.close()
+    # 4. create fake mirrors file
+    ofsmirrors = open('./testfiles/tmp/mirrors.json', 'w')
+    mirrors = [url]
+    if i % 2 == 0: mirrors.append('{0}/{1}/alien{2}'.format(test_network_url, test_network_wd, i+1))
+    else: mirrors.append('{0}/{1}/alien{2}'.format(test_network_url, test_network_wd, i-1))
+    ofsmirrors.write(json.dumps(mirrors))
+    ofsmirrors.close()
+    # 5. create fake aliens file
+    ofsmirrors = open('./testfiles/tmp/aliens.json', 'w')
+    if i+2 <= 5:  # we don't create fake mirrors alien8, alien9 etc.
+        ofsmirrors.write(json.dumps(['{0}/{1}/alien{2}'.format(test_network_url, test_network_wd, i+2)]))
+    else:  # so for aliens with 'i' greater or equal to 4 instead of adding we substract
+        ofsmirrors.write(json.dumps(['{0}/{1}/alien{2}'.format(test_network_url, test_network_wd, i-4)]))
+    ofsmirrors.close()
+    # 6. push fake config files
+    pake.node.pusher._sendlines(remote, './testfiles/tmp/meta.json')
+    pake.node.pusher._sendlines(remote, './testfiles/tmp/mirrors.json')
+    pake.node.pusher._sendlines(remote, './testfiles/tmp/aliens.json')
+    # 7. return to parent directory to prepare for switching to another alien
+    remote.cwd('..')
+
+pushers = pake.config.node.Pushers(test_node_root)
+for i in range(4):  # create dummy mirrors
+    name = 'mirror{0}'.format(i)
+    if name not in ls:
+        remote.mkd(name)
+        print(' * created directory for dummy mirror {0}'.format(i))
+    url = '{0}/{1}'.format(test_network_url, name)
+    pushers.add(url=url, host=test_network_host, cwd='{0}/{1}'.format(test_network_wd, name)).write()
+    print(' * added pusher for mirror {0}: {1}'.format(i, url))
+    pake.node.pusher.push(root=test_node_root, url=url, username=test_network_user, password=test_network_pass, reupload=True)
+    print(' * pushed to mirror {0}'.format(i))
+remote.close()
+print('+ successfully created test network')
 
 
 class NodeInitializationTests(unittest.TestCase):
@@ -365,7 +440,9 @@ class NodePushingTests(unittest.TestCase):
 
 
 class NetworkTests(unittest.TestCase):
-    pass
+    def testGeneratingPkgIndex(self):
+        warnings.warn('implement me!')
+        pass
 
 
 class TokenizationTests(unittest.TestCase):
@@ -465,4 +542,4 @@ class TransactionRunnerTests(unittest.TestCase):
         self.assertEqual(desired, runner._reqs[0])
 
 
-if __name__ == '__main__': unittest.main()
+#if __name__ == '__main__': unittest.main()

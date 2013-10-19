@@ -23,7 +23,7 @@ def _lsdir(remote, directory='.'):
     try:
         listing = [name for name, data in remote.mlsd(directory)]
     except ftplib.error_perm as e:
-        warnings.warn('\'{0}\' was returned by .mlsd(): trying to use .nlst()'.format(e))
+        warnings.warn('\'{0}\' was returned by .mlsd(): trying to use deprecated .nlst()'.format(e))
         listing = remote.nlst(directory)
         warnings.warn(DeprecationWarning)
     finally:
