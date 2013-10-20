@@ -16,13 +16,15 @@ import warnings
 from pake import config, errors
 
 
-def _check(meta):
+def _check(meta, path):
     """Checks if nest in given path has valid meta.json.
     """
-    required_keys = ['name', 'version', 'license']
+    required_keys = ['name']
     for key in required_keys:
-        if key not in meta: raise errors.PAKEError('missing information for this package: {0}'.format(key))
-        if not meta[key]: raise errors.PAKEError('missing information for this package: {0}'.format(key))
+        if key not in meta:
+            raise errors.PAKEError('missing information for nest in: {0}: {1}'.format(path, key))
+        if not meta[key]:
+            raise errors.PAKEError('missing information for nest in: {0}: {1}'.format(path, key))
 
 
 def register(root, path):
@@ -36,7 +38,7 @@ def register(root, path):
         warnings.warn('path {0} is not absolute'.format(path))
         path = os.path.abspath(path)  # make the path absolute
     meta = config.nest.Meta(path)
-    _check(meta.content)
+    _check(meta.content, path)
     config.node.Nests(root).set(name=meta.get('name'), path=path).write()
 
 

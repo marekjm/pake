@@ -19,10 +19,8 @@ import but
 # "clap" (UI library used by PAKE) can be obtained from: https://github.com/marekjm/clap
 import clap
 
-
 # PAKE import
 import pake
-
 
 # import test configuration
 import testconf
@@ -75,11 +73,11 @@ print()  # to make a one-line break between setup messages and actual test messa
 
 
 # Creating test network
-test_network_url = 'http://127.0.0.1'  # without trailing slash
-test_network_host = '127.0.0.1'
-test_network_wd = 'paketest'
-test_network_user = 'marekjm'
-test_network_pass = 'pass'
+test_network_url = testconf.test_network_url
+test_network_host = testconf.test_network_host
+test_network_wd = testconf.test_network_wd
+test_network_user = testconf.test_network_user
+test_network_pass = testconf.test_network_pass
 
 print('* creating test network...')
 remote = ftplib.FTP(test_network_host)
@@ -88,8 +86,11 @@ if test_network_wd: remote.cwd(test_network_wd)
 print('* creating test network in \'{0}\''.format(remote.pwd()))
 ls = pake.node.pusher._lsdir(remote)
 print(ls)
-for i in range(8):  # create dummy aliens
-    name = 'alien{0}'.format(i)
+
+def createFakeAlien(remote, n):
+    """Creates fake alien.
+    """
+    name = 'alien{0}'.format(n)
     # 1. create the directory if it does not exist
     if name not in ls: remote.mkd(name)
     # 2. change directory to this alien's directory
@@ -98,21 +99,21 @@ for i in range(8):  # create dummy aliens
     ofsmeta = open('./testfiles/tmp/meta.json', 'w')
     url = '{0}/{1}/{2}'.format(test_network_url, test_network_wd, name)
     if i % 2 == 0: ofsmeta.write(json.dumps({'url': url}))
-    else: ofsmeta.write(json.dumps({'url': '{0}/{1}/alien{2}'.format(test_network_url, test_network_wd, i-1)}))
+    else: ofsmeta.write(json.dumps({'url': '{0}/{1}/alien{2}'.format(test_network_url, test_network_wd, n-1)}))
     ofsmeta.close()
     # 4. create fake mirrors file
     ofsmirrors = open('./testfiles/tmp/mirrors.json', 'w')
     mirrors = [url]
-    if i % 2 == 0: mirrors.append('{0}/{1}/alien{2}'.format(test_network_url, test_network_wd, i+1))
-    else: mirrors.append('{0}/{1}/alien{2}'.format(test_network_url, test_network_wd, i-1))
+    if n % 2 == 0: mirrors.append('{0}/{1}/alien{2}'.format(test_network_url, test_network_wd, n+1))
+    else: mirrors.append('{0}/{1}/alien{2}'.format(test_network_url, test_network_wd, n-1))
     ofsmirrors.write(json.dumps(mirrors))
     ofsmirrors.close()
     # 5. create fake aliens file
     ofsmirrors = open('./testfiles/tmp/aliens.json', 'w')
-    if i+2 <= 5:  # we don't create fake mirrors alien8, alien9 etc.
-        ofsmirrors.write(json.dumps(['{0}/{1}/alien{2}'.format(test_network_url, test_network_wd, i+2)]))
+    if n+2 <= 5:  # we don't create fake mirrors alien8, alien9 etc.
+        ofsmirrors.write(json.dumps(['{0}/{1}/alien{2}'.format(test_network_url, test_network_wd, n+2)]))
     else:  # so for aliens with 'i' greater or equal to 4 instead of adding we substract
-        ofsmirrors.write(json.dumps(['{0}/{1}/alien{2}'.format(test_network_url, test_network_wd, i-4)]))
+        ofsmirrors.write(json.dumps(['{0}/{1}/alien{2}'.format(test_network_url, test_network_wd, n-4)]))
     ofsmirrors.close()
     # 6. push fake config files
     pake.node.pusher._sendlines(remote, './testfiles/tmp/meta.json')
@@ -121,19 +122,29 @@ for i in range(8):  # create dummy aliens
     # 7. return to parent directory to prepare for switching to another alien
     remote.cwd('..')
 
-pushers = pake.config.node.Pushers(test_node_root)
-for i in range(4):  # create dummy mirrors
-    name = 'mirror{0}'.format(i)
+for i in range(8):  # create dummy aliens
+    createFakeAlien(remote=remote, n=i)
+
+def createFakeMirror(remote, n):
+    """Creates fake mirror and pushes to it.
+    """
+    pushers = pake.config.node.Pushers(test_node_root)
+    name = 'mirror{0}'.format(n)
     if name not in ls:
         remote.mkd(name)
-        print(' * created directory for dummy mirror {0}'.format(i))
+        print(' * created directory for test mirror {0}'.format(n))
     url = '{0}/{1}'.format(test_network_url, name)
     pushers.add(url=url, host=test_network_host, cwd='{0}/{1}'.format(test_network_wd, name)).write()
-    print(' * added pusher for mirror {0}: {1}'.format(i, url))
+    print(' * added pusher for test mirror {0}: {1}'.format(n, url))
     pake.node.pusher.push(root=test_node_root, url=url, username=test_network_user, password=test_network_pass, reupload=True)
-    print(' * pushed to mirror {0}'.format(i))
+    print(' * pushed to test mirror {0}'.format(n))
+
+for i in range(4):  # create dummy mirrors
+    createFakeMirror(remote=remote, n=i)
 remote.close()
 print('+ successfully created test network')
+
+print('\n')
 
 
 class NodeInitializationTests(unittest.TestCase):
@@ -378,8 +389,6 @@ class NestReleasesTests(unittest.TestCase):
 class NodePackagesTests(unittest.TestCase):
     def testRegisteringPackages(self):
         pake.config.nest.Meta(test_nest_root).set('name', 'foo').write()
-        pake.config.nest.Meta(test_nest_root).set('version', '0.0.1').write()
-        pake.config.nest.Meta(test_nest_root).set('license', 'GNU GPL v3+').write()
         pake.node.packages.register(root=test_node_root, path='./testdir/.pakenest')
         print('don\'t worry - this warning is supposed to appear in this test')
         # path smust be absolute to ensure that they are reachable from every other dir
@@ -441,10 +450,20 @@ class NodePushingTests(unittest.TestCase):
 
 class NetworkTests(unittest.TestCase):
     def testGeneratingPkgIndex(self):
+        origin = '{0}/mirror0'.format(test_network_url)
+        pake.config.node.Meta(test_node_root).set('url', origin).write()
+        pake.config.nest.Meta(test_nest_root).set('name', 'foo').set('license', 'GNU GPL v3+').write()
+        pake.node.packages.register(root=test_node_root, path=test_nest_root)
+        pake.config.node.Pushers(test_node_root).add(url=origin, host=test_network_host, cwd=test_network_wd).write()
         index, errors = pake.network.pkgs.getindex(test_node_root)
-        warnings.warn('this test must be implemented!')
-        self.assertEqual([], index)
+        desired = [{'name': 'foo', 'versions': ['0.0.1'], 'origin': origin},
+                   {'name': 'bar', 'versions': ['0.0.1', '0.0.2', '0.0.3'], 'origin': '{0}/alien0'.format(test_network_url)}]
+        self.assertEqual(desired, index)
         self.assertEqual([], errors)
+        # cleanup...
+        pake.config.nest.Meta(test_nest_root).reset().write()
+        pake.config.node.Meta(test_node_root).reset().write()
+        warnings.warn('this test must be improved!')
 
 
 class TokenizationTests(unittest.TestCase):
@@ -544,4 +563,4 @@ class TransactionRunnerTests(unittest.TestCase):
         self.assertEqual(desired, runner._reqs[0])
 
 
-#if __name__ == '__main__': unittest.main()
+if __name__ == '__main__': unittest.main()

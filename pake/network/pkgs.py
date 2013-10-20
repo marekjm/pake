@@ -19,8 +19,22 @@ def getindex(root):
     :returns: two-tuple (pkg-index, list-of-errors)
     """
     aliens = config.node.Aliens(root)
+    nests = config.node.Nests(root)
     index = []
     errors = []
+    # generate index of local packages
+    for i in nests:
+        print(i)
+        ifsmeta = open(os.path.join(nests[i], 'meta.json'), 'r')
+        ifsversions = open(os.path.join(nests[i], 'versions.json'), 'r')
+        name = json.loads(ifsmeta.read())['name']
+        versions = json.loads(ifsversions.read())
+        origin = config.node.Meta(root).get('url')
+        pack = {'name': name, 'versions': versions, 'origin': origin}
+        ifsmeta.close()
+        ifsversions.close()
+        index.append(pack)
+    # generate index of alien packages
     for url in aliens:
         mirrors = aliens.get(url)['mirrors']
         for m in mirrors:
@@ -39,14 +53,15 @@ def getindex(root):
         for m in mirrors:
             indexpart = []
             for name in packages:
-                pack = {}
+                pack = {'name': name, 'origin': url}
                 print('trying package: {0}'.format(name))
-                for i in ['meta', 'dependencies', 'versions']:
+                for i in ['versions']:
                     print('\tfrom mirror: {0}'.format(m))
                     resource = '{0}/packages/{1}/{2}.json'.format(m, name, i)
                     try:
                         pack[i] = shared.fetchjson(resource)
                         indexpart.append(pack)
+                        print(pack)
                     except (urllib.error.HTTPError, urllib.error.URLError) as e:
                         errors.append('{0}: {1}'.format(e, resource))
                     finally:
