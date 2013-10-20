@@ -4,7 +4,7 @@
 
 from pake import node
 from pake import nest
-from pake import aliens
+from pake import network
 from pake import packages
 from pake import transactions
 from pake import config

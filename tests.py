@@ -441,8 +441,10 @@ class NodePushingTests(unittest.TestCase):
 
 class NetworkTests(unittest.TestCase):
     def testGeneratingPkgIndex(self):
-        warnings.warn('implement me!')
-        pass
+        index, errors = pake.network.pkgs.getindex(test_node_root)
+        warnings.warn('this test must be implemented!')
+        self.assertEqual([], index)
+        self.assertEqual([], errors)
 
 
 class TokenizationTests(unittest.TestCase):
