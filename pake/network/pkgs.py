@@ -12,13 +12,11 @@ from pake import config
 from pake import shared
 
 
-def getindex(root):
-    """This function will generate and return index of packages that can be found
-    in the network.
-
-    :returns: two-tuple (pkg-index, list-of-errors)
+def getlocalindex(root):
+    """This will generate index of packages that are local to your network e.g.
+    are provided by your mirrors.
+    This will scan nests.
     """
-    aliens = config.node.Aliens(root)
     nests = config.node.Nests(root)
     index = []
     errors = []
@@ -34,7 +32,18 @@ def getindex(root):
         ifsmeta.close()
         ifsversions.close()
         index.append(pack)
-    # generate index of alien packages
+    return (index, errors)
+
+
+def getindex(root):
+    """This function will generate and return index of packages that can be found
+    in the network.
+
+    :returns: two-tuple (pkg-index, list-of-errors)
+    """
+    aliens = config.node.Aliens(root)
+    index = []
+    errors = []
     for url in aliens:
         mirrors = aliens.get(url)['mirrors']
         for m in mirrors:

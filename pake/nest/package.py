@@ -74,7 +74,13 @@ def build(root):
     tarname = os.path.join(path, 'build.tar.xz')
     package = tarfile.TarFile(name=tarname, mode='w')
     package.xzopen(name=tarname, mode='w')
-    for f in files: package.add(f)
+    for f in files:
+        package.add(os.path.normpath(f))
+    if 'install.fsrl' not in [os.path.normpath(i) for i in files]:
+        warnings.warn('no installation script included in package {0}-{1}'.format(meta['name'], meta['version']))
+    if 'remove.fsrl' not in [os.path.normpath(i) for i in files]:
+        warnings.warn('no removal script included in package {0}-{1}'.format(meta['name'], meta['version']))
+
     package.close()
 
     for name in ['meta.json', 'dependencies.json']:

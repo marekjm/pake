@@ -10,6 +10,7 @@ import os
 import pyversion
 
 from pake.config import base
+from pake import errors
 
 
 class Meta(base.Meta):
@@ -104,9 +105,9 @@ class Files(base.Config):
     def add(self, path):
         """Adds file to the list.
         """
-        if not (os.path.isfile(path) or os.path.isdir(path)): raise FileNotFoundError(path)
+        if not os.path.isfile(path): raise errors.NotAFileError(path)
         for i in self:
-            if os.path.abspath(path) == os.path.abspath(i): raise FileExistsError('file already added')
+            if os.path.abspath(path) == os.path.abspath(i): raise FileExistsError('file already added: {0}'.format(path))
         self.content.append(path)
         return self
 

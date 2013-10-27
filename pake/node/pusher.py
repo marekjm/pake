@@ -12,6 +12,48 @@ import warnings
 from pake import config
 
 
+class FTPPusher(ftplib.FTP):
+    """Wrapper around ftplib's FTP object.
+    """
+    def sendlines(self, path):
+        """Send file as lines.
+        File is sent to the current working directory set in remote.
+
+        :param path: path to a file to be sent
+        """
+        ifstream = open(path, 'rb')
+        self.storlines('STOR {0}'.format(os.path.split(path)[-1]), ifstream, callback=None)
+        ifstream.close()
+        return self
+
+    def sendbinary(self, path):
+        """Send file as binary.
+        File is sent to the current working directory set in remote.
+
+        :param path: path to a file to be sent
+        """
+        ifstream = open(path, 'rb')
+        self.storbinary('STOR {0}'.format(os.path.split(path)[-1]), ifstream, callback=None)
+        ifstream.close()
+        return self
+
+    def ls(self, directory='.'):
+        """Returns directory listing.
+        Although .nlst() method is deprecated some servers (VSFTPd for example) don't accept
+        .mlsd(). In such situations this method issues a warning and falls back to .nlst().
+        Returns a list of strings.
+        """
+        listing = []
+        try:
+            listing = [name for name, data in self.mlsd(directory)]
+        except ftplib.error_perm as e:
+            warnings.warn('\'{0}\' was returned by .mlsd(): trying to use deprecated .nlst()'.format(e))
+            listing = self.nlst(directory)
+        finally:
+            return listing
+
+
+
 # helper FTP functions
 def _lsdir(remote, directory='.'):
     """Returns directory listing.
@@ -72,7 +114,7 @@ def _uploadpackages(root, remote, reupload=False):
     """
     for name in ['packages', 'cache']:
         if name not in _lsdir(remote): remote.mkd(name)
-    print('+ pake: debug: switching to "packages" directory')
+    #print('+ pake: debug: switching to "packages" directory')
     remote.cwd('./packages')
     pkgs = config.node.Nests(root)
     for name in pkgs:
@@ -115,7 +157,7 @@ def _upload(root, host, username, password, cwd='', reupload=False):
     :passowrd: FTP password
     :cwd: directory to which PAKE will go after logging in
     """
-    remote = ftplib.FTP(host)
+    remote = FTPPusher(host)
     remote.login(username, password)
     if cwd: remote.cwd(cwd)
     _uploadconfig(root, remote)

@@ -14,3 +14,10 @@ Here is shown example `testconf.py` file:
     test_server_cwd = 'pakenode'
     test_server_username = 'username123'
     test_server_password = 'password123'
+
+    # Test network
+    test_network_url = 'http://127.0.0.1'   # without trailing slash
+    test_network_host = '127.0.0.1'         # host of your test network
+    test_network_wd = 'paketest'
+    test_network_user = 'marekjm'
+    test_network_pass = 'pass'
