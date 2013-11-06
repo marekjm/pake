@@ -30,8 +30,12 @@ import warnings
 #
 # * but can be obtained from: https://github.com/marekjm/but (only one object from it is needed: but.scanner.Scanner())
 # * clap (UI library used by PAKE) can be obtained from: https://github.com/marekjm/clap
+# * pyversion can be obtained from: https://github.com/marekjm/pyversion
+# * fsrl can be obtained from: https://github.com/marekjm/fsrl
 import but
 import clap
+import pyversion
+import fsrl
 
 
 # PAKE import
@@ -142,11 +146,23 @@ def createFakeMirror(remote, n):
     """
     pushers = pake.config.node.Pushers(test_node_root)
     name = 'mirror{0}'.format(n)
-    if name not in pake.node.pusher._lsdir(remote): remote.mkd(name)
+    if name not in remote.ls(): remote.mkd(name)
     url = '{0}/{1}'.format(test_network_url, name)
     pushers.add(url=url, host=test_network_host, cwd='{0}/{1}'.format(test_network_wd, name)).write()
     pake.node.pusher.push(root=test_node_root, url=url, username=test_network_user, password=test_network_pass, reupload=True)
     print('  * pushed to test mirror {0}: {1}'.format(n, url))
+
+def buildTestPackage(version='0.2.4.8'):
+    """Builds test package.
+    Returns version of built package.
+    """
+    pake.config.nest.Meta(test_nest_root).set('name', 'test').write()
+    pake.nest.package.addfile(test_nest_root, './tests.py')
+    pake.nest.package.addfile(test_nest_root, './install.fsrl')
+    pake.nest.package.addfile(test_nest_root, './remove.fsrl')
+    pake.nest.package.adddir(test_nest_root, './ui/', recursive=True, avoid=['__pycache__'], avoid_exts=['swp', 'pyc'])
+    pake.nest.package.build(root=test_nest_root, version=version)
+    return version
 
 
 # Test environment setup
@@ -332,8 +348,9 @@ class NodePackagesTests(unittest.TestCase):
         pake.config.nest.Meta(test_nest_root).set('name', 'foo').write()
         pake.node.packages.register(root=test_node_root, path='./testdir/.pakenest')
         print('don\'t worry - this warning is supposed to appear in this test')
-        # path smust be absolute to ensure that they are reachable from every other dir
+        # paths must be absolute to ensure that they are reachable from every directory
         self.assertEqual(os.path.abspath('./testdir/.pakenest'), pake.config.node.Nests(test_node_root).get('foo'))
+        pake.node.packages.unregister(root=test_node_root, name='foo')
         pake.config.node.Nests(test_node_root).reset().write()
         pake.config.nest.Meta(test_nest_root).reset().write()
 
@@ -344,6 +361,10 @@ class NodePackagesTests(unittest.TestCase):
         ifstream = open(os.path.join(test_node_root, 'packages.json'))
         self.assertEqual(['foo'], json.loads(ifstream.read()))
         ifstream.close()
+        # cleanup
+        pake.config.node.Nests(test_node_root).reset().write()
+        pake.config.nest.Meta(test_nest_root).reset().write()
+        os.remove(os.path.join('.', 'testdir', '.pakenode', 'packages.json'))
 
 
 class NodePushingTests(unittest.TestCase):
@@ -353,40 +374,56 @@ class NodePushingTests(unittest.TestCase):
         ifstream = open(os.path.join(test_node_root, 'mirrors.json'))
         self.assertEqual(['http://pake.example.com'], json.loads(ifstream.read()))
         ifstream.close()
+        # cleanup
         pake.config.node.Pushers(test_node_root).reset().write()
+        os.remove(os.path.join(test_node_root, 'mirrors.json'))
 
     def testPushingToNode(self):
-        pake.config.nest.Meta(test_nest_root).set('name', 'test').set('version', '0.0.1').write()
-        pake.nest.package.addfile(test_nest_root, './tests.py')
-        pake.nest.package.adddir(test_nest_root, './ui/', recursive=True, avoid=['__pycache__'], avoid_exts=['swp', 'pyc'])
-        pake.nest.package.adddir(test_nest_root, './webui/', recursive=True, avoid_exts=['swp', 'pyc'])
-        pake.nest.package.build(test_nest_root)
-        pake.config.node.Nests(root=test_node_root).set('foo', './testdir/.pakenest').write()
-
-        if SERVER_ENABLED_TESTS:
+        version = '2.4.8.16'
+        if SERVER_ENABLED_TESTS:  # testing code
+            # set all required variables
             url = test_server_url
             host = test_server_host
             cwd = test_server_cwd
-            pake.config.node.Pushers(test_node_root).add(url=url, host=host, cwd=cwd).write()
             username = test_server_username
             password = test_server_password
-            pake.node.pusher.push(root=test_node_root, url=url, username=username, password=password, reupload=True)
             remote = pake.node.pusher.FTPPusher(test_server_host)
             remote.login(username, password)
             if cwd: remote.cwd(cwd)
-            remote.cwd('./packages/foo/versions/0.0.1')
-            files = pake.node.pusher._lsdir(remote)
+
+            pake.config.nest.Meta(test_nest_root).set('name', 'test').write()
+            pake.node.packages.register(root=test_node_root, path='./testdir/.pakenest')
+            pake.nest.package.addfile(test_nest_root, './tests.py')
+            pake.nest.package.addfile(test_nest_root, './install.fsrl')
+            pake.nest.package.addfile(test_nest_root, './remove.fsrl')
+            pake.nest.package.adddir(test_nest_root, './ui/', recursive=True, avoid=['__pycache__'], avoid_exts=['swp', 'pyc'])
+            pake.nest.package.adddir(test_nest_root, './webui/', recursive=True, avoid_exts=['swp', 'pyc'])
+            pake.nest.package.build(test_nest_root, version=version)
+            pake.node.packages.genpkglist(root=test_node_root)
+            pake.config.node.Pushers(test_node_root).add(url=url, host=host, cwd=cwd).write()
+            pake.node.pusher.genmirrorlist(test_node_root)
+
+            print(os.listdir(os.path.join(test_nest_root, 'versions')))
+            print(remote.ls('./packages/test/versions'))
+            pake.node.pusher.push(root=test_node_root, url=url, username=username, password=password, reupload=True)
+
+            exit()
+            """
+
+            remote.cwd('./packages/foo/versions/{0}'.format(version))
+            files = remote.ls()
             if VERBOSE: print(files)
             self.assertIn('build.tar.xz', files)
             self.assertIn('meta.json', files)
             self.assertIn('dependencies.json', files)
             remote.close()
+            """
         else:
-            warnings.warn('test not run: SERVER_ENABLED_TESTS is False')
-        # cleanup (reset to default, empty state)
-        pake.config.node.Nests(test_node_root).reset().write()
-        pake.config.nest.Files(test_nest_root).reset().write()
-        pake.config.nest.Meta(test_nest_root).reset().write()
+            warnings.warn('test not run: flag: SERVER_ENABLED_TESTS = {0}'.format(SERVER_ENABLED_TESTS))
+        if SERVER_ENABLED_TESTS:  # cleanup (reset to default, empty state)
+            pake.config.node.Nests(test_node_root).reset().write()
+            pake.config.nest.Files(test_nest_root).reset().write()
+            pake.config.nest.Meta(test_nest_root).reset().write()
 
 
 # Tests of nest features
@@ -434,14 +471,18 @@ class NestConfigurationTests(unittest.TestCase):
         pake.config.nest.Versions(test_nest_root).add('0.0.1', check=True)
         pake.config.nest.Versions(test_nest_root).reset().write()
 
+
+class NestAddingFilesTests(unittest.TestCase):
     def testAddingNewFilesDirectly(self):
         pake.config.nest.Files(test_nest_root).add('./tests.py').write()
         self.assertIn('./tests.py', pake.config.nest.Files(test_nest_root))
+        # cleanup
         pake.config.nest.Files(test_nest_root).reset().write()
 
     def testAddingNewFilesViaNestInterface(self):
         pake.nest.package.addfile(test_nest_root, './tests.py')
         self.assertIn('./tests.py', pake.config.nest.Files(test_nest_root))
+        # cleanup
         pake.config.nest.Files(test_nest_root).reset().write()
 
     def testRefuseToAddNonexistentFile(self):
@@ -450,44 +491,45 @@ class NestConfigurationTests(unittest.TestCase):
     def testRefuseToAddFileThatIsAlreadyPresent(self):
         pake.config.nest.Files(test_nest_root).add('./tests.py').write()
         self.assertRaises(FileExistsError, pake.config.nest.Files(test_nest_root).add, './tests.py')
+        # cleanup
         pake.config.nest.Files(test_nest_root).reset().write()
 
 
-class NestReleasesTests(unittest.TestCase):
-    def testBuildingNonsignedPackage(self):
-        # 1: setup minimal meta needed for build process
-        pake.config.nest.Meta(test_nest_root).set('name', 'test').set('version', '0.0.1').write()
-        # 2: create list of files
-        pake.nest.package.addfile(test_nest_root, './tests.py')
-        pake.nest.package.addfile(test_nest_root, './install.fsrl')
-        pake.nest.package.addfile(test_nest_root, './remove.fsrl')
-        pake.nest.package.adddir(test_nest_root, './ui/', recursive=True, avoid=['__pycache__'], avoid_exts=['swp', 'pyc'])
-        pake.nest.package.adddir(test_nest_root, './webui/', recursive=True, avoid_exts=['swp', 'pyc'])
-        # 3: run build routine
-        pake.nest.package.build(test_nest_root)
-        # 4: check if the package was built
-        # 4.1: check if the directory was created
-        self.assertIn('0.0.1', os.listdir(os.path.join(test_nest_root, 'versions')))
-        # 4.2: check if the meta has been copied
-        self.assertIn('meta.json', os.listdir(os.path.join(test_nest_root, 'versions', '0.0.1')))
-        # 4.3: check if the dependencies.json has been copied
-        self.assertIn('dependencies.json', os.listdir(os.path.join(test_nest_root, 'versions', '0.0.1')))
-        # 5: get names of files included in package
-        test_pkg = tarfile.TarFile(os.path.join(test_nest_root, 'versions', '0.0.1', 'build.tar.xz'), 'r')
-        names = test_pkg.getnames()
-        test_pkg.close()
-        # 6: create list of files we expect to be included
-        expected = ['./tests.py', './install.fsrl', './remove.fsrl']
-        expected += but.scanner.Scanner('./ui/').discardExtension('pyc').scan().files + but.scanner.Scanner('./webui/').scan().files
-        expected = sorted([os.path.normpath(i) for i in expected])
-        if VERBOSE: [print(i) for i in expected]
-        # 7: check if the two lists are equal
-        self.assertEqual(expected, sorted(names))
-        self.assertIn('0.0.1', pake.config.nest.Versions(test_nest_root))
-        # 8: cleanup (reset to default, empty state)
-        shutil.rmtree(os.path.join(test_nest_root, 'versions', '0.0.1'))
+class NestReleaseBuildingTests(unittest.TestCase):
+    def testPackageBuildCreatesAllNecessaryFiles(self):
+        version = buildTestPackage()
+        self.assertIn(version, os.listdir(os.path.join(test_nest_root, 'versions')))
+        self.assertIn('meta.json', os.listdir(os.path.join(test_nest_root, 'versions', version)))
+        self.assertIn('dependencies.json', os.listdir(os.path.join(test_nest_root, 'versions', version)))
+        self.assertIn('build.tar.xz', os.listdir(os.path.join(test_nest_root, 'versions', version)))
+        # cleanup
         pake.config.nest.Files(test_nest_root).reset().write()
         pake.config.nest.Meta(test_nest_root).reset().write()
+        shutil.rmtree(os.path.join(test_nest_root, 'versions', version))
+
+    def testIfArchieveContainsAllRequiredFiles(self):
+        version = buildTestPackage()
+        test_pkg = tarfile.TarFile(os.path.join(test_nest_root, 'versions', version, 'build.tar.xz'), 'r')
+        names = test_pkg.getnames()
+        test_pkg.close()
+        # create list of files we expect to be included
+        expected = ['./tests.py', './install.fsrl', './remove.fsrl']
+        expected += but.scanner.Scanner('./ui/').discardExtension('pyc').scan().files
+        expected = [os.path.normpath(i) for i in expected]
+        if VERBOSE: [print(i) for i in names]
+        self.assertEqual(sorted(expected), sorted(names))
+        # cleanup
+        pake.config.nest.Files(test_nest_root).reset().write()
+        pake.config.nest.Meta(test_nest_root).reset().write()
+        shutil.rmtree(os.path.join(test_nest_root, 'versions', version))
+
+    def testIfBuildIncludedNewVersionInVersionsFile(self):
+        version = buildTestPackage()
+        self.assertIn(version, pake.config.nest.Versions(test_nest_root))
+        # cleanup
+        pake.config.nest.Files(test_nest_root).reset().write()
+        pake.config.nest.Meta(test_nest_root).reset().write()
+        shutil.rmtree(os.path.join(test_nest_root, 'versions', version))
 
 
 # Tests for package-management features
@@ -499,6 +541,7 @@ class PackageManagerTests(unittest.TestCase):
 class NetworkPackageIndexingTests(unittest.TestCase):
     def testGeneratingLocalPkgIndex(self):
         # set origin for the package
+        version = '0.2.4.8'
         origin = '{0}/mirror0'.format(test_network_url)
         # add the origin to the metadata of the node
         pake.config.node.Meta(test_node_root).set('url', origin).write()
@@ -508,7 +551,7 @@ class NetworkPackageIndexingTests(unittest.TestCase):
         pake.node.packages.register(root=test_node_root, path=test_nest_root)
         pake.config.node.Pushers(test_node_root).add(url=origin, host=test_network_host, cwd=test_network_wd).write()
         index, errors = pake.network.pkgs.getlocalindex(test_node_root)
-        desired = [{'name': 'foo', 'versions': ['0.0.1'], 'origin': origin}]
+        desired = [{'name': 'foo', 'versions': [version], 'origin': origin}]
         self.assertEqual(desired, index)
         print(index)
         self.assertEqual([], errors)
