@@ -15,8 +15,8 @@ manual:
 	sed -i -e s/${OLD}/${VERSION}/ manual/*.markdown
 	#pandoc -o ./manual/manual.pdf ./manual/*.markdown
 
-test: tests.py
-	python3 -m unittest --catch --failfast --verbose tests.py
+test:
+	python3 -m unittest --catch --failfast --verbose tests
 
 clean:
 	@rm -rv ./{pake/,pake/config/,pake/node/,pake/nest/,pake/network/{aliens/,},pake/packages/,pake/transactions/,}__pycache__/

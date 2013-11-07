@@ -21,6 +21,7 @@ def makedirs(root):
     ifstream = open(os.path.join(shared.getenvpath(), 'node', 'required', 'directories.json'))
     directories = json.loads(ifstream.read())
     ifstream.close()
+    root = os.path.join(root, '.pakenode')
     os.mkdir(root)
     for name in directories: os.mkdir(os.path.join(root, name))
 
@@ -33,6 +34,7 @@ def makeconfig(root):
     :param root: node root directory
     :type root: str
     """
+    root = os.path.join(root, '.pakenode')
     config.node.Meta(root).reset().write()
     config.node.Pushers(root).reset().write()
     config.node.Aliens(root).reset().write()
@@ -42,4 +44,4 @@ def makeconfig(root):
 def remove(root):
     """Removes repository from root.
     """
-    shutil.rmtree(root)
+    shutil.rmtree(os.path.join(root, '.pakenode'))
