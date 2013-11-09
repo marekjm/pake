@@ -17,6 +17,7 @@ def makedirs(root):
     :param root: root of the nest
     :type root: str
     """
+    root = os.path.join(root, '.pakenest')
     ifstream = open(os.path.join(shared.getenvpath(), 'nest', 'required', 'directories.json'))
     directories = json.loads(ifstream.read())
     ifstream.close()
@@ -30,6 +31,7 @@ def makeconfig(root):
     :param root: root for the nest
     :type root: str
     """
+    root = os.path.join(root, '.pakenest')
     config.nest.Versions(root).reset().write()
     config.nest.Dependencies(root).reset().write()
     config.nest.Files(root).reset().write()

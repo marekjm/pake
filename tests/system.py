@@ -39,6 +39,14 @@ def rmnode(path):
     pake.node.manager.remove(path)
 
 
+def gennest(path):
+    """Initialize nest in given path.
+    """
+    pake.nest.manager.makedirs(root=path)
+    pake.nest.manager.makeconfig(root=path)
+
+
+
 def prepare(testdir):
     """Prepares test environment.
     """
@@ -53,6 +61,8 @@ def prepare(testdir):
         shutil.rmtree(test_nest_root)
     print('* generating new node...')
     gennode(testdir)
+    print('* generating new nest...')
+    gennest(testdir)
     print()  # line break between prepare()'s output and test suite output
 
 
@@ -89,6 +99,38 @@ class NodeManagerTests(unittest.TestCase):
         """
         pake.node.manager.remove(root=testdir)
         self.assertNotIn('.pakenode', os.listdir(testdir))
+
+
+class NestManagerTests(unittest.TestCase):
+    def testNestManagerDirectoriesWriting(self):
+        """This test checks for correct initialization of all required directories.
+        """
+        ifstream = open('./env/nest/required/directories.json')
+        directories = json.loads(ifstream.read())
+        ifstream.close()
+        if VERBOSE: print()
+        for d in directories:
+            path = os.path.join(test_nest_root, d)
+            if VERBOSE: print("'{0}'".format(path))
+            self.assertEqual(True, os.path.isdir(path))
+
+    def testNestManagerConfigWriting(self):
+        """This test checks for correct intialization of all required config files.
+        """
+        # (filename, desired_content)
+        configs = [ ('meta.json', {}),
+                    ('versions.json', []),
+                    ('dependencies.json', {}),
+                    ('files.json', []),
+                    ]
+        if VERBOSE: print()
+        for f, desired in configs:
+            path = os.path.join(test_nest_root, f)
+            if VERBOSE: print("'{0}'".format(path))
+            ifstream = open(path, 'r')
+            self.assertEqual(desired, json.loads(ifstream.read()))
+            ifstream.close()
+
 
 
 if __name__ == '__main__':
