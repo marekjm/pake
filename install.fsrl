@@ -1,2 +1,0 @@
-// installation script for PAKE
-req mkd '{:python_sitepackages}/pake';

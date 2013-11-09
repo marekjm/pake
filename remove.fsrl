@@ -1,2 +1,0 @@
-// removal script for PAKE
-req rmtree '{:python_sitepackages}/pake';

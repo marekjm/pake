@@ -271,10 +271,10 @@ class NodePackagesTests(unittest.TestCase):
         helpers.gennest(testdir)
         # test logic
         pake.config.nest.Meta(test_nest_root).set('name', 'foo').write()
-        pake.node.packages.register(root=test_node_root, path='./testdir/.pakenest')
+        pake.node.packages.register(root=test_node_root, path=test_nest_root)
         print('don\'t worry - this warning is supposed to appear in this test')
         # paths must be absolute to ensure that they are reachable from every directory
-        self.assertEqual(os.path.abspath('./testdir/.pakenest'), pake.config.node.Nests(test_node_root).get('foo'))
+        self.assertEqual(os.path.abspath(test_nest_root), pake.config.node.Nests(test_node_root).get('foo'))
         pake.node.packages.unregister(root=test_node_root, name='foo')
         pake.config.node.Nests(test_node_root).reset().write()
         pake.config.nest.Meta(test_nest_root).reset().write()
@@ -299,6 +299,67 @@ class NodePackagesTests(unittest.TestCase):
         # cleanup
         helpers.rmnode(testdir)
         helpers.rmnest(testdir)
+
+
+class NodePushingTests(unittest.TestCase):
+    def testMirrorlistGeneration(self):
+        helpers.gennode(testdir)
+        # test logic
+        pake.config.node.Pushers(test_node_root).add(url='http://pake.example.com', host='example.com', cwd='').write()
+        pake.node.pusher.genmirrorlist(test_node_root)
+        ifstream = open(os.path.join(test_node_root, 'mirrors.json'))
+        self.assertEqual(['http://pake.example.com'], json.loads(ifstream.read()))
+        ifstream.close()
+        # cleanup
+        helpers.rmnode(testdir)
+
+    @unittest.skip('')
+    def testPushingToNode(self):
+        version = '2.4.8.16'
+        if SERVER_ENABLED_TESTS:  # testing code
+            # set all required variables
+            url = test_server_url
+            host = test_server_host
+            cwd = test_server_cwd
+            username = test_server_username
+            password = test_server_password
+            remote = pake.node.pusher.FTPPusher(test_server_host)
+            remote.login(username, password)
+            if cwd: remote.cwd(cwd)
+
+            pake.config.nest.Meta(test_nest_root).set('name', 'test').write()
+            pake.node.packages.register(root=test_node_root, path='./testdir/.pakenest')
+            pake.nest.package.addfile(test_nest_root, './tests.py')
+            pake.nest.package.addfile(test_nest_root, './install.fsrl')
+            pake.nest.package.addfile(test_nest_root, './remove.fsrl')
+            pake.nest.package.adddir(test_nest_root, './ui/', recursive=True, avoid=['__pycache__'], avoid_exts=['swp', 'pyc'])
+            pake.nest.package.adddir(test_nest_root, './webui/', recursive=True, avoid_exts=['swp', 'pyc'])
+            pake.nest.package.build(test_nest_root, version=version)
+            pake.node.packages.genpkglist(root=test_node_root)
+            pake.config.node.Pushers(test_node_root).add(url=url, host=host, cwd=cwd).write()
+            pake.node.pusher.genmirrorlist(test_node_root)
+
+            print(os.listdir(os.path.join(test_nest_root, 'versions')))
+            print(remote.ls('./packages/test/versions'))
+            pake.node.pusher.push(root=test_node_root, url=url, username=username, password=password, reupload=True)
+
+            exit()
+            """
+
+            remote.cwd('./packages/foo/versions/{0}'.format(version))
+            files = remote.ls()
+            if VERBOSE: print(files)
+            self.assertIn('build.tar.xz', files)
+            self.assertIn('meta.json', files)
+            self.assertIn('dependencies.json', files)
+            remote.close()
+            """
+        else:
+            warnings.warn('test not run: flag: SERVER_ENABLED_TESTS = {0}'.format(SERVER_ENABLED_TESTS))
+        if SERVER_ENABLED_TESTS:  # cleanup (reset to default, empty state)
+            pake.config.node.Nests(test_node_root).reset().write()
+            pake.config.nest.Files(test_nest_root).reset().write()
+            pake.config.nest.Meta(test_nest_root).reset().write()
 
 
 # Nest related tests
@@ -350,6 +411,178 @@ class NestManagerTests(unittest.TestCase):
         # test logic & cleanup
         pake.nest.manager.remove(root=testdir)
         self.assertNotIn('.pakenest', os.listdir(testdir))
+
+
+class NestConfigurationTests(unittest.TestCase):
+    def testAddingVersions(self):
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Versions(test_nest_root).add('0.0.1-alpha.1').add('0.0.1-beta.1').add('0.0.1-rc.1').add('0.0.1').write()
+        self.assertEqual(['0.0.1-alpha.1', '0.0.1-beta.1', '0.0.1-rc.1', '0.0.1'], list(pake.config.nest.Versions(test_nest_root)))
+        pake.config.nest.Versions(test_nest_root).reset().write()
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testAddingVersionsButCheckingIfItsNotLowerThanTheLastOne(self):
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Versions(test_nest_root).add('0.0.1-beta.1').write()
+        self.assertRaises(ValueError, pake.config.nest.Versions(test_nest_root).add, '0.0.1-alpha.17', check=True)
+        # assertNotRaises -- just run it; if no exception is raise everything's fine
+        pake.config.nest.Versions(test_nest_root).add('0.0.1', check=True)
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testAddingADependency(self):
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Dependencies(test_nest_root).set(name='foo').write()
+        ifstream = open(os.path.join(test_nest_root, 'dependencies.json'))
+        dep = json.loads(ifstream.read())
+        ifstream.close()
+        desired = {'foo': {}}
+        self.assertEqual(desired, dep)
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testAddingADependencyWithSpecifiedOrigin(self):
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Dependencies(test_nest_root).set(name='foo', origin='http://pake.example.com').write()
+        ifstream = open(os.path.join(test_nest_root, 'dependencies.json'))
+        dep = json.loads(ifstream.read())
+        ifstream.close()
+        desired = {'foo': {'origin': 'http://pake.example.com'}}
+        self.assertEqual(desired, dep)
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testAddingADependencyWithSpecifiedMinimalVersion(self):
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Dependencies(test_nest_root).set(name='foo', min='0.2.4').write()
+        ifstream = open(os.path.join(test_nest_root, 'dependencies.json'))
+        dep = json.loads(ifstream.read())
+        ifstream.close()
+        desired = {'foo': {'min': '0.2.4'}}
+        self.assertEqual(desired, dep)
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testAddingADependencyWithSpecifiedMaximalVersion(self):
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Dependencies(test_nest_root).set(name='foo', max='2.4.8').write()
+        ifstream = open(os.path.join(test_nest_root, 'dependencies.json'))
+        dep = json.loads(ifstream.read())
+        ifstream.close()
+        desired = {'foo': {'max': '2.4.8'}}
+        self.assertEqual(desired, dep)
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testAddingADependencyWithFullSpecification(self):
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Dependencies(test_nest_root).set(name='foo', origin='http://pake.example.com', min='0.2.4', max='2.4.8').write()
+        ifstream = open(os.path.join(test_nest_root, 'dependencies.json'))
+        dep = json.loads(ifstream.read())
+        ifstream.close()
+        desired = {'foo': {'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'}}
+        self.assertEqual(desired, dep)
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testRemovingADependency(self):
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Dependencies(test_nest_root).set(name='foo', origin='http://pake.example.com', min='0.2.4', max='2.4.8').write()
+        pake.config.nest.Dependencies(test_nest_root).remove(name='foo').write()
+        ifstream = open(os.path.join(test_nest_root, 'dependencies.json'))
+        dep = json.loads(ifstream.read())
+        ifstream.close()
+        desired = {}
+        self.assertEqual(desired, dep)
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testRedefiningADependency(self):
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Dependencies(test_nest_root).set(name='foo', origin='http://pake.example.com', min='0.2.4', max='2.4.8').write()
+        pake.config.nest.Dependencies(test_nest_root).set(name='foo', origin='http://pake.example.org').write()
+        ifstream = open(os.path.join(test_nest_root, 'dependencies.json'))
+        dep = json.loads(ifstream.read())
+        ifstream.close()
+        desired = {'foo': {'origin': 'http://pake.example.org'}}
+        self.assertEqual(desired, dep)
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testUpdatingADependency(self):
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Dependencies(test_nest_root).set(name='foo', origin='http://pake.example.com', min='0.2.4', max='2.4.8').write()
+        pake.config.nest.Dependencies(test_nest_root).update(name='foo', origin='http://pake.example.org').write()
+        ifstream = open(os.path.join(test_nest_root, 'dependencies.json'))
+        dep = json.loads(ifstream.read())
+        ifstream.close()
+        desired = {'foo': {'origin': 'http://pake.example.org', 'min': '0.2.4', 'max': '2.4.8'}}
+        self.assertEqual(desired, dep)
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testGettingDependencyData(self):
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Dependencies(test_nest_root).set(name='foo', origin='http://pake.example.com', min='0.2.4', max='2.4.8').write()
+        desired = {'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'}
+        self.assertEqual(desired, pake.config.nest.Dependencies(test_nest_root).get(name='foo'))
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testListingDependencies(self):
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Dependencies(test_nest_root).set(name='foo').set(name='bar').set(name='baz').write()
+        desired = ['foo', 'bar', 'baz']
+        self.assertEqual(sorted(desired), sorted(list(pake.config.nest.Dependencies(test_nest_root))))
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testAddingFile(self):
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Files(test_nest_root).add(path='./pake/__init__.py').write()
+        ifstream = open(os.path.join(test_nest_root, 'files.json'))
+        files = json.loads(ifstream.read())
+        ifstream.close()
+        desired = ['./pake/__init__.py']
+        self.assertEqual(desired, files)
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testAddingFileFailsIfFileHasAlreadyBeenAdded(self):
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Files(test_nest_root).add(path='./pake/__init__.py').write()
+        self.assertRaises(FileExistsError, pake.config.nest.Files(test_nest_root).add, path='./pake/__init__.py')
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testAddingFileFailsIfPathIsNotAFile(self):
+        helpers.gennest(testdir)
+        # test logic
+        self.assertRaises(pake.errors.NotAFileError, pake.config.nest.Files(test_nest_root).add, path='./this_file_does_not.exist')
+        # cleanup
+        helpers.rmnest(testdir)
+
+    @unittest.skip('dummy template')
+    def testX(self):
+        helpers.gennest(testdir)
+        # test logic
+        # cleanup
+        helpers.rmnest(testdir)
 
 
 if __name__ == '__main__':

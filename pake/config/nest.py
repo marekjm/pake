@@ -70,21 +70,54 @@ class Dependencies(base.Config):
     default = {}
     content = {}
 
-    def set(self, name, dependency):
+    def set(self, name, origin='', min='', max=''):
         """Sets a dependency for package.
         Dependecies cannot be duplicated which means that there can be
         only one entry `foo` on the dependencies list.
         If a dependency with given name is already found it will be updated.
 
         :param name: name of the package
-        :param dependency: dictionary containing dependency specification
+        :type name: str
+        :param origin: URL of node of origin
+        :type origin: str
+        :param min: minimal required version
+        :type min: semver-based str
+        :param max: maximal allowed version
+        :type max: semver-based str
         """
-        self.content[name] = dependency
+        dep = {}
+        if origin: dep['origin'] = origin
+        if min: dep['min'] = min
+        if max: dep['max'] = max
+        self.content[name] = dep
+        return self
+
+    def update(self, name, origin='', min='', max=''):
+        """Updated data on given dependency.
+        Every information that is not updated is copied from old dependency.
+        If the dependency is not found in a list of dependencies
+        empty dictionary is used and
+        new dependency will be added.
+
+        :param name: name of the package
+        :type name: str
+        :param origin: URL of node of origin
+        :type origin: str
+        :param min: minimal required version
+        :type min: semver-based str
+        :param max: maximal allowed version
+        :type max: semver-based str
+        """
+        if name in self: dep = self[name]
+        else: dep = {}
+        if origin: dep['origin'] = origin
+        if min: dep['min'] = min
+        if max: dep['max'] = max
+        self.content[name] = dep
         return self
 
     def remove(self, name):
         """Removes a dependency.
-        :returns: integer, -1 means that the dependency was not found
         """
         del self.content[name]
         return self
