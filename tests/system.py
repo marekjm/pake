@@ -265,6 +265,42 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
 
 
+class NodePackagesTests(unittest.TestCase):
+    def testRegisteringPackages(self):
+        helpers.gennode(testdir)
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Meta(test_nest_root).set('name', 'foo').write()
+        pake.node.packages.register(root=test_node_root, path='./testdir/.pakenest')
+        print('don\'t worry - this warning is supposed to appear in this test')
+        # paths must be absolute to ensure that they are reachable from every directory
+        self.assertEqual(os.path.abspath('./testdir/.pakenest'), pake.config.node.Nests(test_node_root).get('foo'))
+        pake.node.packages.unregister(root=test_node_root, name='foo')
+        pake.config.node.Nests(test_node_root).reset().write()
+        pake.config.nest.Meta(test_nest_root).reset().write()
+        # cleanup
+        helpers.rmnode(testdir)
+        helpers.rmnest(testdir)
+
+    def testBuildingPackageList(self):
+        helpers.gennode(testdir)
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Meta(test_nest_root).set('name', 'foo').write()
+        pake.config.node.Nests(test_node_root).set('foo', test_nest_root).write()
+        pake.node.packages.genpkglist(test_node_root)
+        ifstream = open(os.path.join(test_node_root, 'packages.json'))
+        self.assertEqual(['foo'], json.loads(ifstream.read()))
+        ifstream.close()
+        # cleanup
+        pake.config.node.Nests(test_node_root).reset().write()
+        pake.config.nest.Meta(test_nest_root).reset().write()
+        os.remove(os.path.join('.', 'testdir', '.pakenode', 'packages.json'))
+        # cleanup
+        helpers.rmnode(testdir)
+        helpers.rmnest(testdir)
+
+
 # Nest related tests
 class NestManagerTests(unittest.TestCase):
     def testNestManagerDirectoriesWriting(self):
