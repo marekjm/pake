@@ -136,6 +136,13 @@ class NestManagerTests(unittest.TestCase):
             self.assertEqual(desired, json.loads(ifstream.read()))
             ifstream.close()
 
+    def testNestManagerRemovingNode(self):
+        """This test checks if node gets correctly deleted.
+        """
+        pake.nest.manager.remove(root=testdir)
+        self.assertNotIn('.pakenest', os.listdir(testdir))
+
+
 
 
 if __name__ == '__main__':
