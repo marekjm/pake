@@ -26,14 +26,20 @@ test_nest_root = testdir + '/.pakenest'
 
 
 # Test environment setup
-def gennode():
+def gennode(path):
     """Generates a node in the test directory.
     """
-    pake.node.manager.makedirs(testdir)
-    pake.node.manager.makeconfig(testdir)
+    pake.node.manager.makedirs(path)
+    pake.node.manager.makeconfig(path)
 
 
-def prepare():
+def rmnode(path):
+    """Removes node from path.
+    """
+    pake.node.manager.remove(path)
+
+
+def prepare(testdir):
     """Prepares test environment.
     """
     if not os.path.isdir(testdir):
@@ -46,7 +52,7 @@ def prepare():
         print('* removing old test nest: {0}'.format(test_nest_root))
         shutil.rmtree(test_nest_root)
     print('* generating new node...')
-    gennode()
+    gennode(testdir)
     print()  # line break between prepare()'s output and test suite output
 
 
@@ -86,5 +92,5 @@ class NodeManagerTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    prepare()
+    prepare(testdir)
     unittest.main()
