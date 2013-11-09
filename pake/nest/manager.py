@@ -41,4 +41,4 @@ def makeconfig(root):
 def remove(root):
     """Removes nest.
     """
-    shutil.rmtree(root)
+    shutil.rmtree(os.path.join(root, '.pakenest'))
