@@ -577,6 +577,15 @@ class NestConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
+    def testListingFile(self):
+        helpers.gennest(testdir)
+        # test logic
+        pake.config.nest.Files(test_nest_root).add(path='./pake/__init__.py').add('./pake/shared.py').write()
+        desired = ['./pake/__init__.py', './pake/shared.py']
+        self.assertEqual(desired, list(pake.config.nest.Files(test_nest_root)))
+        # cleanup
+        helpers.rmnest(testdir)
+
     @unittest.skip('dummy template')
     def testX(self):
         helpers.gennest(testdir)
