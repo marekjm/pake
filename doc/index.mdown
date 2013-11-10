@@ -1,0 +1,12 @@
+## PAKE system documentation
+
+Here is a documentation of PAKE system and network.
+
+0.  [Data separation and security](./security.mdown) - some info about security and information separation in PAKE
+0.  [Transactions](./transactions.mdown) - description of transaction used in PAKE
+0.  [REST API](./api.mdown) - description of API provided by various parts of the system
+
+
+----
+
+**Copyright (c) 2013 Marek Marecki**

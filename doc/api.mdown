@@ -1,0 +1,38 @@
+### PAKE REST API
+
+This is the API that is exposed by your mirrors and
+other people aliens (in this case *mirror* and *alien* are used as
+parts of PAKE terminology).
+
+API is created by structure of directories and does not require any
+exotic software to run (no Python, Perl, Ruby or even PHP) - just a
+server to provide access to them (simple nginx or Apache).
+
+----
+
+### Terminology
+
+PAKE uses some terminology to describe its repositories, mirrors etc.
+It is explained below.
+
+* `nest`    - directory (`.pakenest`) located in a directory of a project (similar to `.git`),
+* `node`    - directory (`.pakenode`) located in home directory (`~`) of a user - used to generate mirrors and
+manage packages,
+* `mirror`  - place on the net which 1) exposes PAKE alien API and 2) is generated from your node,
+* `alien`   - place on the net which 1) exposes PAKE alien API and 2) is not generated from your node,
+
+----
+
+### REST APIs of different parts of PAKE
+
+Even on local machines of developers PAKE uses REST API as a way of passing information within its local network.
+
+
+0.  [Node API](./api/node.mdown)
+0.  [Nest API](./api/nest.mdown)
+0.  [Alien API](./api/alien.mdown)
+
+
+----
+
+[Index](./index.mdown)

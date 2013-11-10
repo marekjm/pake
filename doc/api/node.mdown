@@ -1,0 +1,44 @@
+### Node API structure
+
+Here is shown API of the node. Arrows (`->`) show that a part of alien API is generated from such and such file.
+If no arrow is located after the file it means that the file is sent to the net.
+
+    ROOT = ~/.pakenode
+
+    ROOT/aliens.json
+    ROOT/meta.json
+    ROOT/nests.json -> packages.json
+    ROOT/pushers.json -> mirrors.json
+
+    # optional files that may be sent to the net
+    ROOT/cached.json
+    ROOT/cached/
+
+    # these files and directories are not sent to the net
+    ROOT/installing/
+    ROOT/db/pkgs.json
+    ROOT/db/transactions/pkgs/:name/remove.fsrl
+    ROOT/db/transactions/prepared/:hash.transaction
+
+    # these are not sent to the net and
+    # may be not even implemented
+    ROOT/db/keys/
+    ROOT/db/keys/local/
+    ROOT/db/keys/imported/
+
+> `ROOT/db/keys` may be not even needed as keys should be imported from and to global `~/.gnupg` directory.
+
+`packages.json` must be generated from `nests.json` before pushing, otherwise your node will
+contain empty package list.
+
+    pake node nests --gen-pkg-list
+
+`mirrors.json` must be generated from `pushers.json` beforepushing, otherwise your node will
+contain empty mirrors list. You can use `--pretty` option to enable pretty formatting.
+
+    pake mirrors --gen-list [--pretty]
+
+
+----
+
+[Index](../index.mdown)

@@ -1,0 +1,95 @@
+### Nest API structure
+
+Here is shown API exposed by the nest.
+
+    ROOT = ./.pakenest
+
+    ROOT/meta.json
+    ROOT/dependencies.json
+    ROOT/files.json
+    ROOT/install.fsrl
+    ROOT/update.fsrl
+    ROOT/remove.fsrl
+    ROOT/versions.json
+    ROOT/versions/:version/meta.json
+    ROOT/versions/:version/dependencies.json
+    ROOT/versions/:version/build.tar.xz
+
+
+`build.tar.xz` contains:
+
+* files and directories listed in `files.json`,
+* `install.fsrl`, `update.fsrl` and `remove.fsrl` files,
+
+&nbsp;
+
+#### Dependencies
+
+Dependencies are packages which must be installed with the selected package to ensure its
+proper working. `dependencies.json` is the file containing a list of these packages.
+Each dependency is a dictionary containing few pieces of data:
+
+* `name`        - name of the package,
+* `origin`      - URL of the origin of the package,
+* `min-version` - minimal version of the dependency that must installed,
+* `max-version` - maximal version of the dependency that should be installed,
+
+
+**`name`**
+
+This field contains name of the package to be downloaded.
+In theory, this should be enough to fetch the package.
+However, in real world package names can conflict so setting just package name as
+a dependency identifier is a *bad* practice.  
+Best way to ensure correct package is being fetched is to specify origin of the package.
+
+> TODO: implement name-conflict resolution code
+
+
+**`origin`**
+
+List of mirrors of the origin are generated dynamically by looking up origin URL in
+`aliens.json` file.
+If origin cannot be found in the list of aliens known by network it is treated as the only mirror available.
+
+
+**`min-version`**
+
+Minimal version of the package needed.
+
+
+**`max-version`**
+
+Maximal version of the package.
+
+
+----
+
+#### Dependency tree
+
+Each dependency may have its own dependencies which then will be processed.
+After full list of deps is created (no more dependencies can be found) an install transaction is
+prepared and executed.
+
+
+----
+
+#### Example dependecy list
+
+Here is a list of example project `foo`:
+
+    [
+        {
+            "name":     "bar",
+            "origin":   "http://pake.example.org",
+            "min":      "2.4.8"
+        },
+        {
+            "name":     "baz",
+            "origin":   "http://pake.przyklad.org"
+        }
+    ]
+
+----
+
+[Index](../index.mdown)

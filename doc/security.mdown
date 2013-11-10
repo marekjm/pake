@@ -1,0 +1,35 @@
+### Security
+
+Security is provided by digital signing of packages.
+In order to use PAKE each user must have a PGP (GPG) key which will be used to sign packages.
+
+* imported keys are not sent to the net,
+* user's private key is not sent to the net,
+* user's public key is sent to the net (people must be able to import it),
+* build signatures are sent to the net,
+
+----
+
+### Data separation
+
+PAKE needs some information that you may not be willing to share wwith the outside world to run properly.
+This includes information about working directories of your mirrors and nests.
+
+To solve this PAKE separates data that it uses locally (and never sends anywhere) and
+data that is generated and sent to the net and available through REST/JSON API.
+
+#### Packages and nests
+
+Information about packages you provide is locally stored inside `nests.json` file.
+PAKE uses this file to generate `packages.json` file which contains only names of packages.
+
+#### Pushers and mirrors
+
+To be able to push data to your mirrors PAKE needs information about servers these mirrors are placed on.
+This information is stored locally in `pushers.json` file.
+Information about your mirrors available to others (list of their URLs) is generated from this file and
+stored in `mirrors.json` file which is sent to the net.
+
+----
+
+[Index](./index.mdown)

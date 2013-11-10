@@ -1,0 +1,35 @@
+### Alien API structure
+
+Here are shown paths that can be used to access various information on an alien or
+(mirror if you are interaction with alien originating from your node).
+`:foo`-like strings describe variable endpoints.
+
+
+    ROOT = http://pake.example.com
+
+    # obligatory part of the API (net expanding alien a.k.a. NEA)
+    ROOT/meta.json
+    ROOT/mirrors.json
+    ROOT/alines.json
+    ROOT/packages.json
+
+    # API exposed by aliens which provide downloadable packages
+    ROOT/packages/:name/versions.json
+    ROOT/packages/:name/versions/:version/meta.json
+    ROOT/packages/:name/versions/:version/dependencies.json
+    ROOT/packages/:name/versions/:version/build.tar.xz
+    ROOT/packages/:name/versions/:version/signature.asc [**not implemented**]
+
+    # optional part of the API (caching is done as a last-hope mechanism when trying to obtain
+    # a package whose alien of origin is no longer available and all its mirror are down)
+    ROOT/cached.json
+    ROOT/cached/{name}-{version}.tar.xz
+    ROOT/cached/{name}-{version}.asc
+
+
+Files from `ROOT/packages/:name/:version:/build.tar.xz` are saved as `{:name}-{:version}.tar.xz` files in
+`~/.pakenode/cached/` directory.
+
+----
+
+[Index](../index.mdown)
