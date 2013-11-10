@@ -7,6 +7,7 @@
 import json
 import os
 import shutil
+import tarfile
 import unittest
 
 
@@ -218,7 +219,7 @@ class NodeConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnode(testdir)
 
-    def testSettingNests(self):
+    def testSettingNest(self):
         helpers.gennode(testdir)
         # test logic
         pake.config.node.Nests(root=test_node_root).set('foo', './testdir/.pakenest').write()
@@ -227,7 +228,7 @@ class NodeConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnode(testdir)
 
-    def testRemovingNests(self):
+    def testRemovingNest(self):
         helpers.gennode(testdir)
         # test logic
         nest = {'name': 'foo', 'path': '~/Dev/foo'}
@@ -266,7 +267,7 @@ class NodeConfigurationTests(unittest.TestCase):
 
 
 class NodePackagesTests(unittest.TestCase):
-    def testRegisteringPackages(self):
+    def testRegisteringNests(self):
         helpers.gennode(testdir)
         helpers.gennest(testdir)
         # test logic
@@ -577,7 +578,7 @@ class NestConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
-    def testListingFile(self):
+    def testListingFiles(self):
         helpers.gennest(testdir)
         # test logic
         pake.config.nest.Files(test_nest_root).add(path='./pake/__init__.py').add('./pake/shared.py').write()
@@ -586,10 +587,70 @@ class NestConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('dummy template')
-    def testX(self):
+
+class NestReleaseBuildingTests(unittest.TestCase):
+    def testPackageBuildCreatesAllNecessaryFiles(self):
+        helpers.gennest(testdir)
+        version = helpers.buildTestPackage(path=test_nest_root, version='0.2.4.8')
+        # test logic
+        self.assertIn(version, os.listdir(os.path.join(test_nest_root, 'versions')))
+        self.assertIn('meta.json', os.listdir(os.path.join(test_nest_root, 'versions', version)))
+        self.assertIn('dependencies.json', os.listdir(os.path.join(test_nest_root, 'versions', version)))
+        self.assertIn('build.tar.xz', os.listdir(os.path.join(test_nest_root, 'versions', version)))
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testAddingFile(self):
         helpers.gennest(testdir)
         # test logic
+        pake.nest.package.addfile(test_nest_root, path='./pake/__init__.py')
+        ifstream = open(os.path.join(test_nest_root, 'files.json'))
+        files = json.loads(ifstream.read())
+        ifstream.close()
+        desired = ['./pake/__init__.py']
+        self.assertEqual(desired, files)
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testAddingDirectory(self):
+        helpers.gennest(testdir)
+        # test logic
+        pake.nest.package.adddir(test_nest_root, path='./ui', recursive=True, avoid=['__pycache__'], avoid_exts=['swp', 'pyc'])
+        ifstream = open(os.path.join(test_nest_root, 'files.json'))
+        files = json.loads(ifstream.read())
+        ifstream.close()
+        desired = ['./ui/nest.py', './ui/nest.json',
+                   './ui/node.py', './ui/node.json',
+                   './ui/packages.py', './ui/packages.json',
+                   ]
+        self.assertEqual(sorted(desired), sorted(files))
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testIfArchieveContainsAllRequiredFiles(self):
+        helpers.gennest(testdir)
+        desired = ['./pake/__init__.py', './pake/shared.py']
+        version = helpers.buildTestPackage(path=test_nest_root, version='2.4.8', files=desired, directories=[])
+        # test logic
+        test_pkg = tarfile.TarFile(os.path.join(test_nest_root, 'versions', version, 'build.tar.xz'), 'r')
+        names = test_pkg.getnames()
+        test_pkg.close()
+        # create list of files we expect to be included
+        if VERBOSE: [print(i) for i in names]
+        self.assertEqual(sorted([os.path.normpath(i) for i in desired]), sorted(names))
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testIfBuildIncludedNewVersionInVersionsFile(self):
+        helpers.gennest(testdir)
+        desired = []
+        desired.append(helpers.buildTestPackage(test_nest_root, version='0.1.2', files=[], directories=[]))
+        desired.append(helpers.buildTestPackage(test_nest_root, version='0.1.3', files=[], directories=[]))
+        desired.append(helpers.buildTestPackage(test_nest_root, version='0.1.4', files=[], directories=[]))
+        versions = pake.config.nest.Versions(test_nest_root)
+        # test logic
+        for i in desired:
+            self.assertIn(i, versions)
         # cleanup
         helpers.rmnest(testdir)
 
