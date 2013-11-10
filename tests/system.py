@@ -9,18 +9,25 @@ import os
 import shutil
 import tarfile
 import unittest
+import warnings
 
 
 import pake
 
 
-from tests import helpers
+from tests import helpers, conf
 
 
 # Test flags
-VERBOSE = True
+VERBOSE = conf.VERBOSE
+SERVER_ENABLED_TESTS = conf.SERVER_ENABLED_TESTS
 
-# Test variables
+# Test config data
+test_remote_node_url = conf.test_remote_node_url
+test_remote_node_host = conf.test_remote_node_host
+test_remote_node_cwd = conf.test_remote_node_cwd
+
+# Test environment
 testdir = './testdir'
 test_node_root = testdir + '/.pakenode'
 test_nest_root = testdir + '/.pakenest'
@@ -314,53 +321,44 @@ class NodePushingTests(unittest.TestCase):
         # cleanup
         helpers.rmnode(testdir)
 
-    @unittest.skip('')
     def testPushingToNode(self):
-        version = '2.4.8.16'
-        if SERVER_ENABLED_TESTS:  # testing code
+        helpers.gennode(testdir)
+        helpers.gennest(testdir)
+        version = helpers.buildTestPackage(path=test_nest_root, version='2.4.8.16')
+        # test logic
+        if SERVER_ENABLED_TESTS:
             # set all required variables
-            url = test_server_url
-            host = test_server_host
-            cwd = test_server_cwd
-            username = test_server_username
-            password = test_server_password
-            remote = pake.node.pusher.FTPPusher(test_server_host)
+            url = conf.test_remote_node_url
+            host = conf.test_remote_node_host
+            cwd = conf.test_remote_node_cwd
+            username = conf.test_remote_node_username
+            password = conf.test_remote_node_pass
+            # setup connection to test server
+            remote = pake.node.pusher.FTPPusher(host)
             remote.login(username, password)
             if cwd: remote.cwd(cwd)
-
-            pake.config.nest.Meta(test_nest_root).set('name', 'test').write()
-            pake.node.packages.register(root=test_node_root, path='./testdir/.pakenest')
-            pake.nest.package.addfile(test_nest_root, './tests.py')
-            pake.nest.package.addfile(test_nest_root, './install.fsrl')
-            pake.nest.package.addfile(test_nest_root, './remove.fsrl')
-            pake.nest.package.adddir(test_nest_root, './ui/', recursive=True, avoid=['__pycache__'], avoid_exts=['swp', 'pyc'])
-            pake.nest.package.adddir(test_nest_root, './webui/', recursive=True, avoid_exts=['swp', 'pyc'])
-            pake.nest.package.build(test_nest_root, version=version)
-            pake.node.packages.genpkglist(root=test_node_root)
+            # setup environment
             pake.config.node.Pushers(test_node_root).add(url=url, host=host, cwd=cwd).write()
+            pake.node.packages.register(root=test_node_root, path=test_nest_root)
+            pake.node.packages.genpkglist(root=test_node_root)
             pake.node.pusher.genmirrorlist(test_node_root)
-
-            print(os.listdir(os.path.join(test_nest_root, 'versions')))
-            print(remote.ls('./packages/test/versions'))
+            # push to remote node
             pake.node.pusher.push(root=test_node_root, url=url, username=username, password=password, reupload=True)
-
-            exit()
-            """
-
-            remote.cwd('./packages/foo/versions/{0}'.format(version))
+            # test if it went OK
+            remote.cwd('./packages/test/versions/{0}'.format(version))
             files = remote.ls()
-            if VERBOSE: print(files)
             self.assertIn('build.tar.xz', files)
             self.assertIn('meta.json', files)
             self.assertIn('dependencies.json', files)
             remote.close()
-            """
         else:
             warnings.warn('test not run: flag: SERVER_ENABLED_TESTS = {0}'.format(SERVER_ENABLED_TESTS))
-        if SERVER_ENABLED_TESTS:  # cleanup (reset to default, empty state)
-            pake.config.node.Nests(test_node_root).reset().write()
-            pake.config.nest.Files(test_nest_root).reset().write()
-            pake.config.nest.Meta(test_nest_root).reset().write()
+        # cleanup
+        helpers.rmnode(testdir)
+        helpers.rmnest(testdir)
+        if SERVER_ENABLED_TESTS:
+            pass  # nothing is needed here (unless we want to wipe remote totally clean)
+
 
 
 # Nest related tests
