@@ -61,7 +61,7 @@ class Pushers(base.Config):
                 break
         return result
 
-    def add(self, url, host, cwd=''):
+    def set(self, url, host, cwd=''):
         """Adds pusher to push.json list. Part of PAKE fluent API.
         """
         pusher = {'url': url, 'host': host, 'cwd': cwd}
