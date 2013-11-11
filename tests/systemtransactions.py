@@ -54,7 +54,7 @@ class NodeManagerTests(unittest.TestCase):
     def testNodeManagerDirectoriesWriting(self):
         """This test checks for correct initialization of all required directories.
         """
-        runner = pake.transactions.runner.Runner(path=testdir, requests=[{'act': 'node.manager.init', 'path': testdir}])
+        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'act': 'node.manager.init', 'path': testdir}])
         ifstream = open('./env/node/required/directories.json')
         directories = json.loads(ifstream.read())
         ifstream.close()
@@ -70,7 +70,7 @@ class NodeManagerTests(unittest.TestCase):
     def testNodeManagerConfigWriting(self):
         """This test checks for correct intialization of all required config files.
         """
-        runner = pake.transactions.runner.Runner(path=testdir, requests=[{'act': 'node.manager.init', 'path': testdir}])
+        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'act': 'node.manager.init', 'path': testdir}])
         configs = [ ('meta.json', {}),      # (filename, desired_content)
                     ('pushers.json', []),
                     ('aliens.json', {}),
@@ -91,7 +91,7 @@ class NodeManagerTests(unittest.TestCase):
         """This test checks if node gets correctly deleted.
         """
         helpers.gennode(testdir)
-        runner = pake.transactions.runner.Runner(path=testdir, requests=[{'act': 'node.manager.remove', 'path': testdir}])
+        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'act': 'node.manager.remove', 'path': testdir}])
         # code logic & cleanup - in this test it's the same
         runner.run()
         self.assertNotIn('.pakenode', os.listdir(testdir))
@@ -107,7 +107,7 @@ class NodeConfigurationTests(unittest.TestCase):
         # test logic
         reqs = [{'act': 'node.manager.init'},
                 {'act': 'node.config.meta.set', 'key': 'foo', 'value': 'bar'}]
-        pake.transactions.runner.Runner(path=testdir, requests=reqs).run()
+        pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         self.assertEqual(pake.config.node.Meta(test_node_root).get('foo'), 'bar')
         # cleanup
         helpers.rmnode(testdir)
@@ -117,7 +117,7 @@ class NodeConfigurationTests(unittest.TestCase):
         reqs = [{'act': 'node.manager.init'},
                 {'act': 'node.config.meta.set', 'key': 'foo', 'value': 'bar'},
                 {'act': 'node.config.meta.remove', 'key': 'foo'}]
-        pake.transactions.runner.Runner(path=testdir, requests=reqs).run()
+        pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         self.assertEqual(dict(pake.config.node.Meta(test_node_root)), {})
         # cleanup
         helpers.rmnode(testdir)
@@ -136,7 +136,7 @@ class NodeConfigurationTests(unittest.TestCase):
         reqs = [{'act': 'node.manager.init'},
                 {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}
                 ]
-        pake.transactions.runner.Runner(path=testdir, requests=reqs).run()
+        pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
         pusher = {'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}
         self.assertIn(pusher, pake.config.node.Pushers(test_node_root))
@@ -148,7 +148,7 @@ class NodeConfigurationTests(unittest.TestCase):
                 {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
                 {'act': 'node.config.mirrors.remove', 'url': 'http://pake.example.com'},
                 ]
-        pake.transactions.runner.Runner(path=testdir, requests=reqs).run()
+        pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
         pusher = {'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}
         self.assertNotIn(pusher, pake.config.node.Pushers(test_node_root))
@@ -169,7 +169,7 @@ class NodeConfigurationTests(unittest.TestCase):
     def testAddingAlien(self):
         helpers.gennode(testdir)
         reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}]
-        pake.transactions.runner.Runner(path=testdir, requests=reqs).run()
+        pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
         alien = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
         self.assertIn('http://alien.example.com', list(pake.config.node.Aliens(test_node_root)))
@@ -181,7 +181,7 @@ class NodeConfigurationTests(unittest.TestCase):
         reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}},
                 {'act': 'node.config.aliens.remove', 'url': 'http://alien.example.com'}
                 ]
-        pake.transactions.runner.Runner(path=testdir, requests=reqs).run()
+        pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
         alien = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
         self.assertNotIn('http://alien.example.com', pake.config.node.Aliens(test_node_root))
@@ -228,13 +228,14 @@ class NodeConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnode(testdir)
 
-    @unittest.skip('')
-    def testSettingNest(self):
+    def testRegisteringNest(self):
         helpers.gennode(testdir)
+        helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
+                {'act': 'node.config.nests.register', 'nestpath': testdir}]
+        pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
-        pake.config.node.Nests(root=test_node_root).set('foo', './testdir/.pakenest').write()
-        self.assertEqual('./testdir/.pakenest', pake.config.node.Nests(test_node_root).get('foo'))
-        pake.config.node.Nests(test_node_root).reset().write()
+        self.assertEqual(os.path.abspath(test_nest_root), pake.config.node.Nests(test_node_root).get('test'))
         # cleanup
         helpers.rmnode(testdir)
 

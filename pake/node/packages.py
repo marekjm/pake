@@ -37,9 +37,9 @@ def register(root, path):
     if not os.path.isabs(path):
         warnings.warn('path {0} is not absolute'.format(path))
         path = os.path.abspath(path)  # make the path absolute
-    meta = config.nest.Meta(path)
+    meta = config.nest.Meta(os.path.join(path, '.pakenest'))
     _check(meta.content, path)
-    config.node.Nests(root).set(name=meta.get('name'), path=path).write()
+    config.node.Nests(root).set(name=meta.get('name'), path=os.path.join(path, '.pakenest')).write()
 
 
 def unregister(root, name):

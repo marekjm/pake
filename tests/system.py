@@ -274,13 +274,11 @@ class NodePackagesTests(unittest.TestCase):
         helpers.gennest(testdir)
         # test logic
         pake.config.nest.Meta(test_nest_root).set('name', 'foo').write()
-        pake.node.packages.register(root=test_node_root, path=test_nest_root)
+        pake.node.packages.register(root=test_node_root, path=testdir)
         print('don\'t worry - this warning is supposed to appear in this test')
         # paths must be absolute to ensure that they are reachable from every directory
         self.assertEqual(os.path.abspath(test_nest_root), pake.config.node.Nests(test_node_root).get('foo'))
         pake.node.packages.unregister(root=test_node_root, name='foo')
-        pake.config.node.Nests(test_node_root).reset().write()
-        pake.config.nest.Meta(test_nest_root).reset().write()
         # cleanup
         helpers.rmnode(testdir)
         helpers.rmnest(testdir)
@@ -333,8 +331,9 @@ class NodePushingTests(unittest.TestCase):
             remote.login(username, password)
             if cwd: remote.cwd(cwd)
             # setup environment
+            pake.config.nest.Meta(test_nest_root).set('name', 'test').write()
             pake.config.node.Pushers(test_node_root).set(url=url, host=host, cwd=cwd).write()
-            pake.node.packages.register(root=test_node_root, path=test_nest_root)
+            pake.node.packages.register(root=test_node_root, path=testdir)
             pake.node.packages.genpkglist(root=test_node_root)
             pake.node.pusher.genmirrorlist(test_node_root)
             # push to remote node
