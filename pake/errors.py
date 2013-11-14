@@ -32,14 +32,15 @@ class InvalidVersionError(PAKEError):
     pass
 
 
-class EncodingError(PAKEError):
-    """Exception raised by encoder when it does not know how to encode a statement.
+class NotAFileError(PAKEError):
+    """Raised when trying to add something that is not a file to the list of files
+    of the nest.
     """
     pass
 
 
-class NotAFileError(PAKEError):
-    """Raised when trying to add something that is not a file to the list of files
-    of the nest.
+class UnknownRequestError(PAKEError):
+    """Raised by transactions runner if an unknown request is found and
+    warnings are set to be fatal.
     """
     pass

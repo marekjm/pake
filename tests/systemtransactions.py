@@ -232,12 +232,13 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.gennode(testdir)
         helpers.gennest(testdir)
         reqs = [{'act': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
-                {'act': 'node.config.nests.register', 'nestpath': testdir}]
+                {'act': 'node.config.nests.register', 'path': testdir}]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
         self.assertEqual(os.path.abspath(test_nest_root), pake.config.node.Nests(test_node_root).get('test'))
         # cleanup
         helpers.rmnode(testdir)
+        helpers.rmnest(testdir)
 
     @unittest.skip('')
     def testRemovingNest(self):
@@ -281,38 +282,21 @@ class NodeConfigurationTests(unittest.TestCase):
 
 
 class NodePackagesTests(unittest.TestCase):
-    @unittest.skip('')
-    def testRegisteringNests(self):
-        helpers.gennode(testdir)
-        helpers.gennest(testdir)
-        # test logic
-        pake.config.nest.Meta(test_nest_root).set('name', 'foo').write()
-        pake.node.packages.register(root=test_node_root, path=test_nest_root)
-        print('don\'t worry - this warning is supposed to appear in this test')
-        # paths must be absolute to ensure that they are reachable from every directory
-        self.assertEqual(os.path.abspath(test_nest_root), pake.config.node.Nests(test_node_root).get('foo'))
-        pake.node.packages.unregister(root=test_node_root, name='foo')
-        pake.config.node.Nests(test_node_root).reset().write()
-        pake.config.nest.Meta(test_nest_root).reset().write()
-        # cleanup
-        helpers.rmnode(testdir)
-        helpers.rmnest(testdir)
-
-    @unittest.skip('')
     def testBuildingPackageList(self):
         helpers.gennode(testdir)
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.meta.set', 'key': 'name', 'value': 'foo'},
+                {'act': 'node.config.nests.register', 'path': testdir},
+                {'act': 'node.packages.genlist'},
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.nest.Meta(test_nest_root).set('name', 'foo').write()
-        pake.config.node.Nests(test_node_root).set('foo', test_nest_root).write()
-        pake.node.packages.genpkglist(test_node_root)
+        runner.run(fatalwarns=True)
+        desired = ['foo']
         ifstream = open(os.path.join(test_node_root, 'packages.json'))
-        self.assertEqual(['foo'], json.loads(ifstream.read()))
+        pkgs = json.loads(ifstream.read())
         ifstream.close()
-        # cleanup
-        pake.config.node.Nests(test_node_root).reset().write()
-        pake.config.nest.Meta(test_nest_root).reset().write()
-        os.remove(os.path.join('.', 'testdir', '.pakenode', 'packages.json'))
+        self.assertEqual(desired, pkgs)
         # cleanup
         helpers.rmnode(testdir)
         helpers.rmnest(testdir)

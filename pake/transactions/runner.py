@@ -16,7 +16,8 @@ class Runner():
     transaction file.
     """
     def __init__(self, root, requests):
-        """:param path: directory that transactions are run in (can be overridden by setting 'path' for individual requests)
+        """
+        :param root: directory that transactions are run in
         :param requests: list of requests
         """
         self._root = root
@@ -27,7 +28,7 @@ class Runner():
         """
         return self
 
-    def run(self):
+    def run(self, fatalwarns=False):
         """Call this method to run the transaction.
         """
         for req in self._reqs:
@@ -52,9 +53,11 @@ class Runner():
             elif action == 'node.config.aliens.remove':
                 pake.config.node.Aliens(os.path.join(root, '.pakenode')).remove(**req).write()
             elif action == 'node.config.nests.register':
-                pake.node.packages.register(root=os.path.join(root, '.pakenode'), path=req['nestpath'])
+                pake.node.packages.register(root=os.path.join(root, '.pakenode'), path=req['path'])
             elif action == 'node.config.nests.remove':
                 pake.config.node.Nests(os.path.join(root, '.pakenode')).remove(**req).write()
+            elif action == 'node.packages.genlist':
+                pake.node.packages.genpkglist(os.path.join(root, '.pakenode'))
             elif action == 'nest.manager.init':
                 pake.nest.manager.makedirs(req['path'])
                 pake.nest.manager.makeconfig(req['path'])
@@ -77,4 +80,5 @@ class Runner():
             elif action == 'nest.config.files.add':
                 pake.config.nest.Files(os.path.join(root, '.pakenest')).add(**req).write()
             else:
-                warnings.warn('unknown action: {0}'.format(action))
+                if fatalwarns: raise pake.errors.UnknownRequestError(action)
+                else: warnings.warn('unknown action: {0}'.format(action))
