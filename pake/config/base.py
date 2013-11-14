@@ -47,6 +47,7 @@ class Config():
     def read(self):
         """Reads JSON from config file.
         """
+        reraise = False
         try:
             ifstream = open(os.path.join(self.root, self.name))
             content = json.loads(ifstream.read())
@@ -58,7 +59,11 @@ class Config():
             print('the content read was:')
             print(content)
             content = self.default
+        except (Exception) as e:
+            # set reraise flag to True so any exception that is not handled before will be reraised
+            reraise = e
         finally:
+            if reraise: raise reraise
             self.content = content
         return self
 

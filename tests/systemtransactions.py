@@ -374,12 +374,11 @@ class NodePushingTests(unittest.TestCase):
 
 # Nest related tests
 class NestManagerTests(unittest.TestCase):
-    @unittest.skip('')
     def testNestManagerDirectoriesWriting(self):
         """This test checks for correct initialization of all required directories.
         """
         # preparation
-        helpers.gennest(testdir)
+        pake.transactions.runner.Runner(root=testdir, requests=[{'act': 'nest.manager.init', 'path': testdir}]).run()
         ifstream = open('./env/nest/required/directories.json')
         directories = json.loads(ifstream.read())
         ifstream.close()
@@ -392,13 +391,13 @@ class NestManagerTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('')
     def testNestManagerConfigWriting(self):
         """This test checks for correct intialization of all required config files.
         """
         # preparation
-        helpers.gennest(testdir)
+        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'act': 'nest.manager.init', 'path': testdir}])
         # (filename, desired_content)
+        runner.run()
         configs = [ ('meta.json', {}),
                     ('versions.json', []),
                     ('dependencies.json', {}),
@@ -415,44 +414,65 @@ class NestManagerTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('')
     def testNestManagerRemovingNode(self):
         """This test checks if node gets correctly deleted.
         """
         # preparation
         helpers.gennest(testdir)
+        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'act': 'nest.manager.remove', 'path': testdir}])
         # test logic & cleanup
-        pake.nest.manager.remove(root=testdir)
+        runner.run()
         self.assertNotIn('.pakenest', os.listdir(testdir))
 
 
 class NestConfigurationTests(unittest.TestCase):
-    @unittest.skip('')
     def testAddingVersions(self):
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.versions.add', 'version': '0.0.1-alpha.1'},
+                {'act': 'nest.config.versions.add', 'version': '0.0.1-beta.1'},
+                {'act': 'nest.config.versions.add', 'version': '0.0.1-rc.1'},
+                {'act': 'nest.config.versions.add', 'version': '0.0.1'},
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.nest.Versions(test_nest_root).add('0.0.1-alpha.1').add('0.0.1-beta.1').add('0.0.1-rc.1').add('0.0.1').write()
+        runner.run()
         self.assertEqual(['0.0.1-alpha.1', '0.0.1-beta.1', '0.0.1-rc.1', '0.0.1'], list(pake.config.nest.Versions(test_nest_root)))
-        pake.config.nest.Versions(test_nest_root).reset().write()
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('')
     def testAddingVersionsButCheckingIfItsNotLowerThanTheLastOne(self):
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.versions.add', 'version': '0.0.1-beta.1'},
+                {'act': 'nest.config.versions.add', 'version': '0.0.1-alpha.17', 'check': True}
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.nest.Versions(test_nest_root).add('0.0.1-beta.1').write()
-        self.assertRaises(ValueError, pake.config.nest.Versions(test_nest_root).add, '0.0.1-alpha.17', check=True)
+        self.assertRaises(ValueError, runner.run)
         # assertNotRaises -- just run it; if no exception is raise everything's fine
-        pake.config.nest.Versions(test_nest_root).add('0.0.1', check=True)
+        reqs = [{'act': 'nest.config.versions.add', 'version': '0.0.1-beta.1'},
+                {'act': 'nest.config.versions.add', 'version': '0.0.1', 'check': True}
+                ]
+        pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('')
+    def testRemovingVersions(self):
+        helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.versions.add', 'version': '0.0.1-beta.1'},
+                {'act': 'nest.config.versions.remove', 'version': '0.0.1-beta.1'}
+                ]
+        pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
+        # test logic
+        self.assertEqual([], list(pake.config.nest.Versions(test_nest_root)))
+        # cleanup
+        helpers.rmnest(testdir)
+
     def testAddingADependency(self):
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo'}]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.nest.Dependencies(test_nest_root).set(name='foo').write()
+        runner.run()
         ifstream = open(os.path.join(test_nest_root, 'dependencies.json'))
         dep = json.loads(ifstream.read())
         ifstream.close()
@@ -461,11 +481,12 @@ class NestConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('')
     def testAddingADependencyWithSpecifiedOrigin(self):
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com'}]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.nest.Dependencies(test_nest_root).set(name='foo', origin='http://pake.example.com').write()
+        runner.run()
         ifstream = open(os.path.join(test_nest_root, 'dependencies.json'))
         dep = json.loads(ifstream.read())
         ifstream.close()
@@ -474,11 +495,12 @@ class NestConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('')
     def testAddingADependencyWithSpecifiedMinimalVersion(self):
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo', 'min': '0.2.4'}]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.nest.Dependencies(test_nest_root).set(name='foo', min='0.2.4').write()
+        runner.run()
         ifstream = open(os.path.join(test_nest_root, 'dependencies.json'))
         dep = json.loads(ifstream.read())
         ifstream.close()
@@ -487,11 +509,12 @@ class NestConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('')
     def testAddingADependencyWithSpecifiedMaximalVersion(self):
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo', 'max': '2.4.8'}]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.nest.Dependencies(test_nest_root).set(name='foo', max='2.4.8').write()
+        runner.run()
         ifstream = open(os.path.join(test_nest_root, 'dependencies.json'))
         dep = json.loads(ifstream.read())
         ifstream.close()
@@ -500,11 +523,12 @@ class NestConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('')
     def testAddingADependencyWithFullSpecification(self):
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'}]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.nest.Dependencies(test_nest_root).set(name='foo', origin='http://pake.example.com', min='0.2.4', max='2.4.8').write()
+        runner.run()
         ifstream = open(os.path.join(test_nest_root, 'dependencies.json'))
         dep = json.loads(ifstream.read())
         ifstream.close()
@@ -513,12 +537,13 @@ class NestConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('')
     def testRemovingADependency(self):
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'},
+                {'act': 'nest.config.dependencies.remove', 'name': 'foo'}]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.nest.Dependencies(test_nest_root).set(name='foo', origin='http://pake.example.com', min='0.2.4', max='2.4.8').write()
-        pake.config.nest.Dependencies(test_nest_root).remove(name='foo').write()
+        runner.run()
         ifstream = open(os.path.join(test_nest_root, 'dependencies.json'))
         dep = json.loads(ifstream.read())
         ifstream.close()
@@ -527,12 +552,13 @@ class NestConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('')
     def testRedefiningADependency(self):
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'},
+                {'act': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.org'}]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.nest.Dependencies(test_nest_root).set(name='foo', origin='http://pake.example.com', min='0.2.4', max='2.4.8').write()
-        pake.config.nest.Dependencies(test_nest_root).set(name='foo', origin='http://pake.example.org').write()
+        runner.run()
         ifstream = open(os.path.join(test_nest_root, 'dependencies.json'))
         dep = json.loads(ifstream.read())
         ifstream.close()
@@ -541,12 +567,13 @@ class NestConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('')
     def testUpdatingADependency(self):
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'},
+                {'act': 'nest.config.dependencies.update', 'name': 'foo', 'origin': 'http://pake.example.org'}]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.nest.Dependencies(test_nest_root).set(name='foo', origin='http://pake.example.com', min='0.2.4', max='2.4.8').write()
-        pake.config.nest.Dependencies(test_nest_root).update(name='foo', origin='http://pake.example.org').write()
+        runner.run()
         ifstream = open(os.path.join(test_nest_root, 'dependencies.json'))
         dep = json.loads(ifstream.read())
         ifstream.close()
@@ -575,11 +602,12 @@ class NestConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('')
     def testAddingFile(self):
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.files.add', 'path': './pake/__init__.py'}]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.nest.Files(test_nest_root).add(path='./pake/__init__.py').write()
+        runner.run()
         ifstream = open(os.path.join(test_nest_root, 'files.json'))
         files = json.loads(ifstream.read())
         ifstream.close()
@@ -588,20 +616,23 @@ class NestConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('')
     def testAddingFileFailsIfFileHasAlreadyBeenAdded(self):
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.files.add', 'path': './pake/__init__.py'},
+                {'act': 'nest.config.files.add', 'path': './pake/__init__.py'}
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.nest.Files(test_nest_root).add(path='./pake/__init__.py').write()
-        self.assertRaises(FileExistsError, pake.config.nest.Files(test_nest_root).add, path='./pake/__init__.py')
+        self.assertRaises(FileExistsError, runner.run)
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('')
     def testAddingFileFailsIfPathIsNotAFile(self):
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.files.add', 'path': './this_file_does_not.exist'}]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        self.assertRaises(pake.errors.NotAFileError, pake.config.nest.Files(test_nest_root).add, path='./this_file_does_not.exist')
+        self.assertRaises(pake.errors.NotAFileError, runner.run)
         # cleanup
         helpers.rmnest(testdir)
 

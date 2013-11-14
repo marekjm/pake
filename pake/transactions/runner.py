@@ -32,8 +32,8 @@ class Runner():
         """
         for req in self._reqs:
             action = req['act']
-            if 'path' in req: root = req['path']
-            else: root = self._root
+            del req['act']
+            root = self._root
             if action == 'node.manager.init':
                 pake.node.manager.makedirs(root)
                 pake.node.manager.makeconfig(root)
@@ -55,9 +55,26 @@ class Runner():
                 pake.node.packages.register(root=os.path.join(root, '.pakenode'), path=req['nestpath'])
             elif action == 'node.config.nests.remove':
                 pake.config.node.Nests(os.path.join(root, '.pakenode')).remove(url=req['url']).write()
+            elif action == 'nest.manager.init':
+                pake.nest.manager.makedirs(req['path'])
+                pake.nest.manager.makeconfig(req['path'])
+            elif action == 'nest.manager.remove':
+                pake.nest.manager.remove(req['path'])
             elif action == 'nest.config.meta.set':
                 pake.config.nest.Meta(os.path.join(root, '.pakenest')).set(req['key'], req['value']).write()
             elif action == 'nest.config.meta.remove':
                 pake.config.nest.Meta(os.path.join(root, '.pakenest')).remove(req['key']).write()
+            elif action == 'nest.config.versions.add':
+                pake.config.nest.Versions(os.path.join(root, '.pakenest')).add(**req).write()
+            elif action == 'nest.config.versions.remove':
+                pake.config.nest.Versions(os.path.join(root, '.pakenest')).remove(**req).write()
+            elif action == 'nest.config.dependencies.set':
+                pake.config.nest.Dependencies(os.path.join(root, '.pakenest')).set(**req).write()
+            elif action == 'nest.config.dependencies.update':
+                pake.config.nest.Dependencies(os.path.join(root, '.pakenest')).update(**req).write()
+            elif action == 'nest.config.dependencies.remove':
+                pake.config.nest.Dependencies(os.path.join(root, '.pakenest')).remove(**req).write()
+            elif action == 'nest.config.files.add':
+                pake.config.nest.Files(os.path.join(root, '.pakenest')).add(**req).write()
             else:
                 warnings.warn('unknown action: {0}'.format(action))

@@ -412,7 +412,6 @@ class NestConfigurationTests(unittest.TestCase):
         # test logic
         pake.config.nest.Versions(test_nest_root).add('0.0.1-alpha.1').add('0.0.1-beta.1').add('0.0.1-rc.1').add('0.0.1').write()
         self.assertEqual(['0.0.1-alpha.1', '0.0.1-beta.1', '0.0.1-rc.1', '0.0.1'], list(pake.config.nest.Versions(test_nest_root)))
-        pake.config.nest.Versions(test_nest_root).reset().write()
         # cleanup
         helpers.rmnest(testdir)
 
