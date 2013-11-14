@@ -35,35 +35,35 @@ class Runner():
             del req['act']
             root = self._root
             if action == 'node.manager.init':
-                pake.node.manager.makedirs(root)
-                pake.node.manager.makeconfig(root)
+                pake.node.manager.makedirs(req['path'])
+                pake.node.manager.makeconfig(req['path'])
             elif action == 'node.manager.remove':
                 pake.node.manager.remove(req['path'])
             elif action == 'node.config.meta.set':
-                pake.config.node.Meta(os.path.join(root, '.pakenode')).set(req['key'], req['value']).write()
+                pake.config.node.Meta(os.path.join(root, '.pakenode')).set(**req).write()
             elif action == 'node.config.meta.remove':
-                pake.config.node.Meta(os.path.join(root, '.pakenode')).remove(req['key']).write()
+                pake.config.node.Meta(os.path.join(root, '.pakenode')).remove(**req).write()
             elif action == 'node.config.mirrors.set':
-                pake.config.node.Pushers(os.path.join(root, '.pakenode')).set(url=req['url'], host=req['host'], cwd=req['cwd']).write()
+                pake.config.node.Pushers(os.path.join(root, '.pakenode')).set(**req).write()
             elif action == 'node.config.mirrors.remove':
-                pake.config.node.Pushers(os.path.join(root, '.pakenode')).remove(url=req['url']).write()
+                pake.config.node.Pushers(os.path.join(root, '.pakenode')).remove(**req).write()
             elif action == 'node.config.aliens.set':
-                pake.config.node.Aliens(os.path.join(root, '.pakenode')).set(url=req['url'], mirrors=req['mirrors'], meta=req['meta']).write()
+                pake.config.node.Aliens(os.path.join(root, '.pakenode')).set(**req).write()
             elif action == 'node.config.aliens.remove':
-                pake.config.node.Aliens(os.path.join(root, '.pakenode')).remove(url=req['url']).write()
+                pake.config.node.Aliens(os.path.join(root, '.pakenode')).remove(**req).write()
             elif action == 'node.config.nests.register':
                 pake.node.packages.register(root=os.path.join(root, '.pakenode'), path=req['nestpath'])
             elif action == 'node.config.nests.remove':
-                pake.config.node.Nests(os.path.join(root, '.pakenode')).remove(url=req['url']).write()
+                pake.config.node.Nests(os.path.join(root, '.pakenode')).remove(**req).write()
             elif action == 'nest.manager.init':
                 pake.nest.manager.makedirs(req['path'])
                 pake.nest.manager.makeconfig(req['path'])
             elif action == 'nest.manager.remove':
-                pake.nest.manager.remove(req['path'])
+                pake.nest.manager.remove(root)
             elif action == 'nest.config.meta.set':
-                pake.config.nest.Meta(os.path.join(root, '.pakenest')).set(req['key'], req['value']).write()
+                pake.config.nest.Meta(os.path.join(root, '.pakenest')).set(**req).write()
             elif action == 'nest.config.meta.remove':
-                pake.config.nest.Meta(os.path.join(root, '.pakenest')).remove(req['key']).write()
+                pake.config.nest.Meta(os.path.join(root, '.pakenest')).remove(**req).write()
             elif action == 'nest.config.versions.add':
                 pake.config.nest.Versions(os.path.join(root, '.pakenest')).add(**req).write()
             elif action == 'nest.config.versions.remove':

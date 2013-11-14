@@ -105,7 +105,7 @@ class NodeConfigurationTests(unittest.TestCase):
     """
     def testSettingKeyInMeta(self):
         # test logic
-        reqs = [{'act': 'node.manager.init'},
+        reqs = [{'act': 'node.manager.init', 'path': testdir},
                 {'act': 'node.config.meta.set', 'key': 'foo', 'value': 'bar'}]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         self.assertEqual(pake.config.node.Meta(test_node_root).get('foo'), 'bar')
@@ -114,7 +114,7 @@ class NodeConfigurationTests(unittest.TestCase):
 
     def testRemovingKeyFromMeta(self):
         # test logic
-        reqs = [{'act': 'node.manager.init'},
+        reqs = [{'act': 'node.manager.init', 'path': testdir},
                 {'act': 'node.config.meta.set', 'key': 'foo', 'value': 'bar'},
                 {'act': 'node.config.meta.remove', 'key': 'foo'}]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
@@ -133,7 +133,7 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
 
     def testAddingPusher(self):
-        reqs = [{'act': 'node.manager.init'},
+        reqs = [{'act': 'node.manager.init', 'path': testdir},
                 {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}
                 ]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
@@ -144,7 +144,7 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
 
     def testRemovingPusher(self):
-        reqs = [{'act': 'node.manager.init'},
+        reqs = [{'act': 'node.manager.init', 'path': testdir},
                 {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
                 {'act': 'node.config.mirrors.remove', 'url': 'http://pake.example.com'},
                 ]
