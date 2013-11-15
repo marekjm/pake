@@ -22,6 +22,7 @@ class Runner():
         """
         self._root = root
         self._reqs = requests
+        self._stack = []
 
     def finalize(self):
         """Finalize data in the transaction e.g. fill missing data.
@@ -42,18 +43,34 @@ class Runner():
                 pake.node.manager.remove(req['path'])
             elif action == 'node.config.meta.set':
                 pake.config.node.Meta(os.path.join(root, '.pakenode')).set(**req).write()
+            elif action == 'node.config.meta.get':
+                self._stack.append(pake.config.node.Meta(os.path.join(root, '.pakenode')).get(**req))
             elif action == 'node.config.meta.remove':
                 pake.config.node.Meta(os.path.join(root, '.pakenode')).remove(**req).write()
+            elif action == 'node.config.meta.getkeys':
+                self._stack.append(pake.config.node.Meta(os.path.join(root, '.pakenode')).keys())
             elif action == 'node.config.mirrors.set':
                 pake.config.node.Pushers(os.path.join(root, '.pakenode')).set(**req).write()
+            elif action == 'node.config.mirrors.get':
+                self._stack.append(pake.config.node.Pushers(os.path.join(root, '.pakenode')).get(**req))
             elif action == 'node.config.mirrors.remove':
                 pake.config.node.Pushers(os.path.join(root, '.pakenode')).remove(**req).write()
             elif action == 'node.config.aliens.set':
                 pake.config.node.Aliens(os.path.join(root, '.pakenode')).set(**req).write()
+            elif action == 'node.config.aliens.get':
+                self._stack.append(pake.config.node.Aliens(os.path.join(root, '.pakenode')).get(**req))
+            elif action == 'node.config.aliens.geturls':
+                self._stack.append(pake.config.node.Aliens(os.path.join(root, '.pakenode')).urls())
+            elif action == 'node.config.aliens.getall':
+                self._stack.append(pake.config.node.Aliens(os.path.join(root, '.pakenode')).all())
             elif action == 'node.config.aliens.remove':
                 pake.config.node.Aliens(os.path.join(root, '.pakenode')).remove(**req).write()
             elif action == 'node.config.nests.register':
                 pake.node.packages.register(root=os.path.join(root, '.pakenode'), path=req['path'])
+            elif action == 'node.config.nests.get':
+                self._stack.append(pake.config.node.Nests(os.path.join(root, '.pakenode')).get(**req))
+            elif action == 'node.config.nests.getpaths':
+                self._stack.append(pake.config.node.Nests(os.path.join(root, '.pakenode')).paths())
             elif action == 'node.config.nests.remove':
                 pake.config.node.Nests(os.path.join(root, '.pakenode')).remove(**req).write()
             elif action == 'node.packages.genlist':
@@ -82,3 +99,9 @@ class Runner():
             else:
                 if fatalwarns: raise pake.errors.UnknownRequestError(action)
                 else: warnings.warn('unknown action: {0}'.format(action))
+        return self
+
+    def getstack(self):
+        """Returns stack of the transaction.
+        """
+        return self._stack

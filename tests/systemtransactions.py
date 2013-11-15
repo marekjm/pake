@@ -104,29 +104,47 @@ class NodeConfigurationTests(unittest.TestCase):
     Any tests passing for node will also pass for nests.
     """
     def testSettingKeyInMeta(self):
-        # test logic
         reqs = [{'act': 'node.manager.init', 'path': testdir},
                 {'act': 'node.config.meta.set', 'key': 'foo', 'value': 'bar'}]
+        # test logic
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         self.assertEqual(pake.config.node.Meta(test_node_root).get('foo'), 'bar')
         # cleanup
         helpers.rmnode(testdir)
 
     def testRemovingKeyFromMeta(self):
-        # test logic
         reqs = [{'act': 'node.manager.init', 'path': testdir},
                 {'act': 'node.config.meta.set', 'key': 'foo', 'value': 'bar'},
                 {'act': 'node.config.meta.remove', 'key': 'foo'}]
+        # test logic
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         self.assertEqual(dict(pake.config.node.Meta(test_node_root)), {})
         # cleanup
         helpers.rmnode(testdir)
 
-    @unittest.skip('')
+    def testGettingValuesFromMeta(self):
+        helpers.gennode(testdir)
+        reqs = [{'act': 'node.config.meta.set', 'key': 'foo', 'value': 'bar'},
+                {'act': 'node.config.meta.get', 'key': 'foo'}
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
+        # test logic
+        runner.run()
+        self.assertEqual('bar', runner.getstack()[-1])
+        # cleanup
+        helpers.rmnode(testdir)
+
     def testGettingMetaKeys(self):
         helpers.gennode(testdir)
+        reqs = [{'act': 'node.config.meta.set', 'key': 'foo', 'value': 0},
+                {'act': 'node.config.meta.set', 'key': 'bar', 'value': 1},
+                {'act': 'node.config.meta.set', 'key': 'baz', 'value': 2},
+                {'act': 'node.config.meta.getkeys'},
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.node.Meta(test_node_root).set('foo', 0).set('bar', 1).set('baz', 2).write()
+        runner.run()
+        self.assertEqual(['bar', 'baz', 'foo'], sorted(runner.getstack()[-1]))
         self.assertEqual(['bar', 'baz', 'foo'], sorted(pake.config.node.Meta(test_node_root).keys()))
         pake.config.node.Meta(test_node_root).reset().write()
         # cleanup
@@ -155,14 +173,16 @@ class NodeConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnode(testdir)
 
-    @unittest.skip('transactions API for getters is not yet designed')
     def testGettingPusher(self):
         helpers.gennode(testdir)
+        reqs = [{'act': 'node.config.mirrors.set', 'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
+                {'act': 'node.config.mirrors.get', 'url': 'http://pake.example.com'}
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
+        runner.run()
         pusher = {'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}
-        pake.config.node.Pushers(test_node_root).add(**pusher).write()
-        self.assertEqual(pusher, pake.config.node.Pushers(test_node_root).get(url='http://pake.example.com'))
-        pake.config.node.Pushers(test_node_root).reset().write()
+        self.assertEqual(pusher, runner.getstack()[-1])
         # cleanup
         helpers.rmnode(testdir)
 
@@ -188,43 +208,47 @@ class NodeConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnode(testdir)
 
-    @unittest.skip('transactions API for getters is not yet designed')
     def testGettingAlien(self):
         helpers.gennode(testdir)
+        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}},
+                {'act': 'node.config.aliens.get', 'url': 'http://alien.example.com'}
+                ]
         # test logic
-        alien = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
-        pake.config.node.Aliens(test_node_root).set(**alien).write()
-        del alien['url']
-        self.assertEqual(alien, pake.config.node.Aliens(test_node_root).get('http://alien.example.com'))
-        pake.config.node.Aliens(test_node_root).reset().write()
+        self.assertEqual({'mirrors': [], 'meta': {}}, pake.transactions.runner.Runner(root=testdir, requests=reqs).run().getstack()[-1])
         # cleanup
         helpers.rmnode(testdir)
 
-    @unittest.skip('transactions API for getters is not yet designed')
     def testListingAlienURLs(self):
         helpers.gennode(testdir)
+        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}},
+                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}},
+                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}}
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        foo = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
-        bar = {'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}}
-        baz = {'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}}
-        pake.config.node.Aliens(test_node_root).set(**foo).set(**bar).set(**baz).write()
-        self.assertEqual(['http://alien.example.com', 'http://alien.example.net', 'http://alien.example.org'],
-                             sorted(pake.config.node.Aliens(test_node_root).urls()))
-        pake.config.node.Aliens(test_node_root).reset().write()
+        runner.run()
+        urls = ['http://alien.example.com', 'http://alien.example.net', 'http://alien.example.org']
+        self.assertEqual(urls, sorted(pake.config.node.Aliens(test_node_root).urls()))
         # cleanup
         helpers.rmnode(testdir)
 
-    @unittest.skip('transactions API for getters is not yet designed')
     def testListingAliens(self):
         helpers.gennode(testdir)
-        # test logic
+        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}},
+                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}},
+                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}},
+                {'act': 'node.config.aliens.getall'}
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         foo = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
         bar = {'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}}
         baz = {'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}}
-        pake.config.node.Aliens(test_node_root).set(**foo).set(**bar).set(**baz).write()
-        aliens = pake.config.node.Aliens(test_node_root).all()
+        # test logic
+        runner.run()
+        aliens = runner.getstack()[-1]
         self.assertIn(foo, aliens)
-        pake.config.node.Aliens(test_node_root).reset().write()
+        self.assertIn(bar, aliens)
+        self.assertIn(baz, aliens)
         # cleanup
         helpers.rmnode(testdir)
 
@@ -240,45 +264,48 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
         helpers.rmnest(testdir)
 
-    @unittest.skip('')
     def testRemovingNest(self):
         helpers.gennode(testdir)
+        helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
+                {'act': 'node.config.nests.register', 'path': testdir},
+                {'act': 'node.config.nests.remove', 'name': 'test'}]
+        pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
-        nest = {'name': 'foo', 'path': '~/Dev/foo'}
-        pake.config.node.Nests(test_node_root).set(**nest).write()
-        pake.config.node.Nests(test_node_root).remove('foo').write()
-        self.assertRaises(KeyError, pake.config.node.Nests(test_node_root).get, 'foo')
-        pake.config.node.Nests(test_node_root).reset().write()
+        self.assertRaises(KeyError, pake.config.node.Nests(test_node_root).get, 'test')
          # cleanup
         helpers.rmnode(testdir)
+        helpers.rmnest(testdir)
 
-    @unittest.skip('transactions API for getters is not yet designed')
     def testGettingPathOfOneNest(self):
         helpers.gennode(testdir)
+        helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
+                {'act': 'node.config.nests.register', 'path': testdir},
+                {'act': 'node.config.nests.get', 'name': 'test'},
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        foo = {'name': 'foo', 'path': '~/Dev/foo'}
-        bar = {'name': 'bar', 'path': '~/Dev/bar'}
-        baz = {'name': 'baz', 'path': '~/Dev/baz'}
-        pake.config.node.Nests(test_node_root).set(**foo).set(**bar).set(**baz).write()
-        self.assertEqual('~/Dev/foo', pake.config.node.Nests(test_node_root).get('foo'))
-        self.assertEqual('~/Dev/bar', pake.config.node.Nests(test_node_root).get('bar'))
-        self.assertEqual('~/Dev/baz', pake.config.node.Nests(test_node_root).get('baz'))
-        pake.config.node.Nests(test_node_root).reset().write()
+        runner.run()
+        self.assertEqual(os.path.abspath(test_nest_root), runner.getstack()[-1])
+        self.assertEqual(os.path.abspath(test_nest_root), pake.config.node.Nests(test_node_root).get('test'))
         # cleanup
         helpers.rmnode(testdir)
+        helpers.rmnest(testdir)
 
-    @unittest.skip('transactions API for getters is not yet designed')
     def testGettingPathsOfAllNests(self):
         helpers.gennode(testdir)
+        helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
+                {'act': 'node.config.nests.register', 'path': testdir},
+                {'act': 'node.config.nests.getpaths'}
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        foo = {'name': 'foo', 'path': '~/Dev/foo'}
-        bar = {'name': 'bar', 'path': '~/Dev/bar'}
-        baz = {'name': 'baz', 'path': '~/Dev/baz'}
-        pake.config.node.Nests(test_node_root).set(**foo).set(**bar).set(**baz).write()
-        self.assertEqual(['~/Dev/bar', '~/Dev/baz', '~/Dev/foo'], sorted(pake.config.node.Nests(test_node_root).paths()))
-        pake.config.node.Nests(test_node_root).reset().write()
+        self.assertEqual([os.path.abspath(test_nest_root)], runner.run().getstack()[-1])
         # cleanup
         helpers.rmnode(testdir)
+        helpers.rmnest(testdir)
 
 
 class NodePackagesTests(unittest.TestCase):
