@@ -126,6 +126,8 @@ class Runner():
             pake.config.nest.Files(os.path.join(root, '.pakenest')).remove(**req).write()
         elif action == 'nest.config.files.list':
             self._stack.append(list(pake.config.nest.Files(os.path.join(root, '.pakenest'))))
+        elif action == 'nest.build':
+            pake.nest.package.build(root=os.path.join(root, '.pakenest'), version=req['version'])
         else:
             self._issueunknown(action, fatalwarns)
 
