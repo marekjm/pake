@@ -16,9 +16,7 @@ manual:
 	#pandoc -o ./manual/manual.pdf ./manual/*.markdown
 
 test:
-	#python3 -m unittest --catch --failfast --verbose tests
-	python3 tests/system.py --verbose --failfast
-	python3 tests/systemtransactions.py --verbose --failfast
+	python3 ./tests/ --catch --failfast --verbose
 
 clean:
 	@rm -rv ./{pake/,pake/config/,pake/node/,pake/nest/,pake/network/{aliens/,},pake/packages/,pake/transactions/,}__pycache__/

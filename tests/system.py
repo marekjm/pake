@@ -33,22 +33,6 @@ test_node_root = testdir + '/.pakenode'
 test_nest_root = testdir + '/.pakenest'
 
 
-# Test environment setup
-def prepare(testdir):
-    """Prepares test environment.
-    """
-    if not os.path.isdir(testdir):
-        print('* creating test directory: {0}'.format(testdir))
-        os.mkdir(testdir)
-    if os.path.isdir(test_node_root):
-        print('* removing leftover test node: {0}'.format(test_node_root))
-        shutil.rmtree(test_node_root)
-    if os.path.isdir(test_nest_root):
-        print('* removing old test nest: {0}'.format(test_nest_root))
-        shutil.rmtree(test_nest_root)
-    print()  # line break between prepare()'s output and test suite output
-
-
 # Node related tests
 class NodeManagerTests(unittest.TestCase):
     def testNodeManagerDirectoriesWriting(self):
@@ -646,6 +630,10 @@ class NestReleaseBuildingTests(unittest.TestCase):
         helpers.rmnest(testdir)
 
 
+# Wrapper class
+class Suite(NodeManagerTests, NodeConfigurationTests, NodePackagesTests, NodePushingTests, NestManagerTests, NestConfigurationTests, NestReleaseBuildingTests):
+    pass
+
 if __name__ == '__main__':
-    prepare(testdir)
+    helpers.prepare(testdir)
     unittest.main()

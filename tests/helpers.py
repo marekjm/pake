@@ -9,6 +9,25 @@ import os
 
 import pake
 
+from tests import conf
+
+
+def prepare(testdir):
+    """Prepares test environment.
+    """
+    test_node_root = os.path.join(testdir, '.pakenode')
+    test_nest_root = os.path.join(testdir, '.pakenest')
+    if not os.path.isdir(testdir):
+        print('* creating test directory: {0}'.format(testdir))
+        os.mkdir(testdir)
+    if os.path.isdir(test_node_root):
+        print('* removing leftover test node: {0}'.format(test_node_root))
+        shutil.rmtree(conf.test_node_root)
+    if os.path.isdir(conf.test_nest_root):
+        print('* removing old test nest: {0}'.format(conf.test_nest_root))
+        shutil.rmtree(conf.test_nest_root)
+    print()  # line break between prepare()'s output and test suite output
+
 
 def gennode(path):
     """Generates a node in the test directory.

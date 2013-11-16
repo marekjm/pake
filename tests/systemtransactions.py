@@ -33,22 +33,6 @@ test_node_root = testdir + '/.pakenode'
 test_nest_root = testdir + '/.pakenest'
 
 
-# Test environment setup
-def prepare(testdir):
-    """Prepares test environment.
-    """
-    if not os.path.isdir(testdir):
-        print('* creating test directory: {0}'.format(testdir))
-        os.mkdir(testdir)
-    if os.path.isdir(test_node_root):
-        print('* removing leftover test node: {0}'.format(test_node_root))
-        shutil.rmtree(test_node_root)
-    if os.path.isdir(test_nest_root):
-        print('* removing old test nest: {0}'.format(test_nest_root))
-        shutil.rmtree(test_nest_root)
-    print()  # line break between prepare()'s output and test suite output
-
-
 # Node related tests
 class NodeManagerTests(unittest.TestCase):
     def testNodeManagerDirectoriesWriting(self):
@@ -344,31 +328,34 @@ class NodeConfigurationTests(unittest.TestCase):
 
 
 class NodePushingTests(unittest.TestCase):
-    @unittest.skip('')
     def testPushingToNode(self):
         helpers.gennode(testdir)
         helpers.gennest(testdir)
         # test logic
         if SERVER_ENABLED_TESTS:
-            version = helpers.buildTestPackage(path=test_nest_root, version='2.4.8.16')
             # set all required variables
             url = conf.test_remote_node_url
             host = conf.test_remote_node_host
             cwd = conf.test_remote_node_cwd
             username = conf.test_remote_node_username
             password = conf.test_remote_node_pass
+            version = '2.4.8.16'
+            # set all required resuests
+            reqs = [{'act': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
+                    {'act': 'node.config.mirrors.set', 'url': url, 'host': host, 'cwd': cwd},
+                    {'act': 'node.config.nests.register', 'path': testdir},
+                    {'act': 'nest.build', 'version': version},
+                    {'act': 'node.packages.genlist'},
+                    {'act': 'node.config.mirrors.genlist'},
+                    {'act': 'node.push', 'url': url, 'username': username, 'password': password, 'reupload': True},
+                    ]
+            runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
+            runner.run()
             # setup connection to test server
             remote = pake.node.pusher.FTPPusher(host)
             remote.login(username, password)
             if cwd: remote.cwd(cwd)
-            # setup environment
-            pake.config.node.Pushers(test_node_root).add(url=url, host=host, cwd=cwd).write()
-            pake.node.packages.register(root=test_node_root, path=test_nest_root)
-            pake.node.packages.genpkglist(root=test_node_root)
-            pake.node.pusher.genmirrorlist(test_node_root)
-            # push to remote node
-            pake.node.pusher.push(root=test_node_root, url=url, username=username, password=password, reupload=True)
-            # test if it went OK
+            # test if everything went OK
             remote.cwd('./packages/test/versions/{0}'.format(version))
             files = remote.ls()
             self.assertIn('build.tar.xz', files)
@@ -745,6 +732,11 @@ class NestReleaseBuildingTests(unittest.TestCase):
         helpers.rmnest(testdir)
 
 
+# Wrapper class
+class Suite(NodeManagerTests, NodeConfigurationTests, NodePushingTests, NestManagerTests, NestConfigurationTests, NestReleaseBuildingTests):
+    pass
+
+
 if __name__ == '__main__':
-    prepare(testdir)
+    helpers.prepare(testdir)
     unittest.main()

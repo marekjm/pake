@@ -81,6 +81,9 @@ class Runner():
             pake.config.node.Nests(os.path.join(root, '.pakenode')).remove(**req).write()
         elif action == 'node.packages.genlist':
             pake.node.packages.genpkglist(os.path.join(root, '.pakenode'))
+        elif action == 'node.push':
+            req['root'] = os.path.join(root, '.pakenode')
+            pake.node.pusher.push(**req)
         else:
             self._issueunknown(action, fatalwarns)
 
