@@ -186,6 +186,22 @@ class NodeConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnode(testdir)
 
+    def testMirrorlistGeneration(self):
+        helpers.gennode(testdir)
+        reqs = [{'act': 'node.config.mirrors.set', 'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
+                {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.net', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
+                {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.org', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
+                {'act': 'node.config.mirrors.genlist'},
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
+        # test logic
+        runner.run()
+        ifstream = open(os.path.join(test_node_root, 'mirrors.json'))
+        self.assertEqual(['http://pake.example.com', 'http://pake.example.net', 'http://pake.example.org'], json.loads(ifstream.read()))
+        ifstream.close()
+        # cleanup
+        helpers.rmnode(testdir)
+
     def testAddingAlien(self):
         helpers.gennode(testdir)
         reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}]
@@ -307,8 +323,6 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
         helpers.rmnest(testdir)
 
-
-class NodePackagesTests(unittest.TestCase):
     def testBuildingPackageList(self):
         helpers.gennode(testdir)
         helpers.gennest(testdir)
@@ -330,18 +344,6 @@ class NodePackagesTests(unittest.TestCase):
 
 
 class NodePushingTests(unittest.TestCase):
-    @unittest.skip('')
-    def testMirrorlistGeneration(self):
-        helpers.gennode(testdir)
-        # test logic
-        pake.config.node.Pushers(test_node_root).add(url='http://pake.example.com', host='example.com', cwd='').write()
-        pake.node.pusher.genmirrorlist(test_node_root)
-        ifstream = open(os.path.join(test_node_root, 'mirrors.json'))
-        self.assertEqual(['http://pake.example.com'], json.loads(ifstream.read()))
-        ifstream.close()
-        # cleanup
-        helpers.rmnode(testdir)
-
     @unittest.skip('')
     def testPushingToNode(self):
         helpers.gennode(testdir)
@@ -380,7 +382,6 @@ class NodePushingTests(unittest.TestCase):
         helpers.rmnest(testdir)
         if SERVER_ENABLED_TESTS:
             pass  # nothing is needed here (unless we want to wipe remote totally clean)
-
 
 
 # Nest related tests
@@ -593,13 +594,18 @@ class NestConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('transactions API for getters is not yet designed')
     def testGettingDependencyData(self):
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'},
+                {'act': 'nest.config.dependencies.get', 'name': 'foo'}
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.nest.Dependencies(test_nest_root).set(name='foo', origin='http://pake.example.com', min='0.2.4', max='2.4.8').write()
+        runner.run()
+        #pake.config.nest.Dependencies(test_nest_root).set(name='foo', origin='http://pake.example.com', min='0.2.4', max='2.4.8').write()
         desired = {'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'}
-        self.assertEqual(desired, pake.config.nest.Dependencies(test_nest_root).get(name='foo'))
+        #self.assertEqual(desired, pake.config.nest.Dependencies(test_nest_root).get(name='foo'))
+        self.assertEqual(desired, runner.getstack()[-1])
         # cleanup
         helpers.rmnest(testdir)
 
