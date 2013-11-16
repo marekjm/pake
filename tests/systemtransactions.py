@@ -609,13 +609,37 @@ class NestConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('transactions API for getters is not yet designed')
-    def testListingDependencies(self):
+    def testListingDependenciesNames(self):
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo'},
+                {'act': 'nest.config.dependencies.set', 'name': 'bar'},
+                {'act': 'nest.config.dependencies.set', 'name': 'baz'},
+                {'act': 'nest.config.dependencies.getnames'}
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.nest.Dependencies(test_nest_root).set(name='foo').set(name='bar').set(name='baz').write()
+        runner.run()
+        #pake.config.nest.Dependencies(test_nest_root).set(name='foo').set(name='bar').set(name='baz').write()
         desired = ['foo', 'bar', 'baz']
         self.assertEqual(sorted(desired), sorted(list(pake.config.nest.Dependencies(test_nest_root))))
+        self.assertEqual(sorted(desired), sorted(runner.getstack()[-1]))
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testListingDependenciesDetails(self):
+        helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo'},
+                {'act': 'nest.config.dependencies.set', 'name': 'bar', 'origin': 'http://pake.example.com'},
+                {'act': 'nest.config.dependencies.set', 'name': 'baz', 'origin': 'http://pake.example.net', 'min': '0.2.4'},
+                {'act': 'nest.config.dependencies.list'}
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
+        # test logic
+        runner.run()
+        deps = runner.getstack()[-1]
+        self.assertIn({'name': 'foo'}, deps)
+        self.assertIn({'name': 'bar', 'origin': 'http://pake.example.com'}, deps)
+        self.assertIn({'name': 'baz', 'origin': 'http://pake.example.net', 'min': '0.2.4'}, deps)
         # cleanup
         helpers.rmnest(testdir)
 
@@ -630,6 +654,19 @@ class NestConfigurationTests(unittest.TestCase):
         ifstream.close()
         desired = ['./pake/__init__.py']
         self.assertEqual(desired, files)
+        # cleanup
+        helpers.rmnest(testdir)
+
+    def testRemovingFile(self):
+        helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.files.add', 'path': './pake/__init__.py'}, {'act': 'nest.config.files.remove', 'path': './pake/__init__.py'}]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
+        # test logic
+        runner.run()
+        ifstream = open(os.path.join(test_nest_root, 'files.json'))
+        files = json.loads(ifstream.read())
+        ifstream.close()
+        self.assertEqual([], files)
         # cleanup
         helpers.rmnest(testdir)
 
@@ -653,13 +690,17 @@ class NestConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnest(testdir)
 
-    @unittest.skip('transactions API for getters is not yet designed')
     def testListingFiles(self):
         helpers.gennest(testdir)
+        reqs = [{'act': 'nest.config.files.add', 'path': './pake/__init__.py'},
+                {'act': 'nest.config.files.add', 'path': './pake/shared.py'},
+                {'act': 'nest.config.files.list'}
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
-        pake.config.nest.Files(test_nest_root).add(path='./pake/__init__.py').add('./pake/shared.py').write()
+        runner.run()
         desired = ['./pake/__init__.py', './pake/shared.py']
-        self.assertEqual(desired, list(pake.config.nest.Files(test_nest_root)))
+        self.assertEqual(desired, runner.getstack()[-1])
         # cleanup
         helpers.rmnest(testdir)
 

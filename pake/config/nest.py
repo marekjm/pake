@@ -144,8 +144,8 @@ class Files(base.Config):
         self.content.append(path)
         return self
 
-    def remove(self, string):
+    def remove(self, path):
         """Removes file from the list.
         """
-        self.content.remove(string)
+        self.content.remove(path)
         return self

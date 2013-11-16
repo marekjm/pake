@@ -110,8 +110,22 @@ class Runner():
             pake.config.nest.Dependencies(os.path.join(root, '.pakenest')).update(**req).write()
         elif action == 'nest.config.dependencies.remove':
             pake.config.nest.Dependencies(os.path.join(root, '.pakenest')).remove(**req).write()
+        elif action == 'nest.config.dependencies.getnames':
+            self._stack.append(list(pake.config.nest.Dependencies(os.path.join(root, '.pakenest'))))
+        elif action == 'nest.config.dependencies.list':
+            depconf = pake.config.nest.Dependencies(os.path.join(root, '.pakenest'))
+            deps = []
+            for i in list(depconf):
+                dep = depconf.get(i)
+                dep['name'] = i
+                deps.append(dep)
+            self._stack.append(deps)
         elif action == 'nest.config.files.add':
             pake.config.nest.Files(os.path.join(root, '.pakenest')).add(**req).write()
+        elif action == 'nest.config.files.remove':
+            pake.config.nest.Files(os.path.join(root, '.pakenest')).remove(**req).write()
+        elif action == 'nest.config.files.list':
+            self._stack.append(list(pake.config.nest.Files(os.path.join(root, '.pakenest'))))
         else:
             self._issueunknown(action, fatalwarns)
 
