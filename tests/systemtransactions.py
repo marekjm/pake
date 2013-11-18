@@ -204,6 +204,20 @@ class NodeConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnode(testdir)
 
+    def testGettingPusherURLs(self):
+        helpers.gennode(testdir)
+        reqs = [{'act': 'node.config.mirrors.set', 'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
+                {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.net', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
+                {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.org', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
+                {'act': 'node.config.mirrors.geturls'},
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
+        # test logic
+        runner.run()
+        self.assertEqual(['http://pake.example.com', 'http://pake.example.net', 'http://pake.example.org'], runner.getstack()[-1])
+        # cleanup
+        helpers.rmnode(testdir)
+
     def testMirrorlistGeneration(self):
         helpers.gennode(testdir)
         reqs = [{'act': 'node.config.mirrors.set', 'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},

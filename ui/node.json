@@ -58,8 +58,8 @@
     ],
     "mirrors": [
         {
-            "short": "a",
-            "long": "add",
+            "short": "s",
+            "long": "set",
             "requires": ["--url", "--host", "--cwd"],
             "conflicts": ["--remove"],
             "help": "add mirror for the node"

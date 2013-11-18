@@ -143,9 +143,8 @@ elif str(ui) == 'meta':
 elif str(ui) == 'mirrors':
     """This mode is used for management of pushers list.
     """
-    pushers = pake.config.node.Pushers(root)
-
-    if '--add' in ui:
+    mirrors = pake.transactions.runner.Runner(root=root, requests=[{'act': 'node.config.mirrors.geturls'}]).run().getstack()[-1]
+    if '--set' in ui:
         """Code used to add mirrors and pushers which are very much alike each other.
         *Mirrors* are visible to the outside network and are just a list of URLs while
         *pushers* contain additional data:
@@ -155,11 +154,12 @@ elif str(ui) == 'mirrors':
         url = ui.get('--url')
         host = ui.get('--host')
         cwd = ui.get('--cwd')
-        if url not in pushers:
+        if url not in mirrors:
             """If URL is not in mirrors everything's fine and we can just add it to the list
             of pushers and mirrors.
             """
-            pushers.add(url=url, host=host, cwd=cwd).write()
+            request = {'act': 'node.config.mirrors.set', 'url': url, 'host': host, 'cwd': cwd}
+            pake.transactions.runner.Runner(root=root, requests=[request]).run()
             message = 'pake: node: added mirror'
             if '--verbose' in ui: message += ' {0}'.format(url)
             if '--quiet' not in ui: print(message)
@@ -175,97 +175,23 @@ elif str(ui) == 'mirrors':
         the same across different mirrors.
         """
         url = ui.get('--remove')
-        mirrors.remove(url).write()
-        pushers.remove(url).write()
+        request = {'act': 'node.config.mirrors.remove', 'url': url}
         message = 'pake: node: mirror removed'
         if '--verbose' in ui: message += ': {0}'.format(url)
         if '--quiet' not in ui: print(message)
     if '--list' in ui:
-        if '--verbose' in ui:
-            for m in pushers:
-                print(' * {0}'.format(m['url']))
-                print('   + host: {0}'.format(m['host']))
-                print('   + cwd:  {0}'.format(m['cwd']))
-        else:
-            for m in mirrors: print(m)
+        for m in mirrors: print(m)
     if '--gen-list' in ui:
         """Used to generate mirrors.json list which is sent to server and
         is served to the network.
         """
-        pake.node.pusher.genmirrorlist(root)
-        if '--quiet' not in ui: print('pake: generated mirrors.json list...')
+        request = {'act': 'node.config.mirrors.genlist'}
+        pake.transactions.runner.Runner(root=root).execute(request)
+        if '--quiet' not in ui: print('pake: generated mirrors list')
     if '--pretty' in ui:
         """Format pushers.json in a pretty (more human readable form).
         """
-        pushers.write(pretty=True)
-        if '--verbose' in ui: print('pake: formatted pushers.json')
-elif str(ui) == 'push':
-    """This mode is used to push node's contents to mirror servers on the Net.
-    """
-    def getcredentials(url, pushers):
-        """Returns two-tuple (username, password) for given URL.
-        Prompting user to enter them.
-        """
-        username = input('Username for {0}: '.format(url))
-        prompt = 'Password for {0}@{1}: '.format(username, pushers.get(url)['host'])
-        password = getpass.getpass(prompt)
-        return (username, password)
-
-    pushers = pake.config.node.Pushers(root)
-    mirrors = pushers.geturls()
-    installed = '--installed' in ui  # whether push also installed.json file
-    credentials = []
-    if '--only' in ui: urls = [ui.get('--only')]
-    if '--only-main' in ui: urls = [pake.config.node.Meta(root).get('url')]
-    else: urls = [m for m in mirrors]
-
-    for url in urls:
-        # check input for invalid mirror URLs
-        if url in mirrors:
-            # if a URL is valid ask for credentials
-            try:
-                credentials.append(getcredentials(url, pushers))
-            except KeyboardInterrupt:
-                # append empty credentials - do not push to this mirror
-                credentials.append(())
-                print()
-            except EOFError:
-                # cancel push operation
-                print()
-                exit()
-        else:
-            # if it's not valid print error message
-            print('pake: fail: no such mirror: {0}'.format(url))
-            # and append empty credentials to keep indexes synced
-            credentials.append(())
-
-    # this is a line break between credentials input and
-    # reports about push status
-    print()
-
-    for i, url in enumerate(urls):
-        # enumeration is required to get index for credentials
-        # they are stored in a list synced with list of URLs
-        if credentials[i]:
-            print('* pushing to mirror {0}...'.format(url))
-            username, password = credentials[i]
-            try:
-                pake.node.pusher.push(root, url, username, password, reupload=('--reupload' in ui))
-                message = '* pushing to mirror {0}: OK'.format(url)
-            except KeyboardInterrupt:
-                message = '* pushing to mirror {0}: cancelled by user'.format(url)
-            except Exception as e:
-                if '--debug' in ui:
-                    # if running with --debug option reraise the exception to
-                    # provide stack trace and debug info
-                    message = '* pushing to mirror {0}: failed: showing debug trace'.format(url)
-                    print()
-                    raise
-                else:
-                    # otherwise, silence the exception and just show error message
-                    message = '* pushing to mirror {0}: failed: {1} (cause: {2})'.format(url, e, str(type(e))[8:-2])
-            finally:
-                print(message)
+        pake.config.node.Pushers(os.path.join(root, '.pakenode')).write(pretty=True)
 elif str(ui) == 'aliens':
     """This mode is used for aliens.
     """
@@ -363,6 +289,73 @@ elif str(ui) == 'nests':
         """
         pake.node.packages.genpkglist(root)
         if '--quiet' not in ui: print('pake: generated packages.json list')
+elif str(ui) == 'push':
+    """This mode is used to push node's contents to mirror servers on the Net.
+    """
+    def getcredentials(url, pushers):
+        """Returns two-tuple (username, password) for given URL.
+        Prompting user to enter them.
+        """
+        username = input('Username for {0}: '.format(url))
+        prompt = 'Password for {0}@{1}: '.format(username, pushers.get(url)['host'])
+        password = getpass.getpass(prompt)
+        return (username, password)
+
+    pushers = pake.config.node.Pushers(root)
+    mirrors = pushers.geturls()
+    installed = '--installed' in ui  # whether push also installed.json file
+    credentials = []
+    if '--only' in ui: urls = [ui.get('--only')]
+    if '--only-main' in ui: urls = [pake.config.node.Meta(root).get('url')]
+    else: urls = [m for m in mirrors]
+
+    for url in urls:
+        # check input for invalid mirror URLs
+        if url in mirrors:
+            # if a URL is valid ask for credentials
+            try:
+                credentials.append(getcredentials(url, pushers))
+            except KeyboardInterrupt:
+                # append empty credentials - do not push to this mirror
+                credentials.append(())
+                print()
+            except EOFError:
+                # cancel push operation
+                print()
+                exit()
+        else:
+            # if it's not valid print error message
+            print('pake: fail: no such mirror: {0}'.format(url))
+            # and append empty credentials to keep indexes synced
+            credentials.append(())
+
+    # this is a line break between credentials input and
+    # reports about push status
+    print()
+
+    for i, url in enumerate(urls):
+        # enumeration is required to get index for credentials
+        # they are stored in a list synced with list of URLs
+        if credentials[i]:
+            print('* pushing to mirror {0}...'.format(url))
+            username, password = credentials[i]
+            try:
+                pake.node.pusher.push(root, url, username, password, reupload=('--reupload' in ui))
+                message = '* pushing to mirror {0}: OK'.format(url)
+            except KeyboardInterrupt:
+                message = '* pushing to mirror {0}: cancelled by user'.format(url)
+            except Exception as e:
+                if '--debug' in ui:
+                    # if running with --debug option reraise the exception to
+                    # provide stack trace and debug info
+                    message = '* pushing to mirror {0}: failed: showing debug trace'.format(url)
+                    print()
+                    raise
+                else:
+                    # otherwise, silence the exception and just show error message
+                    message = '* pushing to mirror {0}: failed: {1} (cause: {2})'.format(url, e, str(type(e))[8:-2])
+            finally:
+                print(message)
 elif str(ui) == '':
     """Local options of top mode.
     """

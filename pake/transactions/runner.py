@@ -73,6 +73,8 @@ class Runner():
             self._stack.append(pake.config.node.Pushers(os.path.join(root, '.pakenode')).get(**req))
         elif action == 'node.config.mirrors.remove':
             pake.config.node.Pushers(os.path.join(root, '.pakenode')).remove(**req).write()
+        elif action == 'node.config.mirrors.geturls':
+            self._stack.append(pake.config.node.Pushers(os.path.join(root, '.pakenode')).geturls())
         elif action == 'node.config.mirrors.genlist':
             pake.node.pusher.genmirrorlist(os.path.join(root, '.pakenode'))
         elif action == 'node.config.aliens.set':
