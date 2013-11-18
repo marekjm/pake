@@ -24,6 +24,7 @@ import getpass
 import os
 import sys
 import urllib
+import warnings
 
 import clap
 import pake
@@ -108,30 +109,36 @@ if str(ui) == 'init':
 elif str(ui) == 'meta':
     """Logic for meta.json manipulation.
     """
-    warnings.warn('rewrite to use pake.transactions.runner requests')
     if '--set' in ui:
         key, value = ui.get('--set')
-        #request = {'req': 'meta.set', 'key': key, 'value': value}
-        #pake.transactions.runner.execute(request)
-        pake.config.node.Meta(root).set(key, value).write()
+        request = {'act': 'node.config.meta.set', 'key': key, 'value': value}
+        pake.transactions.runner.Runner(root=root).execute(request)
     if '--remove' in ui:
-        #request = {'req': 'meta.remove', 'key': ui.get('--remove')}
-        #pake.transactions.runner.execute(request)
-        pake.config.node.Meta(root).remove(ui.get('--remove')).write()
+        request = {'act': 'node.config.meta.remove', 'key': ui.get('--remove')}
+        pake.transactions.runner.Runner(root=root).execute(request)
     if '--get' in ui:
-        print(pake.config.node.Meta(root).get(ui.get('--get')))
+        request = {'act': 'node.config.meta.get', 'key': ui.get('--get')}
+        print(pake.transactions.runner.Runner(root=root).execute(request).getstack()[-1])
     if '--list-keys' in ui:
-        meta = pake.config.node.Meta(root)
+        request = {'act': 'node.config.meta.getkeys'}
+        keys = pake.transactions.runner.Runner(root=root).execute(request).getstack()[-1]
+        meta = pake.config.node.Meta(os.path.join(root, '.pakenode'))
         if '--verbose' in ui:
-            for key in sorted(meta.keys()): print('{0}: {1}'.format(key, meta.get(key)))
+            for key in sorted(keys):
+                value = pake.transactions.runner.Runner(root=root).execute({'act': 'node.config.meta.get', 'key': key}).getstack()[-1]
+                print('{0}: {1}'.format(key, value))
         else:
-            print(', '.join(sorted(meta.keys())))
+            s = ', '.join(sorted(keys))
+            if s: print(s)
     if '--reset' in ui:
-        pake.config.node.Meta(root).reset().write()
+        pake.transactions.runner.Runner(root=root).execute({'act': 'node.config.meta.reset'})
     if '--pretty' in ui:
-        #   this should be routine and independent from
-        #   every other options to always enable the possibility
-        #   to format JSON in pretty way
+        """This should be independent from
+        other options to always enable the possibility
+        to format JSON in pretty way
+
+        No transaction for it is available for this.
+        """
         pake.config.node.Meta(root).write(pretty=True)
 elif str(ui) == 'mirrors':
     """This mode is used for management of pushers list.
@@ -154,13 +161,13 @@ elif str(ui) == 'mirrors':
             """
             pushers.add(url=url, host=host, cwd=cwd).write()
             message = 'pake: node: added mirror'
-            if '--verbose' in ui: message += ' {0} on host {1}'.format(url, host)
+            if '--verbose' in ui: message += ' {0}'.format(url)
             if '--quiet' not in ui: print(message)
         else:
             """Otherwise fail and tell user that mirror with this URL already exists.
             """
-            message = 'pake: node: fatal: mirror already exists'
-            if '--verbose' in ui: message += ' {0}'.format(url)
+            message = 'pake: node: fail: mirror already exists'
+            if '--verbose' in ui: message += ': {0}'.format(url)
             if '--quiet' not in ui: print(message)
     if '--remove' in ui:
         """Code used to remove mirrors and pushers.

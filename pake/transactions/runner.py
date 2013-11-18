@@ -15,7 +15,7 @@ class Runner():
     requests - request is a middle-form of a single line of
     transaction file.
     """
-    def __init__(self, root, requests):
+    def __init__(self, root, requests=[]):
         """
         :param root: directory that transactions are run in
         :param requests: list of requests
@@ -65,6 +65,8 @@ class Runner():
             pake.config.node.Meta(os.path.join(root, '.pakenode')).remove(**req).write()
         elif action == 'node.config.meta.getkeys':
             self._stack.append(pake.config.node.Meta(os.path.join(root, '.pakenode')).keys())
+        elif action == 'node.config.meta.reset':
+            pake.config.node.Meta(os.path.join(root, '.pakenode')).reset().write()
         elif action == 'node.config.mirrors.set':
             pake.config.node.Pushers(os.path.join(root, '.pakenode')).set(**req).write()
         elif action == 'node.config.mirrors.get':
@@ -146,16 +148,21 @@ class Runner():
         else:
             self._issueunknown(action, fatalwarns)
 
+    def execute(self, req, fatalwarns=False):
+        """This is used to execute single requests.
+        """
+        action = req['act']
+        del req['act']
+        root = self._root
+        if action.split('.')[0] == 'node': self._executenode(action, req, fatalwarns)
+        elif action.split('.')[0] == 'nest': self._executenest(action, req, fatalwarns)
+        else: self._issueunknown(action, fatalwarns)
+        return self
+
     def run(self, fatalwarns=False):
         """Call this method to run the transaction.
         """
-        for req in self._reqs:
-            action = req['act']
-            del req['act']
-            root = self._root
-            if action.split('.')[0] == 'node': self._executenode(action, req, fatalwarns)
-            elif action.split('.')[0] == 'nest': self._executenest(action, req, fatalwarns)
-            else: self._issueunknown(action, fatalwarns)
+        for req in self._reqs: self.execute(req)
         return self
 
     def getstack(self):
