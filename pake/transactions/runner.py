@@ -43,6 +43,18 @@ class Runner():
         if action == 'node.manager.init':
             pake.node.manager.makedirs(req['path'])
             pake.node.manager.makeconfig(req['path'])
+        elif action == 'node.manager.reinit':
+            confpath = os.path.join(req['path'], '.pakenode')
+            meta = pake.config.node.Meta(confpath)
+            nests = pake.config.node.Nests(confpath)
+            pushers = pake.config.node.Pushers(confpath)
+            aliens = pake.config.node.Aliens(confpath)
+            self._executenode('node.manager.remove', {'path': req['path']})
+            self._executenode('node.manager.init', {'path': req['path']})
+            meta.write()
+            nests.write()
+            pushers.write()
+            aliens.write()
         elif action == 'node.manager.remove':
             pake.node.manager.remove(req['path'])
         elif action == 'node.config.meta.set':

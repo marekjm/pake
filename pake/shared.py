@@ -58,8 +58,7 @@ def getnodepath(check=True, fake=''):
     """
     if fake: path = fake
     else: path = os.path.expanduser('~')
-    path = os.path.join(path, '.pakenode')
-    if check and not os.path.isdir(path): path = ''
+    if check and not os.path.isdir(os.path.join(path, '.pakenode')): path = ''
     return path
 
 

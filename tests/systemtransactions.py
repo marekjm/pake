@@ -6,7 +6,6 @@
 
 import json
 import os
-import shutil
 import tarfile
 import unittest
 import warnings
@@ -35,6 +34,41 @@ test_nest_root = testdir + '/.pakenest'
 
 # Node related tests
 class NodeManagerTests(unittest.TestCase):
+    def testNodeRegeneration(self):
+        reqs = [{'act': 'node.manager.init', 'path': testdir},
+                {'act': 'nest.manager.init', 'path': testdir},
+                {'act': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
+                {'act': 'node.config.nests.register', 'path': testdir},
+                {'act': 'node.config.meta.set', 'key': 'foo', 'value': 'bar'},
+                {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
+                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}},
+                {'act': 'node.manager.reinit', 'path': testdir}
+                ]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
+        ifstream = open('./env/node/required/directories.json')
+        directories = json.loads(ifstream.read())
+        ifstream.close()
+        configs = [ ('meta.json', {'foo': 'bar'}),      # (filename, desired_content)
+                    ('pushers.json', [{'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}]),
+                    ('aliens.json', {'http://alien.example.com': {'mirrors': [], 'meta': {}}}),
+                    ('nests.json', {'test': os.path.abspath(os.path.join(testdir, '.pakenest'))}),
+                    ]
+        # test logic
+        runner.run()
+        self.assertIn('.pakenode', os.listdir(testdir))
+        for d in directories:
+            path = os.path.join(test_node_root, d)
+            self.assertEqual(True, os.path.isdir(path))
+        for f, desired in configs:
+            path = os.path.join(test_node_root, f)
+            print(path, os.path.isfile(path))
+            ifstream = open(path, 'r')
+            self.assertEqual(desired, json.loads(ifstream.read()))
+            ifstream.close()
+        # cleanup
+        helpers.rmnode(testdir)
+        helpers.rmnest(testdir)
+
     def testNodeManagerDirectoriesWriting(self):
         """This test checks for correct initialization of all required directories.
         """
