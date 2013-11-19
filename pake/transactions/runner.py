@@ -78,7 +78,15 @@ class Runner():
         elif action == 'node.config.mirrors.genlist':
             pake.node.pusher.genmirrorlist(os.path.join(root, '.pakenode'))
         elif action == 'node.config.aliens.set':
-            pake.config.node.Aliens(os.path.join(root, '.pakenode')).set(**req).write()
+            req['alien'] = {}
+            if 'mirrors' in req:
+                req['alien']['mirrors'] = req['mirrors']
+                del req['mirrors']
+            if 'meta' in req:
+                req['alien']['meta'] = req['meta']
+                del req['meta']
+            alien = pake.network.aliens.manager.set(os.path.join(root, '.pakenode'), **req)
+            self._stack.append(alien)
         elif action == 'node.config.aliens.get':
             self._stack.append(pake.config.node.Aliens(os.path.join(root, '.pakenode')).get(**req))
         elif action == 'node.config.aliens.geturls':

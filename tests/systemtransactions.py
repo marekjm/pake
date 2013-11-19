@@ -41,7 +41,7 @@ class NodeManagerTests(unittest.TestCase):
                 {'act': 'node.config.nests.register', 'path': testdir},
                 {'act': 'node.config.meta.set', 'key': 'foo', 'value': 'bar'},
                 {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
-                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}},
+                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
                 {'act': 'node.manager.reinit', 'path': testdir}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
@@ -236,7 +236,7 @@ class NodeConfigurationTests(unittest.TestCase):
 
     def testAddingAlien(self):
         helpers.gennode(testdir)
-        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}]
+        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False}]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
         alien = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
@@ -246,7 +246,7 @@ class NodeConfigurationTests(unittest.TestCase):
 
     def testRemovingAlien(self):
         helpers.gennode(testdir)
-        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}},
+        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
                 {'act': 'node.config.aliens.remove', 'url': 'http://alien.example.com'}
                 ]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
@@ -258,7 +258,7 @@ class NodeConfigurationTests(unittest.TestCase):
 
     def testGettingAlien(self):
         helpers.gennode(testdir)
-        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}},
+        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
                 {'act': 'node.config.aliens.get', 'url': 'http://alien.example.com'}
                 ]
         # test logic
@@ -268,9 +268,9 @@ class NodeConfigurationTests(unittest.TestCase):
 
     def testListingAlienURLs(self):
         helpers.gennode(testdir)
-        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}},
-                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}},
-                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}}
+        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
+                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}, 'fetch': False},
+                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}, 'fetch': False}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -282,9 +282,9 @@ class NodeConfigurationTests(unittest.TestCase):
 
     def testListingAliens(self):
         helpers.gennode(testdir)
-        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}},
-                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}},
-                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}},
+        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
+                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}, 'fetch': False},
+                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}, 'fetch': False},
                 {'act': 'node.config.aliens.getall'}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)

@@ -4,9 +4,7 @@
 registered in current network.
 """
 
-import json
 import os
-import urllib.request
 import warnings
 
 from pake import config
@@ -23,7 +21,7 @@ def fetchalien(url):
     return alien
 
 
-def add(root, url):
+def set(root, url, alien={}, fetch=True):
     """Adds alien node to the list of aliens.json.
     If given url is not of the alien's main node it will be changed.
 
@@ -31,10 +29,16 @@ def add(root, url):
     :type root: str
     :param url: URL of the alien node
     :type url: str
+    :param alien: dictionary containing alien data - `mirrors` and `meta` (used only when `fetch` is False)
+    :type alien: dict
+    :param fetch: tells the function whether to fetch data
+    :type fetch: bool
 
     :returns: dictionary containing fetched alien data
     """
-    alien = fetchalien(url)
+    if fetch: alien = fetchalien(url)
+    if 'mirrors' not in alien: warnings.warn('alien does not contain list of mirrors')
+    if 'meta' not in alien: warnings.warn('alien does not contain metadata')
     if url in alien['mirrors']: url = alien['meta']['url']
     config.node.Aliens(root).set(url=url, mirrors=alien['mirrors'], meta=alien['meta']).write()
     return alien

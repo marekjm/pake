@@ -192,6 +192,53 @@ elif str(ui) == 'mirrors':
         """Format pushers.json in a pretty (more human readable form).
         """
         pake.config.node.Pushers(os.path.join(root, '.pakenode')).write(pretty=True)
+elif str(ui) == 'nests':
+    """Interface code for nest management.
+    """
+    nests = pake.config.node.Nests(root)
+    if '--register' in ui:
+        """Code used to register nests.
+        Nest which is being registered must have a valid meta (containing name and version).
+        """
+        try:
+            path = os.path.join(ui.get('--register'), '.pakenest')
+            if path[0] == '~': path = os.path.abspath(os.path.expanduser(path))
+            pake.node.packages.register(root, path)
+            meta = pake.config.nest.Meta(path)
+            if not os.path.isdir(path): raise pake.errors.PAKEError('nest not found in: {0}'.format(path))
+
+            report = 'pake: registered nest'
+            if '--verbose' in ui: report += ' for package: {0} (version: {1})'.format(meta.get('name'), meta.get('version'))
+        except (pake.errors.PAKEError) as e:
+            report = 'pake: fatal: {0}'.format(e)
+        finally:
+            print(report)
+    if '--unregister' in ui:
+        """Used to remove nest from the list of registered nests.
+        """
+        try:
+            nests.remove(name=ui.get('--unregister')).write()
+        except KeyError as e:
+            print('pake: nest for package {0} was not registered'.format(e))
+        finally:
+            pass
+    if '--list' in ui:
+        """List all nests registered in this node.
+        """
+        for package in nests:
+            meta = pake.config.nest.Meta(nests.get(package))
+            report = '{0} {1} {2}'.format(meta['name'], meta['version'], nests.get(package))
+            if '--verbose' in ui:
+                report += ' (licensed under: {0})'.format(p['license'])
+                if 'description' in p: report += ': {0}'.format(p['description'])
+            print(report)
+    if '--gen-pkg-list' in ui:
+        """This is used to build list of packages that is served on your node.
+
+        It reads data from all registered nests and forges a packages.json data file.
+        """
+        pake.node.packages.genpkglist(root)
+        if '--quiet' not in ui: print('pake: generated packages.json list')
 elif str(ui) == 'aliens':
     """This mode is used for aliens.
     """
@@ -242,53 +289,6 @@ elif str(ui) == 'aliens':
             if '--verbose' in ui:
                 amirrors = aliens.get(url)['mirrors']
                 for am in amirrors: print('   + {0}'.format(am))
-elif str(ui) == 'nests':
-    """Interface code for nest management.
-    """
-    nests = pake.config.node.Nests(root)
-    if '--register' in ui:
-        """Code used to register nests.
-        Nest which is being registered must have a valid meta (containing name and version).
-        """
-        try:
-            path = os.path.join(ui.get('--register'), '.pakenest')
-            if path[0] == '~': path = os.path.abspath(os.path.expanduser(path))
-            pake.node.packages.register(root, path)
-            meta = pake.config.nest.Meta(path)
-            if not os.path.isdir(path): raise pake.errors.PAKEError('nest not found in: {0}'.format(path))
-
-            report = 'pake: registered nest'
-            if '--verbose' in ui: report += ' for package: {0} (version: {1})'.format(meta.get('name'), meta.get('version'))
-        except (pake.errors.PAKEError) as e:
-            report = 'pake: fatal: {0}'.format(e)
-        finally:
-            print(report)
-    if '--unregister' in ui:
-        """Used to remove nest from the list of registered nests.
-        """
-        try:
-            nests.remove(name=ui.get('--unregister')).write()
-        except KeyError as e:
-            print('pake: nest for package {0} was not registered'.format(e))
-        finally:
-            pass
-    if '--list' in ui:
-        """List all nests registered in this node.
-        """
-        for package in nests:
-            meta = pake.config.nest.Meta(nests.get(package))
-            report = '{0} {1} {2}'.format(meta['name'], meta['version'], nests.get(package))
-            if '--verbose' in ui:
-                report += ' (licensed under: {0})'.format(p['license'])
-                if 'description' in p: report += ': {0}'.format(p['description'])
-            print(report)
-    if '--gen-pkg-list' in ui:
-        """This is used to build list of packages that is served on your node.
-
-        It reads data from all registered nests and forges a packages.json data file.
-        """
-        pake.node.packages.genpkglist(root)
-        if '--quiet' not in ui: print('pake: generated packages.json list')
 elif str(ui) == 'push':
     """This mode is used to push node's contents to mirror servers on the Net.
     """
