@@ -8,8 +8,7 @@ created by parser or PAKE itself.
 import warnings
 
 
-from pake import errors
-from pake.transactions import shared
+from .. import errors
 
 
 class Encoder():

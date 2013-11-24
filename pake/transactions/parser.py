@@ -3,8 +3,8 @@
 """This file contains PAKE transactions parser code.
 """
 
-from pake import errors
-from pake.transactions import shared
+
+from .. import errors
 
 
 def dequote(s):
