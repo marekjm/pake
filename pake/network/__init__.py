@@ -2,5 +2,5 @@
 
 #flake8: noqa
 
-from pake.network import pkgs
-from pake.network import aliens
+from . import pkgs
+from . import aliens
