@@ -2,5 +2,5 @@
 
 #flake8: noqa
 
-from pake.nest import manager
-from pake.nest import package
+from . import manager
+from . import package

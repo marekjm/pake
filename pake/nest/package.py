@@ -12,7 +12,7 @@ import warnings
 import pyversion
 from but import scanner as butscanner
 
-from pake import config, errors
+from .. import config, errors
 
 
 def addfile(root, path):
