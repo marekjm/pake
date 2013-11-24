@@ -13,7 +13,7 @@ import json
 import os
 import warnings
 
-from pake import config, errors
+from .. import config, errors
 
 
 def _check(meta, path):

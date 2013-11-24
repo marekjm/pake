@@ -7,7 +7,7 @@ import json
 import os
 import shutil
 
-from pake import config, shared
+from .. import config, shared
 
 
 def makedirs(root):

@@ -2,6 +2,6 @@
 
 #flake8: noqa
 
-from pake.node import manager
-from pake.node import pusher
-from pake.node import packages
+from . import manager
+from . import pusher
+from . import packages

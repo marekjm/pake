@@ -9,7 +9,7 @@ import json
 import os
 import warnings
 
-from pake import config
+from .. import config
 
 
 class FTPPusher(ftplib.FTP):
