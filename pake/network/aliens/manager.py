@@ -4,7 +4,6 @@
 registered in current network.
 """
 
-import os
 import warnings
 
 from pake import config

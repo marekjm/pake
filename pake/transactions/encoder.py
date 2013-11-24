@@ -5,6 +5,8 @@ encoding transactions to source code from their middle-form
 created by parser or PAKE itself.
 """
 
+import warnings
+
 
 from pake import errors
 from pake.transactions import shared
@@ -18,42 +20,11 @@ class Encoder():
         self._parsed = parsed  # this is middle-form of transaction
         self._source = []
 
-    def _encodeline(self, statement, args=[]):
-        """Create list of words in source code line encoded from
-        middle form of translated statement.
-
-        This method uses repr() function on all arguments so they will be enquoted.
-        It is required for correct encoding of META statements where VALUE subkeywords can
-        have arguments containing spaces.
-        """
-        line = [statement['req']]  # set main KEYWORD
-        line.append(statement['context'])  # set context
-        req_name = [kw for kw, req, argno, conflicts in args if kw == statement['req']][0]
-        line.append(repr(statement[statement['context'].lower()]))  # append argument for context
-        for kw, req, argno, conflicts in args:
-            if kw in [statement['context'], statement['req']]: continue  # don't add it second time - it's the main KEYWORD or context
-            if req in statement:
-                line.append(kw)
-                line.append(repr(statement[req]))
-        return line
-
-    def _encodepkg(self, statement):
-        """Encodes PKG statements.
-        """
-        return self._encodeline(statement=statement, args=shared.statement_subkeywords_for_pkg)
-
     def encode(self):
         """Create source code from the middle-form representation of
         the transaction.
         """
-        source = []
-        for statement in self._parsed:
-            st = statement['req']
-            if st == 'PKG':
-                source.append(self._encodepkg(statement))
-            else:
-                raise errors.EncodingError('does not know how to encode \'{0}\' statement'.format(st))
-        self._source = source
+        warnings.warn(NotImplemented)
         return self
 
     def getsource(self, joined=True):
@@ -61,8 +32,7 @@ class Encoder():
 
         :param joined: if True words will be joined with whitespace
         """
-        if joined: return [' '.join(l) for l in self._source]
-        else: return [l for l in self._source]
+        return self._source
 
     def dump(self, path):
         """Write source to the file specified during initialization

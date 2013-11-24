@@ -6,7 +6,6 @@
 import os
 import json
 import urllib
-import warnings
 
 from pake import config
 from pake import shared

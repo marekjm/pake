@@ -5,7 +5,6 @@ expand the network.
 """
 
 
-import json
 import warnings
 
 from pake import config

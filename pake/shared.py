@@ -24,10 +24,10 @@ import clap
 
 
 # locations in which PAKE will search for configration files, UI files etc.
-uilocations = [ ('.'),
-                (os.path.expanduser('~'), '.local', 'share', 'pake'),
-                (os.path.sep, 'usr', 'share', 'pake'),
-                ]
+uilocations = [('.'),
+               (os.path.expanduser('~'), '.local', 'share', 'pake'),
+               (os.path.sep, 'usr', 'share', 'pake'),
+               ]
 
 
 def getuipath(ui, debug=False):
