@@ -2,14 +2,14 @@
 
 #flake8: noqa
 
-from pake import node
-from pake import nest
-from pake import network
-from pake import packages
-from pake import transactions
-from pake import config
-from pake import shared
-from pake import errors
+from . import node
+from . import nest
+from . import network
+from . import packages
+from . import transactions
+from . import config
+from . import shared
+from . import errors
 
 
 __version__ = '0.1.2'

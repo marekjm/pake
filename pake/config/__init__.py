@@ -2,6 +2,6 @@
 
 #flake8: noqa
 
-from pake.config import node
-from pake.config import nest
-from pake.config import base
+from . import node
+from . import nest
+from . import base

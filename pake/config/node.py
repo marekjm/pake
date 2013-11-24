@@ -7,7 +7,7 @@
 
 import warnings
 
-from pake.config import base
+from . import base
 
 
 class Meta(base.Meta):

@@ -9,8 +9,8 @@ import os
 # pyversion can be found at: https://github.com/marekjm/pyversion
 import pyversion
 
-from pake.config import base
-from pake import errors
+from . import base
+from .. import errors
 
 
 class Meta(base.Meta):
