@@ -2,4 +2,4 @@
 
 #flake8: noqa
 
-from pake.packages import db
+from . import db

@@ -7,8 +7,7 @@ import os
 import json
 import urllib
 
-from pake import config
-from pake import shared
+from .. import config, shared
 
 
 def getindex(root):
