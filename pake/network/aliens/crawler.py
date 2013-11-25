@@ -16,3 +16,4 @@ def crawl(root):
     """
     warnings.warn(NotImplemented)
     aliens = config.node.Aliens(shared.getnodepath(check=True))
+    for a in aliens: pass

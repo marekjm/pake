@@ -8,9 +8,6 @@ created by parser or PAKE itself.
 import warnings
 
 
-from .. import errors
-
-
 class Encoder():
     """This object can encode middle-form representation of transactions
     back to the source code.

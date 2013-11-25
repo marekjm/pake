@@ -43,11 +43,18 @@ class Versions(base.Config):
         :type version: semver version string
         :param check: decide whether to check if last known version isn't greater than the one we want to add
         :type check: bool
-        :param strict: whether to use strict semver strings or not (non-strict allow to use more than three digit-words in base version)
+        :param strict: whether to use strict semver strings or not
         :type strict: bool
         """
         if version not in self.content:
-            if check and pyversion.version.Version(self[-1], strict=strict) > pyversion.version.Version(version, strict=strict):
+            #last = pyversion.version.Version(self[-1], strict=strict)
+            if check and len(self.content) > 0:
+                last = pyversion.version.Version(self[-1], strict=strict)
+                this = pyversion.version.Version(version, strict=strict)
+                last_is_greater = last > this
+            else:
+                last_is_greater = False
+            if check and last_is_greater:
                 raise ValueError('{0} is lesser version then the last present: {1}'.format(version, self[-1]))
             self.content.append(version)
         return self
@@ -140,7 +147,8 @@ class Files(base.Config):
         """
         if not os.path.isfile(path): raise errors.NotAFileError(path)
         for i in self:
-            if os.path.abspath(path) == os.path.abspath(i): raise FileExistsError('file already added: {0}'.format(path))
+            if os.path.abspath(path) == os.path.abspath(i):
+                raise FileExistsError('file already added: {0}'.format(path))
         self.content.append(path)
         return self
 

@@ -164,7 +164,6 @@ class Runner():
         """
         action = req['act']
         del req['act']
-        root = self._root
         if action.split('.')[0] == 'node': self._executenode(action, req, fatalwarns)
         elif action.split('.')[0] == 'nest': self._executenest(action, req, fatalwarns)
         else: self._issueunknown(action, fatalwarns)
