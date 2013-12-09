@@ -4,16 +4,16 @@ Here is shown API exposed by the nest.
 
     ROOT = ./.pakenest
 
-    ROOT/meta.json
-    ROOT/dependencies.json
-    ROOT/files.json
-    ROOT/install.fsrl
-    ROOT/update.fsrl
-    ROOT/remove.fsrl
-    ROOT/versions.json
-    ROOT/versions/:version/meta.json
-    ROOT/versions/:version/dependencies.json
-    ROOT/versions/:version/build.tar.xz
+    /meta.json
+    /dependencies.json
+    /files.json
+    /install.fsrl
+    /update.fsrl
+    /remove.fsrl
+    /versions.json
+    /versions/:version/meta.json
+    /versions/:version/dependencies.json
+    /versions/:version/build.tar.xz
 
 
 `build.tar.xz` contains:
@@ -76,7 +76,7 @@ prepared and executed.
 
 #### Example dependecy list
 
-Here is a list of example project `foo`:
+Here is a list of dependencies for an example project `foo`:
 
     [
         {
