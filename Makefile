@@ -30,7 +30,6 @@ install-ui:
 	@cp -v ./ui/*.json ${SHAREDIR}/pake/ui/
 	@cp -v ./ui/node.py ${BINDIR}/pakenode && chmod +x ${BINDIR}/pakenode
 	@cp -v ./ui/nest.py ${BINDIR}/pakenest && chmod +x ${BINDIR}/pakenest
-	@cp -v ./ui/unified.py ${BINDIR}/pake && chmod +x ${BINDIR}/pake
 
 install-env-descriptions:
 	@cp -Rv ./env/ ${SHAREDIR}/pake
