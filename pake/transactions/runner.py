@@ -162,11 +162,11 @@ class Runner():
     def execute(self, req, fatalwarns=False):
         """This is used to execute single requests.
         """
-        action = req['act']
-        del req['act']
-        if action.split('.')[0] == 'node': self._executenode(action, req, fatalwarns)
-        elif action.split('.')[0] == 'nest': self._executenest(action, req, fatalwarns)
-        else: self._issueunknown(action, fatalwarns)
+        call = req['call']
+        del req['call']
+        if call.split('.')[0] == 'node': self._executenode(call, req, fatalwarns)
+        elif call.split('.')[0] == 'nest': self._executenest(call, req, fatalwarns)
+        else: self._issueunknown(call, fatalwarns)
         return self
 
     def run(self, fatalwarns=False):

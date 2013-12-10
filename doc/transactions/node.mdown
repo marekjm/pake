@@ -1,0 +1,51 @@
+### Node transactions
+
+Node transactions operate on node elements.
+Their prefix in function calls is `node.`.
+
+*Example:*
+
+    node.manager.init("/home/user")
+
+*(this would initialize a node in user's home directory)*
+
+----
+
+#### Available requests
+
+Here is a list of all node-related requests which can be used in transactions.
+
+**(NI)** is added if given request has not been implemented yet.
+**(DEP)** is added if given request is deprecated.
+**(UNS)** is added if given request has unsure state (could be moved to different module, different name, etc.) and
+users should use it with caution.
+
+----
+
+**`node.manager.init(string path)`**
+
+This will initialize a node in a given `path` (which must be a directory).
+
+*JSON*:
+
+    {'call': 'node.manager.init', 'params': {'path': '/some/path'}}
+
+----
+
+**`node.manager.reinit(string path)`**
+
+This will reinitialize a node in a given `path` (which must be a directory).
+
+*JSON*:
+
+    {'call': 'node.manager.reinit', 'params': {'path': '/some/path'}}
+
+----
+
+**`node.manager.remove(string path)`**
+
+This will remove PAKE node from given `path` (must be a directory).
+
+*JSON*:
+
+    {'call': 'pake.manager.remove', 'params': {'path': '/some/path'}}
