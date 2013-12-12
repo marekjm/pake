@@ -1,51 +1,20 @@
 ## PAKE transactions
 
 User interface of PAKE is very loosely connected to it's backend and
-all communication between ui and backend is done via
-*transactions*.
+all communication between ui and backend is done via *transactions*.
 
 ----
 
-### Overview
+### Contents
 
-Early versions of PAKE were built with tightly connected UI and backend.
-This approach has proven to be very hard to maintain and was abandoned.
+Documentation regarding transaction system itself.
 
-Now, all internal communication between UI and backend is done via transactions mechanism.
+0.  [Overview](./transactions/overview.mdown)
+0.  [Encoding](./transactions/encoding.mdown)
 
-*Schema*:
+Documentation of requests available in transactions.
 
-    UI --> [generated "compiled" transactions] --> runner --> [API calls] --> backend
-
-
-This transaction-based approach is slower than direct calls but is more flexible and reliable.
-With UIs built around this set of transactions it's easy to extend the available set and
-change the backend without worrying about backwards compatibility because
-the only code changed is in transactions runner (which is used by clients but the changes are
-in backend-side code and ui-side code is left unchanged).
-
-This also enables transactions to be stored on disk (transaction caching) for later usage or
-inspection by users (feature intended for power-users and developers).
-
-Transactions are passed as lists of requests (with each request being a dictionary of its name and params) and
-as such they can be easily saved as JSON-encoded strings.
-Runner can then load such transactions and execute them.
-This means that creating various front-ends for PAKE can be easily done even
-in languages other than Python - only thing required is a proper JSON library.
-
-Properly encoded request looks like this dictionary:
-
-    {'call': 'request.function.name', 'params': {'dict': 'with', 'given': 'parameters'}}
-
-Properly encoded transaction is a list (even if it has only one request):
-
-    [{'call': 'foo', 'params': {'bar': 'baz'}}]
-
-----
-
-### Transactions explained
-
-0.  [Node transactions (`node.*`)](./transactions/node.mdown)
-0.  [Nest transactions (`nest.*`)](./transactions/nest.mdown)
-0.  [Network transactions (`network.*`)](./transactions/network.mdown)
-0.  [Package manager transactions (`pm.*`)](./transactions/pm.mdown)
+0.  [Node requests (`node.*`)](./transactions/requests/node.mdown)
+0.  [Nest requests (`nest.*`)](./transactions/requests/nest.mdown)
+0.  [Network requests (`network.*`)](./transactions/requests/network.mdown)
+0.  [Package manager requests (`pm.*`)](./transactions/requests/pm.mdown)

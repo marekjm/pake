@@ -1,0 +1,101 @@
+### Node transactions
+
+Node transactions operate on node elements.
+Their prefix in function calls is `node.`.
+
+*Example:*
+
+    node.manager.init("/home/user")
+
+*(this would initialize a node in user's home directory)*
+
+----
+
+#### Available requests
+
+Here is a list of all node-related requests which can be used in transactions.
+
+*   **(NI)** is added if given request has not been implemented yet,
+*   **(DEP)** is added if given request is deprecated,
+*   **(UNS)** is added if given request has unsure state (could be moved to different module, different name, etc.) and
+    users should use it with caution,
+
+Some requests place values on stack.
+In PAKE transaction-runner stack is used to make results of calls available to outer world.
+Stack is a list of values returned by requests which return non-null values (e.g. various getters) and
+can be obtained with `getstack()` method of runner.
+First returned value is first item on stack.
+
+
+----
+
+**`node.manager.init(string path)`**
+
+Initialize a node in a given `path` (which must be a directory).
+
+*JSON*:
+
+    {"call": "node.manager.init", "params": {"path": "/some/path"}}
+
+
+----
+
+**`node.manager.reinit(string path)`**
+
+Reinitialize a node in a given `path` (which must be a directory).
+Initialize node if it wasn't there.
+
+*JSON*:
+
+    {"call": "node.manager.reinit", "params": {"path": "/some/path"}}
+
+
+----
+
+**`node.manager.remove(string path)`**
+
+Remove PAKE node from given `path` (must be a directory).
+
+*JSON*:
+
+    {"call": "node.manager.remove", "params": {"path": "/some/path"}}
+
+----
+
+**`node.config.meta.set(string key, string value)`**
+
+Set key in node metadata.
+
+*JSON*:
+
+    {"call": "pake.config.meta.set", "params": {"key": "some-name", "value": "some value"}}
+
+
+----
+
+**`node.config.meta.get(string key)`**
+
+Place value of given key on stack.
+Raises error if given key cannot be found in metadata.
+
+*JSON*:
+
+    {"call": "pake.config.meta.get", "params": {"key": "some-name"}}
+
+
+----
+
+**`node.config.meta.getkeys()`**
+
+Place list of all available keys on stack.
+
+*JSON*:
+
+    {"call": "pake.config.meta.getkeys", "params": {}}
+
+
+----
+
+**`node.config.meta.remove(string key)`**
+
+Remove key form node metadata.
