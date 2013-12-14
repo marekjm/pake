@@ -85,6 +85,13 @@ Raises error if given key cannot be found in metadata.
 
 ----
 
+**`node.config.meta.remove(string key)`**
+
+Remove key form node metadata.
+
+
+----
+
 **`node.config.meta.getkeys()`**
 
 Place list of all available keys on stack.
@@ -93,9 +100,39 @@ Place list of all available keys on stack.
 
     {"call": "pake.config.meta.getkeys", "params": {}}
 
+----
+
+**`node.config.meta.reset()`**
+
+Reset meta to default (empty) state.
+
+*JSON*:
+
+    {"call": "pake.config.meta.reset", "params": {}}
+
 
 ----
 
-**`node.config.meta.remove(string key)`**
+**`node.config.mirrors.set(string url, string host, string cwd = "")`**
 
-Remove key form node metadata.
+Set new mirror.
+
+*   `url`:  URL at which mirror can be accessed,
+*   `host`: hostname which will be used for FTP connection,
+*   `cwd`:  path to which PAKE will go after connecting to the FTP server,
+
+*JSON*:
+
+    {"call": "node.config.mirrors.set", "params": {"url": "https://pake.example.com", "host": "example.com", "cwd": "/pake"}}
+
+
+----
+
+**`node.config.mirrors.get(string url)`**
+
+Place dictionary with mirror's data on stack.
+Error raised when URL is not found in database.
+
+*JSON*:
+
+    {"call": "node.config.mirrors.get", "params": {"url", "https://pake.example.com"}}
