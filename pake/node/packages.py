@@ -48,7 +48,7 @@ def unregister(root, name):
     :param root: path to the root of the node
     :param name: name of the package
     """
-    config.node.Nests(root).remove(name).write()
+    config.node.Nests(root).remove(what=name, by='name').write()
 
 
 def genpkglist(root):

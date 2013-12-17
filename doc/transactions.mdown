@@ -18,3 +18,7 @@ Documentation of requests available in transactions.
 0.  [Nest requests (`nest.*`)](./transactions/requests/nest.mdown)
 0.  [Network requests (`network.*`)](./transactions/requests/network.mdown)
 0.  [Package manager requests (`pm.*`)](./transactions/requests/pm.mdown)
+
+----
+
+***Copyright (c) 2013 Marek Marecki***

@@ -1,0 +1,1 @@
+0.  management of aliens should be moved to `network` part of backend before creating a set of requests in transaction runner,

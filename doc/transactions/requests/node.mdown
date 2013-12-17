@@ -1,6 +1,6 @@
-### Node transactions
+### Node requests
 
-Node transactions operate on node elements.
+Node requests operate on node elements.
 Their prefix in function calls is `node.`.
 
 *Example:*
@@ -136,3 +136,102 @@ Error raised when URL is not found in database.
 *JSON*:
 
     {"call": "node.config.mirrors.get", "params": {"url", "https://pake.example.com"}}
+
+
+----
+
+**`node.config.mirrors.remove(string url)`**
+
+Remove mirror with given URL from list of mirrors.
+If URL cannot be found no error is raised.
+
+*JSON*:
+
+    {"call": "node.config.mirrors.remove", "params": {"url": "https://pake.example.com"}}
+
+
+----
+
+**`node.config.mirrors.geturls()`**
+
+Place list of mirror URLs on stack.
+
+*JSON*:
+
+    {"call": "node.config.mirrors.geturls", "params": {}}
+
+
+----
+
+**`node.config.mirrors.genlist()`**
+
+Generate `mirrors.json` file that will be available from REST API of mirrors.
+
+*JSON*:
+
+    {"call": "node.config.mirrors.genlist", "params": {}}
+
+
+----
+
+**`node.config.nests.register(string path)`**
+
+Register a nest in the node.
+
+*JSON*:
+
+    {"call": node.config.nests.register", "params": {"path": "/some/path/to/nest"}}
+
+
+----
+
+**`node.config.nests.remove(string what, string by='name')`**
+
+Remove nest from the list of registered nests.
+If `by` is passed as `'name'` `what` is considered to be a name of the package.
+If `by` is passed as `'path'` `what` is considered to be a path of the nest.
+
+*JSON*:
+
+    {"call": "node.config.nests.unregister", "params": {"what": "foo"}}
+    {"call": "node.config.nests.unregister", "params": {"what": "foo", "by": "name"}}
+    {"call": "node.config.nests.unregister", "params": {"what": "/home/user/path/to/nest", "by": "path"}}
+
+
+----
+
+**`node.config.nests.getpath(string name)`**
+
+Place path to nest of package with the given name on stack.
+Raises error when package with `name` is not registered.
+
+*JSON*:
+
+    {"call": "node.config.nests.getpath", "params": {"name": string}}
+
+
+----
+
+**`node.config.nests.getpaths()`**
+
+Place list of paths to all registred nests on stack.
+
+*JSON*:
+
+    {"call": "node.config.nests.getpaths", "params": {}}
+
+
+----
+
+**`node.packages.genlist()`**
+
+Generate list of packages provided by node.
+
+*JSON*:
+
+    {"call": "node.packages.genlist", "params": {}}
+
+
+----
+
+&nbsp;

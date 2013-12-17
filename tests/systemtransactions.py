@@ -35,14 +35,21 @@ test_nest_root = testdir + '/.pakenest'
 # Node related tests
 class NodeManagerTests(unittest.TestCase):
     def testNodeRegeneration(self):
-        reqs = [{'act': 'node.manager.init', 'path': testdir},
-                {'act': 'nest.manager.init', 'path': testdir},
-                {'act': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
-                {'act': 'node.config.nests.register', 'path': testdir},
-                {'act': 'node.config.meta.set', 'key': 'foo', 'value': 'bar'},
-                {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
-                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
-                {'act': 'node.manager.reinit', 'path': testdir}
+        reqs = [{'call': 'node.manager.init', 'params': {'path': testdir}},
+                {'call': 'nest.manager.init', 'params': {'path': testdir}},
+                {'call': 'nest.config.meta.set', 'params': {'key': 'name', 'value': 'test'}},
+                {'call': 'node.config.nests.register', 'params': {'path': testdir}},
+                {'call': 'node.config.meta.set', 'params': {'key': 'foo', 'value': 'bar'}},
+                {'call': 'node.config.mirrors.set', 'params': {
+                                                               'url': 'http://pake.example.com',
+                                                               'host': 'example.com',
+                                                               'cwd': '/domains/example.com/public_html/pake'}},
+                {'call': 'network.aliens.set', 'params': {
+                                                              'url': 'http://alien.example.com',
+                                                              'mirrors': [],
+                                                              'meta': {},
+                                                              'fetch': False}},
+                {'call': 'node.manager.reinit', 'params': {'path': testdir}}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         ifstream = open('./env/node/required/directories.json')
@@ -72,7 +79,8 @@ class NodeManagerTests(unittest.TestCase):
     def testNodeManagerDirectoriesWriting(self):
         """This test checks for correct initialization of all required directories.
         """
-        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'act': 'node.manager.init', 'path': testdir}])
+        reqs = [{'call': 'node.manager.init', 'params': {'path': testdir}}]
+        runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         ifstream = open('./env/node/required/directories.json')
         directories = json.loads(ifstream.read())
         ifstream.close()
@@ -88,7 +96,7 @@ class NodeManagerTests(unittest.TestCase):
     def testNodeManagerConfigWriting(self):
         """This test checks for correct intialization of all required config files.
         """
-        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'act': 'node.manager.init', 'path': testdir}])
+        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'call': 'node.manager.init', 'params': {'path': testdir}}])
         configs = [ ('meta.json', {}),      # (filename, desired_content)
                     ('pushers.json', []),
                     ('aliens.json', {}),
@@ -109,7 +117,7 @@ class NodeManagerTests(unittest.TestCase):
         """This test checks if node gets correctly deleted.
         """
         helpers.gennode(testdir)
-        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'act': 'node.manager.remove', 'path': testdir}])
+        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'call': 'node.manager.remove', 'params': {'path': testdir}}])
         # code logic & cleanup - in this test it's the same
         runner.run()
         self.assertNotIn('.pakenode', os.listdir(testdir))
@@ -122,8 +130,8 @@ class NodeConfigurationTests(unittest.TestCase):
     Any tests passing for node will also pass for nests.
     """
     def testSettingKeyInMeta(self):
-        reqs = [{'act': 'node.manager.init', 'path': testdir},
-                {'act': 'node.config.meta.set', 'key': 'foo', 'value': 'bar'}]
+        reqs = [{'call': 'node.manager.init', 'params': {'path': testdir}},
+                {'call': 'node.config.meta.set', 'params': {'key': 'foo', 'value': 'bar'}}]
         # test logic
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         self.assertEqual(pake.config.node.Meta(test_node_root).get('foo'), 'bar')
@@ -131,9 +139,9 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
 
     def testRemovingKeyFromMeta(self):
-        reqs = [{'act': 'node.manager.init', 'path': testdir},
-                {'act': 'node.config.meta.set', 'key': 'foo', 'value': 'bar'},
-                {'act': 'node.config.meta.remove', 'key': 'foo'}]
+        reqs = [{'call': 'node.manager.init', 'params': {'path': testdir}},
+                {'call': 'node.config.meta.set', 'params': {'key': 'foo', 'value': 'bar'}},
+                {'call': 'node.config.meta.remove', 'params': {'key': 'foo'}}]
         # test logic
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         self.assertEqual(dict(pake.config.node.Meta(test_node_root)), {})
@@ -142,8 +150,8 @@ class NodeConfigurationTests(unittest.TestCase):
 
     def testGettingValuesFromMeta(self):
         helpers.gennode(testdir)
-        reqs = [{'act': 'node.config.meta.set', 'key': 'foo', 'value': 'bar'},
-                {'act': 'node.config.meta.get', 'key': 'foo'}
+        reqs = [{'call': 'node.config.meta.set', 'params': {'key': 'foo', 'value': 'bar'}},
+                {'call': 'node.config.meta.get', 'params': {'key': 'foo'}}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -154,10 +162,10 @@ class NodeConfigurationTests(unittest.TestCase):
 
     def testGettingMetaKeys(self):
         helpers.gennode(testdir)
-        reqs = [{'act': 'node.config.meta.set', 'key': 'foo', 'value': 0},
-                {'act': 'node.config.meta.set', 'key': 'bar', 'value': 1},
-                {'act': 'node.config.meta.set', 'key': 'baz', 'value': 2},
-                {'act': 'node.config.meta.getkeys'},
+        reqs = [{'call': 'node.config.meta.set', 'params': {'key': 'foo', 'value': 0}},
+                {'call': 'node.config.meta.set', 'params': {'key': 'bar', 'value': 1}},
+                {'call': 'node.config.meta.set', 'params': {'key': 'baz', 'value': 2}},
+                {'call': 'node.config.meta.getkeys', 'params': {}},
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -169,8 +177,8 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
 
     def testAddingPusher(self):
-        reqs = [{'act': 'node.manager.init', 'path': testdir},
-                {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}
+        reqs = [{'call': 'node.manager.init', 'params': {'path': testdir}},
+                {'call': 'node.config.mirrors.set', 'params': {'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}}
                 ]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
@@ -180,9 +188,9 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
 
     def testRemovingPusher(self):
-        reqs = [{'act': 'node.manager.init', 'path': testdir},
-                {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
-                {'act': 'node.config.mirrors.remove', 'url': 'http://pake.example.com'},
+        reqs = [{'call': 'node.manager.init', 'params': {'path': testdir}},
+                {'call': 'node.config.mirrors.set', 'params': {'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}},
+                {'call': 'node.config.mirrors.remove', 'params': {'url': 'http://pake.example.com'}},
                 ]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
@@ -193,8 +201,8 @@ class NodeConfigurationTests(unittest.TestCase):
 
     def testGettingPusher(self):
         helpers.gennode(testdir)
-        reqs = [{'act': 'node.config.mirrors.set', 'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
-                {'act': 'node.config.mirrors.get', 'url': 'http://pake.example.com'}
+        reqs = [{'call': 'node.config.mirrors.set', 'params': {'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}},
+                {'call': 'node.config.mirrors.get', 'params': {'url': 'http://pake.example.com'}}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -206,10 +214,10 @@ class NodeConfigurationTests(unittest.TestCase):
 
     def testGettingPusherURLs(self):
         helpers.gennode(testdir)
-        reqs = [{'act': 'node.config.mirrors.set', 'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
-                {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.net', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
-                {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.org', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
-                {'act': 'node.config.mirrors.geturls'},
+        reqs = [{'call': 'node.config.mirrors.set', 'params': {'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}},
+                {'call': 'node.config.mirrors.set', 'params': {'url': 'http://pake.example.net', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}},
+                {'call': 'node.config.mirrors.set', 'params': {'url': 'http://pake.example.org', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}},
+                {'call': 'node.config.mirrors.geturls', 'params': {}},
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -220,10 +228,10 @@ class NodeConfigurationTests(unittest.TestCase):
 
     def testMirrorlistGeneration(self):
         helpers.gennode(testdir)
-        reqs = [{'act': 'node.config.mirrors.set', 'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
-                {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.net', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
-                {'act': 'node.config.mirrors.set', 'url': 'http://pake.example.org', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'},
-                {'act': 'node.config.mirrors.genlist'},
+        reqs = [{'call': 'node.config.mirrors.set', 'params': {'url': 'http://pake.example.com', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}},
+                {'call': 'node.config.mirrors.set', 'params': {'url': 'http://pake.example.net', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}},
+                {'call': 'node.config.mirrors.set', 'params': {'url': 'http://pake.example.org', 'host': 'example.com', 'cwd': '/domains/example.com/public_html/pake'}},
+                {'call': 'node.config.mirrors.genlist', 'params': {}},
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -234,9 +242,10 @@ class NodeConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnode(testdir)
 
+    @unittest.skip('due to major interpreter redesign')
     def testAddingAlien(self):
         helpers.gennode(testdir)
-        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False}]
+        reqs = [{'call': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False}]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
         alien = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
@@ -244,10 +253,11 @@ class NodeConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnode(testdir)
 
+    @unittest.skip('due to major interpreter redesign')
     def testRemovingAlien(self):
         helpers.gennode(testdir)
-        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
-                {'act': 'node.config.aliens.remove', 'url': 'http://alien.example.com'}
+        reqs = [{'call': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
+                {'call': 'node.config.aliens.remove', 'url': 'http://alien.example.com'}
                 ]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
@@ -256,21 +266,23 @@ class NodeConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnode(testdir)
 
+    @unittest.skip('due to major interpreter redesign')
     def testGettingAlien(self):
         helpers.gennode(testdir)
-        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
-                {'act': 'node.config.aliens.get', 'url': 'http://alien.example.com'}
+        reqs = [{'call': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
+                {'call': 'node.config.aliens.get', 'url': 'http://alien.example.com'}
                 ]
         # test logic
         self.assertEqual({'mirrors': [], 'meta': {}}, pake.transactions.runner.Runner(root=testdir, requests=reqs).run().getstack()[-1])
         # cleanup
         helpers.rmnode(testdir)
 
+    @unittest.skip('due to major interpreter redesign')
     def testListingAlienURLs(self):
         helpers.gennode(testdir)
-        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
-                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}, 'fetch': False},
-                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}, 'fetch': False}
+        reqs = [{'call': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
+                {'call': 'node.config.aliens.set', 'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}, 'fetch': False},
+                {'call': 'node.config.aliens.set', 'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}, 'fetch': False}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -280,12 +292,13 @@ class NodeConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnode(testdir)
 
+    @unittest.skip('due to major interpreter redesign')
     def testListingAliens(self):
         helpers.gennode(testdir)
-        reqs = [{'act': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
-                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}, 'fetch': False},
-                {'act': 'node.config.aliens.set', 'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}, 'fetch': False},
-                {'act': 'node.config.aliens.getall'}
+        reqs = [{'call': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
+                {'call': 'node.config.aliens.set', 'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}, 'fetch': False},
+                {'call': 'node.config.aliens.set', 'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}, 'fetch': False},
+                {'call': 'node.config.aliens.getall'}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         foo = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
@@ -300,11 +313,12 @@ class NodeConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnode(testdir)
 
+    @unittest.skip('due to major interpreter redesign')
     def testRegisteringNest(self):
         helpers.gennode(testdir)
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
-                {'act': 'node.config.nests.register', 'path': testdir}]
+        reqs = [{'call': 'nest.config.meta.set', 'params': {'key': 'name', 'value': 'test'}},
+                {'call': 'node.config.nests.register', 'params': {'path': testdir}}]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
         self.assertEqual(os.path.abspath(test_nest_root), pake.config.node.Nests(test_node_root).get('test'))
@@ -312,12 +326,13 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
         helpers.rmnest(testdir)
 
+    @unittest.skip('due to major interpreter redesign')
     def testRemovingNest(self):
         helpers.gennode(testdir)
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
-                {'act': 'node.config.nests.register', 'path': testdir},
-                {'act': 'node.config.nests.remove', 'name': 'test'}]
+        reqs = [{'call': 'nest.config.meta.set', 'params': {'key': 'name', 'value': 'test'}},
+                {'call': 'node.config.nests.register', 'params': {'path': testdir}},
+                {'call': 'node.config.nests.remove', 'name': 'test'}]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
         self.assertRaises(KeyError, pake.config.node.Nests(test_node_root).get, 'test')
@@ -325,12 +340,13 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
         helpers.rmnest(testdir)
 
+    @unittest.skip('due to major interpreter redesign')
     def testGettingPathOfOneNest(self):
         helpers.gennode(testdir)
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
-                {'act': 'node.config.nests.register', 'path': testdir},
-                {'act': 'node.config.nests.get', 'name': 'test'},
+        reqs = [{'call': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
+                {'call': 'node.config.nests.register', 'path': testdir},
+                {'call': 'node.config.nests.get', 'name': 'test'},
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -341,12 +357,13 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
         helpers.rmnest(testdir)
 
+    @unittest.skip('due to major interpreter redesign')
     def testGettingPathsOfAllNests(self):
         helpers.gennode(testdir)
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
-                {'act': 'node.config.nests.register', 'path': testdir},
-                {'act': 'node.config.nests.getpaths'}
+        reqs = [{'call': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
+                {'call': 'node.config.nests.register', 'path': testdir},
+                {'call': 'node.config.nests.getpaths'}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -355,12 +372,13 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
         helpers.rmnest(testdir)
 
+    @unittest.skip('due to major interpreter redesign')
     def testBuildingPackageList(self):
         helpers.gennode(testdir)
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.meta.set', 'key': 'name', 'value': 'foo'},
-                {'act': 'node.config.nests.register', 'path': testdir},
-                {'act': 'node.packages.genlist'},
+        reqs = [{'call': 'nest.config.meta.set', 'key': 'name', 'value': 'foo'},
+                {'call': 'node.config.nests.register', 'path': testdir},
+                {'call': 'node.packages.genlist'},
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -375,6 +393,7 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnest(testdir)
 
 
+@unittest.skip('due to major interpreter redesign')
 class NodePushingTests(unittest.TestCase):
     def testPushingToNode(self):
         helpers.gennode(testdir)
@@ -389,13 +408,13 @@ class NodePushingTests(unittest.TestCase):
             password = conf.test_remote_node_pass
             version = '2.4.8.16'
             # set all required resuests
-            reqs = [{'act': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
-                    {'act': 'node.config.mirrors.set', 'url': url, 'host': host, 'cwd': cwd},
-                    {'act': 'node.config.nests.register', 'path': testdir},
-                    {'act': 'nest.build', 'version': version},
-                    {'act': 'node.packages.genlist'},
-                    {'act': 'node.config.mirrors.genlist'},
-                    {'act': 'node.push', 'url': url, 'username': username, 'password': password, 'reupload': True},
+            reqs = [{'call': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
+                    {'call': 'node.config.mirrors.set', 'url': url, 'host': host, 'cwd': cwd},
+                    {'call': 'node.config.nests.register', 'path': testdir},
+                    {'call': 'nest.build', 'version': version},
+                    {'call': 'node.packages.genlist'},
+                    {'call': 'node.config.mirrors.genlist'},
+                    {'call': 'node.push', 'url': url, 'username': username, 'password': password, 'reupload': True},
                     ]
             runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
             runner.run()
@@ -420,12 +439,13 @@ class NodePushingTests(unittest.TestCase):
 
 
 # Nest related tests
+@unittest.skip('due to major interpreter redesign')
 class NestManagerTests(unittest.TestCase):
     def testNestManagerDirectoriesWriting(self):
         """This test checks for correct initialization of all required directories.
         """
         # preparation
-        pake.transactions.runner.Runner(root=testdir, requests=[{'act': 'nest.manager.init', 'path': testdir}]).run()
+        pake.transactions.runner.Runner(root=testdir, requests=[{'call': 'nest.manager.init', 'path': testdir}]).run()
         ifstream = open('./env/nest/required/directories.json')
         directories = json.loads(ifstream.read())
         ifstream.close()
@@ -442,7 +462,7 @@ class NestManagerTests(unittest.TestCase):
         """This test checks for correct intialization of all required config files.
         """
         # preparation
-        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'act': 'nest.manager.init', 'path': testdir}])
+        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'call': 'nest.manager.init', 'path': testdir}])
         # (filename, desired_content)
         runner.run()
         configs = [ ('meta.json', {}),
@@ -466,19 +486,20 @@ class NestManagerTests(unittest.TestCase):
         """
         # preparation
         helpers.gennest(testdir)
-        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'act': 'nest.manager.remove', 'path': testdir}])
+        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'call': 'nest.manager.remove', 'path': testdir}])
         # test logic & cleanup
         runner.run()
         self.assertNotIn('.pakenest', os.listdir(testdir))
 
 
+@unittest.skip('due to major interpreter redesign')
 class NestConfigurationTests(unittest.TestCase):
     def testAddingVersions(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.versions.add', 'version': '0.0.1-alpha.1'},
-                {'act': 'nest.config.versions.add', 'version': '0.0.1-beta.1'},
-                {'act': 'nest.config.versions.add', 'version': '0.0.1-rc.1'},
-                {'act': 'nest.config.versions.add', 'version': '0.0.1'},
+        reqs = [{'call': 'nest.config.versions.add', 'version': '0.0.1-alpha.1'},
+                {'call': 'nest.config.versions.add', 'version': '0.0.1-beta.1'},
+                {'call': 'nest.config.versions.add', 'version': '0.0.1-rc.1'},
+                {'call': 'nest.config.versions.add', 'version': '0.0.1'},
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -489,15 +510,15 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingVersionsButCheckingIfItsNotLowerThanTheLastOne(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.versions.add', 'version': '0.0.1-beta.1'},
-                {'act': 'nest.config.versions.add', 'version': '0.0.1-alpha.17', 'check': True}
+        reqs = [{'call': 'nest.config.versions.add', 'version': '0.0.1-beta.1'},
+                {'call': 'nest.config.versions.add', 'version': '0.0.1-alpha.17', 'check': True}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         self.assertRaises(ValueError, runner.run)
         # assertNotRaises -- just run it; if no exception is raise everything's fine
-        reqs = [{'act': 'nest.config.versions.add', 'version': '0.0.1-beta.1'},
-                {'act': 'nest.config.versions.add', 'version': '0.0.1', 'check': True}
+        reqs = [{'call': 'nest.config.versions.add', 'version': '0.0.1-beta.1'},
+                {'call': 'nest.config.versions.add', 'version': '0.0.1', 'check': True}
                 ]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # cleanup
@@ -505,8 +526,8 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testRemovingVersions(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.versions.add', 'version': '0.0.1-beta.1'},
-                {'act': 'nest.config.versions.remove', 'version': '0.0.1-beta.1'}
+        reqs = [{'call': 'nest.config.versions.add', 'version': '0.0.1-beta.1'},
+                {'call': 'nest.config.versions.remove', 'version': '0.0.1-beta.1'}
                 ]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
@@ -516,7 +537,7 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingADependency(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo'}]
+        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo'}]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -530,7 +551,7 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingADependencyWithSpecifiedOrigin(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com'}]
+        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com'}]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -544,7 +565,7 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingADependencyWithSpecifiedMinimalVersion(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo', 'min': '0.2.4'}]
+        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo', 'min': '0.2.4'}]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -558,7 +579,7 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingADependencyWithSpecifiedMaximalVersion(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo', 'max': '2.4.8'}]
+        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo', 'max': '2.4.8'}]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -572,7 +593,7 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingADependencyWithFullSpecification(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'}]
+        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'}]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -586,8 +607,8 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testRemovingADependency(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'},
-                {'act': 'nest.config.dependencies.remove', 'name': 'foo'}]
+        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'},
+                {'call': 'nest.config.dependencies.remove', 'name': 'foo'}]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -601,8 +622,8 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testRedefiningADependency(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'},
-                {'act': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.org'}]
+        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'},
+                {'call': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.org'}]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -616,8 +637,8 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testUpdatingADependency(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'},
-                {'act': 'nest.config.dependencies.update', 'name': 'foo', 'origin': 'http://pake.example.org'}]
+        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'},
+                {'call': 'nest.config.dependencies.update', 'name': 'foo', 'origin': 'http://pake.example.org'}]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -631,8 +652,8 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testGettingDependencyData(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'},
-                {'act': 'nest.config.dependencies.get', 'name': 'foo'}
+        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'},
+                {'call': 'nest.config.dependencies.get', 'name': 'foo'}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -646,10 +667,10 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testListingDependenciesNames(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo'},
-                {'act': 'nest.config.dependencies.set', 'name': 'bar'},
-                {'act': 'nest.config.dependencies.set', 'name': 'baz'},
-                {'act': 'nest.config.dependencies.getnames'}
+        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo'},
+                {'call': 'nest.config.dependencies.set', 'name': 'bar'},
+                {'call': 'nest.config.dependencies.set', 'name': 'baz'},
+                {'call': 'nest.config.dependencies.getnames'}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -663,10 +684,10 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testListingDependenciesDetails(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.dependencies.set', 'name': 'foo'},
-                {'act': 'nest.config.dependencies.set', 'name': 'bar', 'origin': 'http://pake.example.com'},
-                {'act': 'nest.config.dependencies.set', 'name': 'baz', 'origin': 'http://pake.example.net', 'min': '0.2.4'},
-                {'act': 'nest.config.dependencies.list'}
+        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo'},
+                {'call': 'nest.config.dependencies.set', 'name': 'bar', 'origin': 'http://pake.example.com'},
+                {'call': 'nest.config.dependencies.set', 'name': 'baz', 'origin': 'http://pake.example.net', 'min': '0.2.4'},
+                {'call': 'nest.config.dependencies.list'}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -680,7 +701,7 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingFile(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.files.add', 'path': './pake/__init__.py'}]
+        reqs = [{'call': 'nest.config.files.add', 'path': './pake/__init__.py'}]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -694,7 +715,7 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testRemovingFile(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.files.add', 'path': './pake/__init__.py'}, {'act': 'nest.config.files.remove', 'path': './pake/__init__.py'}]
+        reqs = [{'call': 'nest.config.files.add', 'path': './pake/__init__.py'}, {'call': 'nest.config.files.remove', 'path': './pake/__init__.py'}]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -707,8 +728,8 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingFileFailsIfFileHasAlreadyBeenAdded(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.files.add', 'path': './pake/__init__.py'},
-                {'act': 'nest.config.files.add', 'path': './pake/__init__.py'}
+        reqs = [{'call': 'nest.config.files.add', 'path': './pake/__init__.py'},
+                {'call': 'nest.config.files.add', 'path': './pake/__init__.py'}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -718,7 +739,7 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingFileFailsIfPathIsNotAFile(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.files.add', 'path': './this_file_does_not.exist'}]
+        reqs = [{'call': 'nest.config.files.add', 'path': './this_file_does_not.exist'}]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         self.assertRaises(pake.errors.NotAFileError, runner.run)
@@ -727,9 +748,9 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testListingFiles(self):
         helpers.gennest(testdir)
-        reqs = [{'act': 'nest.config.files.add', 'path': './pake/__init__.py'},
-                {'act': 'nest.config.files.add', 'path': './pake/shared.py'},
-                {'act': 'nest.config.files.list'}
+        reqs = [{'call': 'nest.config.files.add', 'path': './pake/__init__.py'},
+                {'call': 'nest.config.files.add', 'path': './pake/shared.py'},
+                {'call': 'nest.config.files.list'}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -740,12 +761,13 @@ class NestConfigurationTests(unittest.TestCase):
         helpers.rmnest(testdir)
 
 
+@unittest.skip('due to major interpreter redesign')
 class NestReleaseBuildingTests(unittest.TestCase):
     def testPackageBuildCreatesAllNecessaryFiles(self):
         helpers.gennest(testdir)
         version = '0.2.4.8'
-        reqs = [{'act': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
-                {'act': 'nest.build', 'version': version}
+        reqs = [{'call': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
+                {'call': 'nest.build', 'version': version}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -762,10 +784,10 @@ class NestReleaseBuildingTests(unittest.TestCase):
         helpers.gennest(testdir)
         desired = ['./pake/__init__.py', './pake/shared.py']
         version = '0.2.4.8'
-        reqs = [{'act': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
-                {'act': 'nest.config.files.add', 'path': './pake/__init__.py'},
-                {'act': 'nest.config.files.add', 'path': './pake/shared.py'},
-                {'act': 'nest.build', 'version': version}
+        reqs = [{'call': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
+                {'call': 'nest.config.files.add', 'path': './pake/__init__.py'},
+                {'call': 'nest.config.files.add', 'path': './pake/shared.py'},
+                {'call': 'nest.build', 'version': version}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic

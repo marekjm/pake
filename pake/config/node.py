@@ -181,12 +181,21 @@ class Nests(base.Config):
         self.content[name] = path
         return self
 
-    def remove(self, name):
-        """Removes a name from the list of registered nests.
+    def remove(self, what, by='name'):
+        """Removes a nest from the list of registered nests.
 
-        :param name: name of a package whose nest to remove
+        :param what: name of a package whose nest to remove OR path of the nest to rmeove
+        :param by: 'name' or 'path'
         """
-        del self.content[name]
+        if by == 'name': pass
+        elif by == 'path':
+            for k in self:
+                if self[k] == what:
+                    what = k
+                    break
+        else:
+            raise ArgumentError('by can be either "name" or "path": cannot remove by "{0}"'.format(by))
+        del self.content[what]
         return self
 
     def get(self, name):

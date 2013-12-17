@@ -78,27 +78,9 @@ class Runner():
             self._stack.append(pake.config.node.Pushers(os.path.join(root, '.pakenode')).geturls())
         elif action == 'node.config.mirrors.genlist':
             pake.node.pusher.genmirrorlist(os.path.join(root, '.pakenode'))
-        elif action == 'node.config.aliens.set':
-            req['alien'] = {}
-            if 'mirrors' in req:
-                req['alien']['mirrors'] = req['mirrors']
-                del req['mirrors']
-            if 'meta' in req:
-                req['alien']['meta'] = req['meta']
-                del req['meta']
-            alien = pake.network.aliens.manager.set(os.path.join(root, '.pakenode'), **req)
-            self._stack.append(alien)
-        elif action == 'node.config.aliens.get':
-            self._stack.append(pake.config.node.Aliens(os.path.join(root, '.pakenode')).get(**req))
-        elif action == 'node.config.aliens.geturls':
-            self._stack.append(pake.config.node.Aliens(os.path.join(root, '.pakenode')).urls())
-        elif action == 'node.config.aliens.getall':
-            self._stack.append(pake.config.node.Aliens(os.path.join(root, '.pakenode')).all())
-        elif action == 'node.config.aliens.remove':
-            pake.config.node.Aliens(os.path.join(root, '.pakenode')).remove(**req).write()
         elif action == 'node.config.nests.register':
             pake.node.packages.register(root=os.path.join(root, '.pakenode'), path=req['path'])
-        elif action == 'node.config.nests.get':
+        elif action == 'node.config.nests.getpath':
             self._stack.append(pake.config.node.Nests(os.path.join(root, '.pakenode')).get(**req))
         elif action == 'node.config.nests.getpaths':
             self._stack.append(pake.config.node.Nests(os.path.join(root, '.pakenode')).paths())
@@ -109,6 +91,32 @@ class Runner():
         elif action == 'node.push':
             req['root'] = os.path.join(root, '.pakenode')
             pake.node.pusher.push(**req)
+        else:
+            self._issueunknown(action, fatalwarns)
+
+    def _executenetwork(self, action, request, fatalwarns=False):
+        """Execute network-related requests.
+        """
+        req = request
+        root = self._root
+        if action == 'network.aliens.set':
+            req['alien'] = {}
+            if 'mirrors' in req:
+                req['alien']['mirrors'] = req['mirrors']
+                del req['mirrors']
+            if 'meta' in req:
+                req['alien']['meta'] = req['meta']
+                del req['meta']
+            alien = pake.network.aliens.manager.set(os.path.join(root, '.pakenode'), **req)
+            self._stack.append(alien)
+        elif action == 'network.aliens.get':
+            self._stack.append(pake.config.node.Aliens(os.path.join(root, '.pakenode')).get(**req))
+        elif action == 'network.aliens.geturls':
+            self._stack.append(pake.config.node.Aliens(os.path.join(root, '.pakenode')).urls())
+        elif action == 'network.aliens.getall':
+            self._stack.append(pake.config.node.Aliens(os.path.join(root, '.pakenode')).all())
+        elif action == 'network.aliens.remove':
+            pake.config.node.Aliens(os.path.join(root, '.pakenode')).remove(**req).write()
         else:
             self._issueunknown(action, fatalwarns)
 
@@ -163,9 +171,9 @@ class Runner():
         """This is used to execute single requests.
         """
         call = req['call']
-        del req['call']
-        if call.split('.')[0] == 'node': self._executenode(call, req, fatalwarns)
-        elif call.split('.')[0] == 'nest': self._executenest(call, req, fatalwarns)
+        if call.split('.')[0] == 'node': self._executenode(call, req['params'], fatalwarns)
+        elif call.split('.')[0] == 'nest': self._executenest(call, req['params'], fatalwarns)
+        elif call.split('.')[0] == 'network': self._executenetwork(call, req['params'], fatalwarns)
         else: self._issueunknown(call, fatalwarns)
         return self
 
