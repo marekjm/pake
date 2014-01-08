@@ -94,32 +94,6 @@ class Runner():
         else:
             self._issueunknown(action, fatalwarns)
 
-    def _executenetwork(self, action, request, fatalwarns=False):
-        """Execute network-related requests.
-        """
-        req = request
-        root = self._root
-        if action == 'network.aliens.set':
-            req['alien'] = {}
-            if 'mirrors' in req:
-                req['alien']['mirrors'] = req['mirrors']
-                del req['mirrors']
-            if 'meta' in req:
-                req['alien']['meta'] = req['meta']
-                del req['meta']
-            alien = pake.network.aliens.manager.set(os.path.join(root, '.pakenode'), **req)
-            self._stack.append(alien)
-        elif action == 'network.aliens.get':
-            self._stack.append(pake.config.node.Aliens(os.path.join(root, '.pakenode')).get(**req))
-        elif action == 'network.aliens.geturls':
-            self._stack.append(pake.config.node.Aliens(os.path.join(root, '.pakenode')).urls())
-        elif action == 'network.aliens.getall':
-            self._stack.append(pake.config.node.Aliens(os.path.join(root, '.pakenode')).all())
-        elif action == 'network.aliens.remove':
-            pake.config.node.Aliens(os.path.join(root, '.pakenode')).remove(**req).write()
-        else:
-            self._issueunknown(action, fatalwarns)
-
     def _executenest(self, action, request, fatalwarns=False):
         """Executes transactions for nest.*
         """
@@ -164,6 +138,32 @@ class Runner():
             self._stack.append(list(pake.config.nest.Files(os.path.join(root, '.pakenest'))))
         elif action == 'nest.build':
             pake.nest.package.build(root=os.path.join(root, '.pakenest'), version=req['version'])
+        else:
+            self._issueunknown(action, fatalwarns)
+
+    def _executenetwork(self, action, request, fatalwarns=False):
+        """Execute network-related requests.
+        """
+        req = request
+        root = self._root
+        if action == 'network.aliens.set':
+            req['alien'] = {}
+            if 'mirrors' in req:
+                req['alien']['mirrors'] = req['mirrors']
+                del req['mirrors']
+            if 'meta' in req:
+                req['alien']['meta'] = req['meta']
+                del req['meta']
+            alien = pake.network.aliens.manager.set(os.path.join(root, '.pakenode'), **req)
+            self._stack.append(alien)
+        elif action == 'network.aliens.get':
+            self._stack.append(pake.config.network.Aliens(os.path.join(root, '.pakenode')).get(**req))
+        elif action == 'network.aliens.geturls':
+            self._stack.append(pake.config.network.Aliens(os.path.join(root, '.pakenode')).urls())
+        elif action == 'network.aliens.getall':
+            self._stack.append(pake.config.network.Aliens(os.path.join(root, '.pakenode')).all())
+        elif action == 'network.aliens.remove':
+            pake.config.node.Aliens(os.path.join(root, '.pakenode')).remove(**req).write()
         else:
             self._issueunknown(action, fatalwarns)
 

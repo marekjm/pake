@@ -39,5 +39,5 @@ def set(root, url, alien={}, fetch=True):
     if 'mirrors' not in alien: warnings.warn('alien does not contain list of mirrors')
     if 'meta' not in alien: warnings.warn('alien does not contain metadata')
     if url in alien['mirrors']: url = alien['meta']['url']
-    config.node.Aliens(root).set(url=url, mirrors=alien['mirrors'], meta=alien['meta']).write()
+    config.network.Aliens(root).set(url=url, mirrors=alien['mirrors'], meta=alien['meta']).write()
     return alien

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-"""Module containing shared code for all config files interfaces.
+"""Module containing code shared by all information/configuration JSON files interfaces.
 """
 
 

@@ -242,7 +242,6 @@ class NodeConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnode(testdir)
 
-    @unittest.skip('due to major interpreter redesign')
     def testAddingAlien(self):
         helpers.gennode(testdir)
         reqs = [{'call': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False}]
