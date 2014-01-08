@@ -36,9 +36,9 @@ def makeconfig(root):
     """
     root = os.path.join(root, '.pakenode')
     config.node.Meta(root).reset().write()
-    config.node.Pushers(root).reset().write()
-    config.node.Aliens(root).reset().write()
     config.node.Nests(root).reset().write()
+    config.node.Pushers(root).reset().write()
+    config.network.Aliens(root).reset().write()
 
 
 def remove(root):
