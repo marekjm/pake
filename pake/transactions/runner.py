@@ -49,7 +49,7 @@ class Runner():
             meta = pake.config.node.Meta(confpath)
             nests = pake.config.node.Nests(confpath)
             pushers = pake.config.node.Pushers(confpath)
-            aliens = pake.config.node.Aliens(confpath)
+            aliens = pake.config.network.Aliens(confpath)
             self._executenode('node.manager.remove', {'path': req['path']})
             self._executenode('node.manager.init', {'path': req['path']})
             meta.write()
@@ -163,7 +163,7 @@ class Runner():
         elif action == 'network.aliens.getall':
             self._stack.append(pake.config.network.Aliens(os.path.join(root, '.pakenode')).all())
         elif action == 'network.aliens.remove':
-            pake.config.node.Aliens(os.path.join(root, '.pakenode')).remove(**req).write()
+            pake.config.network.Aliens(os.path.join(root, '.pakenode')).remove(**req).write()
         else:
             self._issueunknown(action, fatalwarns)
 
@@ -171,9 +171,11 @@ class Runner():
         """This is used to execute single requests.
         """
         call = req['call']
-        if call.split('.')[0] == 'node': self._executenode(call, req['params'], fatalwarns)
-        elif call.split('.')[0] == 'nest': self._executenest(call, req['params'], fatalwarns)
-        elif call.split('.')[0] == 'network': self._executenetwork(call, req['params'], fatalwarns)
+        if 'params' in req: params = req['params']
+        else: params = {}
+        if call.split('.')[0] == 'node': self._executenode(call, params, fatalwarns)
+        elif call.split('.')[0] == 'nest': self._executenest(call, params, fatalwarns)
+        elif call.split('.')[0] == 'network': self._executenetwork(call, params, fatalwarns)
         else: self._issueunknown(call, fatalwarns)
         return self
 
