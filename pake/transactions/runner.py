@@ -80,7 +80,7 @@ class Runner():
             pake.node.pusher.genmirrorlist(os.path.join(root, '.pakenode'))
         elif action == 'node.config.nests.register':
             pake.node.packages.register(root=os.path.join(root, '.pakenode'), path=req['path'])
-        elif action == 'node.config.nests.getpath':
+        elif action == 'node.config.nests.get':
             self._stack.append(pake.config.node.Nests(os.path.join(root, '.pakenode')).get(**req))
         elif action == 'node.config.nests.getpaths':
             self._stack.append(pake.config.node.Nests(os.path.join(root, '.pakenode')).paths())

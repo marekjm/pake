@@ -244,60 +244,56 @@ class NodeConfigurationTests(unittest.TestCase):
 
     def testAddingAlien(self):
         helpers.gennode(testdir)
-        reqs = [{'call': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False}]
+        reqs = [{'call': 'network.aliens.set', 'params': {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False}}]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
         alien = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
-        self.assertIn('http://alien.example.com', list(pake.config.node.Aliens(test_node_root)))
+        self.assertIn('http://alien.example.com', list(pake.config.network.Aliens(test_node_root)))
         # cleanup
         helpers.rmnode(testdir)
 
-    @unittest.skip('due to major interpreter redesign')
     def testRemovingAlien(self):
         helpers.gennode(testdir)
-        reqs = [{'call': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
-                {'call': 'node.config.aliens.remove', 'url': 'http://alien.example.com'}
+        reqs = [{'call': 'network.aliens.set', 'params': {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False}},
+                {'call': 'network.aliens.remove', 'params': {'url': 'http://alien.example.com'}}
                 ]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
         alien = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
-        self.assertNotIn('http://alien.example.com', pake.config.node.Aliens(test_node_root))
+        self.assertNotIn('http://alien.example.com', pake.config.network.Aliens(test_node_root))
         # cleanup
         helpers.rmnode(testdir)
 
-    @unittest.skip('due to major interpreter redesign')
     def testGettingAlien(self):
         helpers.gennode(testdir)
-        reqs = [{'call': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
-                {'call': 'node.config.aliens.get', 'url': 'http://alien.example.com'}
+        reqs = [{'call': 'network.aliens.set', 'params': {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False}},
+                {'call': 'network.aliens.get', 'params': {'url': 'http://alien.example.com'}}
                 ]
         # test logic
         self.assertEqual({'mirrors': [], 'meta': {}}, pake.transactions.runner.Runner(root=testdir, requests=reqs).run().getstack()[-1])
         # cleanup
         helpers.rmnode(testdir)
 
-    @unittest.skip('due to major interpreter redesign')
     def testListingAlienURLs(self):
         helpers.gennode(testdir)
-        reqs = [{'call': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
-                {'call': 'node.config.aliens.set', 'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}, 'fetch': False},
-                {'call': 'node.config.aliens.set', 'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}, 'fetch': False}
+        reqs = [{'call': 'network.aliens.set', 'params': {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False}},
+                {'call': 'network.aliens.set', 'params': {'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}, 'fetch': False}},
+                {'call': 'network.aliens.set', 'params': {'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}, 'fetch': False}}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
         urls = ['http://alien.example.com', 'http://alien.example.net', 'http://alien.example.org']
-        self.assertEqual(urls, sorted(pake.config.node.Aliens(test_node_root).urls()))
+        self.assertEqual(urls, sorted(pake.config.network.Aliens(test_node_root).urls()))
         # cleanup
         helpers.rmnode(testdir)
 
-    @unittest.skip('due to major interpreter redesign')
     def testListingAliens(self):
         helpers.gennode(testdir)
-        reqs = [{'call': 'node.config.aliens.set', 'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False},
-                {'call': 'node.config.aliens.set', 'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}, 'fetch': False},
-                {'call': 'node.config.aliens.set', 'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}, 'fetch': False},
-                {'call': 'node.config.aliens.getall'}
+        reqs = [{'call': 'network.aliens.set', 'params': {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}, 'fetch': False}},
+                {'call': 'network.aliens.set', 'params': {'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}, 'fetch': False}},
+                {'call': 'network.aliens.set', 'params': {'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}, 'fetch': False}},
+                {'call': 'network.aliens.getall'}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         foo = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
@@ -312,12 +308,12 @@ class NodeConfigurationTests(unittest.TestCase):
         # cleanup
         helpers.rmnode(testdir)
 
-    @unittest.skip('due to major interpreter redesign')
     def testRegisteringNest(self):
         helpers.gennode(testdir)
         helpers.gennest(testdir)
         reqs = [{'call': 'nest.config.meta.set', 'params': {'key': 'name', 'value': 'test'}},
-                {'call': 'node.config.nests.register', 'params': {'path': testdir}}]
+                {'call': 'node.config.nests.register', 'params': {'path': testdir}}
+                ]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
         self.assertEqual(os.path.abspath(test_nest_root), pake.config.node.Nests(test_node_root).get('test'))
@@ -325,13 +321,13 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
         helpers.rmnest(testdir)
 
-    @unittest.skip('due to major interpreter redesign')
     def testRemovingNest(self):
         helpers.gennode(testdir)
         helpers.gennest(testdir)
         reqs = [{'call': 'nest.config.meta.set', 'params': {'key': 'name', 'value': 'test'}},
                 {'call': 'node.config.nests.register', 'params': {'path': testdir}},
-                {'call': 'node.config.nests.remove', 'name': 'test'}]
+                {'call': 'node.config.nests.remove', 'params': {'name': 'test'}},
+                ]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
         self.assertRaises(KeyError, pake.config.node.Nests(test_node_root).get, 'test')
@@ -339,13 +335,12 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
         helpers.rmnest(testdir)
 
-    @unittest.skip('due to major interpreter redesign')
     def testGettingPathOfOneNest(self):
         helpers.gennode(testdir)
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
-                {'call': 'node.config.nests.register', 'path': testdir},
-                {'call': 'node.config.nests.get', 'name': 'test'},
+        reqs = [{'call': 'nest.config.meta.set', 'params': {'key': 'name', 'value': 'test'}},
+                {'call': 'node.config.nests.register', 'params': {'path': testdir}},
+                {'call': 'node.config.nests.get', 'params': {'name': 'test'}},
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -356,12 +351,11 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
         helpers.rmnest(testdir)
 
-    @unittest.skip('due to major interpreter redesign')
     def testGettingPathsOfAllNests(self):
         helpers.gennode(testdir)
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
-                {'call': 'node.config.nests.register', 'path': testdir},
+        reqs = [{'call': 'nest.config.meta.set', 'params': {'key': 'name', 'value': 'test'}},
+                {'call': 'node.config.nests.register', 'params': {'path': testdir}},
                 {'call': 'node.config.nests.getpaths'}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
@@ -371,12 +365,11 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
         helpers.rmnest(testdir)
 
-    @unittest.skip('due to major interpreter redesign')
     def testBuildingPackageList(self):
         helpers.gennode(testdir)
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.meta.set', 'key': 'name', 'value': 'foo'},
-                {'call': 'node.config.nests.register', 'path': testdir},
+        reqs = [{'call': 'nest.config.meta.set', 'params': {'key': 'name', 'value': 'foo'}},
+                {'call': 'node.config.nests.register', 'params': {'path': testdir}},
                 {'call': 'node.packages.genlist'},
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
@@ -799,11 +792,6 @@ class NestReleaseBuildingTests(unittest.TestCase):
         self.assertEqual(sorted([os.path.normpath(i) for i in desired]), sorted(names))
         # cleanup
         helpers.rmnest(testdir)
-
-
-# Wrapper class
-class Suite(NodeManagerTests, NodeConfigurationTests, NodePushingTests, NestManagerTests, NestConfigurationTests, NestReleaseBuildingTests):
-    pass
 
 
 if __name__ == '__main__':

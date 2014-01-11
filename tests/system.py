@@ -152,9 +152,9 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.gennode(testdir)
         # test logic
         alien = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
-        pake.config.node.Aliens(test_node_root).set(**alien).write()
-        self.assertIn('http://alien.example.com', pake.config.node.Aliens(test_node_root))
-        pake.config.node.Aliens(test_node_root).reset().write()
+        pake.config.network.Aliens(test_node_root).set(**alien).write()
+        self.assertIn('http://alien.example.com', pake.config.network.Aliens(test_node_root))
+        pake.config.network.Aliens(test_node_root).reset().write()
         # cleanup
         helpers.rmnode(testdir)
 
@@ -162,9 +162,9 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.gennode(testdir)
         # test logic
         alien = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
-        pake.config.node.Aliens(test_node_root).set(**alien).write()
-        pake.config.node.Aliens(test_node_root).remove(alien['url']).write()
-        self.assertNotIn('http://alien.example.com', pake.config.node.Aliens(test_node_root))
+        pake.config.network.Aliens(test_node_root).set(**alien).write()
+        pake.config.network.Aliens(test_node_root).remove(alien['url']).write()
+        self.assertNotIn('http://alien.example.com', pake.config.network.Aliens(test_node_root))
         # cleanup
         helpers.rmnode(testdir)
 
@@ -172,10 +172,10 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.gennode(testdir)
         # test logic
         alien = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
-        pake.config.node.Aliens(test_node_root).set(**alien).write()
+        pake.config.network.Aliens(test_node_root).set(**alien).write()
         del alien['url']
-        self.assertEqual(alien, pake.config.node.Aliens(test_node_root).get('http://alien.example.com'))
-        pake.config.node.Aliens(test_node_root).reset().write()
+        self.assertEqual(alien, pake.config.network.Aliens(test_node_root).get('http://alien.example.com'))
+        pake.config.network.Aliens(test_node_root).reset().write()
         # cleanup
         helpers.rmnode(testdir)
 
@@ -185,10 +185,10 @@ class NodeConfigurationTests(unittest.TestCase):
         foo = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
         bar = {'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}}
         baz = {'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}}
-        pake.config.node.Aliens(test_node_root).set(**foo).set(**bar).set(**baz).write()
+        pake.config.network.Aliens(test_node_root).set(**foo).set(**bar).set(**baz).write()
         self.assertEqual(['http://alien.example.com', 'http://alien.example.net', 'http://alien.example.org'],
-                             sorted(pake.config.node.Aliens(test_node_root).urls()))
-        pake.config.node.Aliens(test_node_root).reset().write()
+                             sorted(pake.config.network.Aliens(test_node_root).urls()))
+        pake.config.network.Aliens(test_node_root).reset().write()
         # cleanup
         helpers.rmnode(testdir)
 
@@ -198,10 +198,10 @@ class NodeConfigurationTests(unittest.TestCase):
         foo = {'url': 'http://alien.example.com', 'mirrors': [], 'meta': {}}
         bar = {'url': 'http://alien.example.net', 'mirrors': [], 'meta': {}}
         baz = {'url': 'http://alien.example.org', 'mirrors': [], 'meta': {}}
-        pake.config.node.Aliens(test_node_root).set(**foo).set(**bar).set(**baz).write()
-        aliens = pake.config.node.Aliens(test_node_root).all()
+        pake.config.network.Aliens(test_node_root).set(**foo).set(**bar).set(**baz).write()
+        aliens = pake.config.network.Aliens(test_node_root).all()
         self.assertIn(foo, aliens)
-        pake.config.node.Aliens(test_node_root).reset().write()
+        pake.config.network.Aliens(test_node_root).reset().write()
         # cleanup
         helpers.rmnode(testdir)
 
