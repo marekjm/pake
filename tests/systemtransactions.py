@@ -399,7 +399,6 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnest(testdir)
 
 
-@unittest.skip('due to major interpreter redesign')
 class NodePushingTests(unittest.TestCase):
     def testPushingToNode(self):
         helpers.gennode(testdir)
@@ -414,13 +413,13 @@ class NodePushingTests(unittest.TestCase):
             password = conf.test_remote_node_pass
             version = '2.4.8.16'
             # set all required resuests
-            reqs = [{'call': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
-                    {'call': 'node.config.mirrors.set', 'url': url, 'host': host, 'cwd': cwd},
-                    {'call': 'node.config.nests.register', 'path': testdir},
-                    {'call': 'nest.build', 'version': version},
+            reqs = [{'call': 'nest.config.meta.set', 'params': {'key': 'name', 'value': 'test'}},
+                    {'call': 'node.config.mirrors.set', 'params': {'url': url, 'host': host, 'cwd': cwd}},
+                    {'call': 'node.config.nests.register', 'params': {'path': testdir}},
+                    {'call': 'nest.build', 'params': {'version': version}},
                     {'call': 'node.packages.genlist'},
                     {'call': 'node.config.mirrors.genlist'},
-                    {'call': 'node.push', 'url': url, 'username': username, 'password': password, 'reupload': True},
+                    {'call': 'node.push', 'params': {'url': url, 'username': username, 'password': password, 'reupload': True}},
                     ]
             runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
             runner.run()
