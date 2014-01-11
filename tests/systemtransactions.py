@@ -321,12 +321,26 @@ class NodeConfigurationTests(unittest.TestCase):
         helpers.rmnode(testdir)
         helpers.rmnest(testdir)
 
-    def testRemovingNest(self):
+    def testRemovingNestByName(self):
         helpers.gennode(testdir)
         helpers.gennest(testdir)
         reqs = [{'call': 'nest.config.meta.set', 'params': {'key': 'name', 'value': 'test'}},
                 {'call': 'node.config.nests.register', 'params': {'path': testdir}},
-                {'call': 'node.config.nests.remove', 'params': {'name': 'test'}},
+                {'call': 'node.config.nests.remove', 'params': {'what': 'test', 'by': 'name'}},
+                ]
+        pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
+        # test logic
+        self.assertRaises(KeyError, pake.config.node.Nests(test_node_root).get, 'test')
+         # cleanup
+        helpers.rmnode(testdir)
+        helpers.rmnest(testdir)
+
+    def testRemovingNestByPath(self):
+        helpers.gennode(testdir)
+        helpers.gennest(testdir)
+        reqs = [{'call': 'nest.config.meta.set', 'params': {'key': 'name', 'value': 'test'}},
+                {'call': 'node.config.nests.register', 'params': {'path': testdir}},
+                {'call': 'node.config.nests.remove', 'params': {'what': os.path.abspath(os.path.join(testdir, '.pakenest')), 'by': 'path'}},
                 ]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
