@@ -1,0 +1,57 @@
+[
+    "var",
+    "guard",
+    "const",
+
+    "int",
+    "float",
+    "string",
+    "bool",
+    "void",
+    "array",
+    "vector",
+
+    "true",
+    "false",
+    "undefined",
+
+    "typeof",
+
+    "function",
+    "namespace",
+    "class",
+    "this",
+    "public",
+    "private",
+    "protected",
+
+    "new",
+    "delete",
+
+    "if",
+    "else",
+
+    "swich",
+    "case",
+
+    "for",
+    "while",
+
+    "break",
+    "continue",
+    "return",
+
+    "try",
+    "catch",
+    "finally",
+
+    "and",
+    "or",
+    "not",
+
+    "with",
+    "as",
+    "in",
+
+    "assert"
+]
