@@ -444,13 +444,12 @@ class NodePushingTests(unittest.TestCase):
 
 
 # Nest related tests
-@unittest.skip('due to major interpreter redesign')
 class NestManagerTests(unittest.TestCase):
     def testNestManagerDirectoriesWriting(self):
         """This test checks for correct initialization of all required directories.
         """
         # preparation
-        pake.transactions.runner.Runner(root=testdir, requests=[{'call': 'nest.manager.init', 'path': testdir}]).run()
+        pake.transactions.runner.Runner(root=testdir, requests=[{'call': 'nest.manager.init', 'params': {'path': testdir}}]).run()
         ifstream = open('./env/nest/required/directories.json')
         directories = json.loads(ifstream.read())
         ifstream.close()
@@ -467,7 +466,7 @@ class NestManagerTests(unittest.TestCase):
         """This test checks for correct intialization of all required config files.
         """
         # preparation
-        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'call': 'nest.manager.init', 'path': testdir}])
+        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'call': 'nest.manager.init', 'params': {'path': testdir}}])
         # (filename, desired_content)
         runner.run()
         configs = [ ('meta.json', {}),
@@ -491,7 +490,7 @@ class NestManagerTests(unittest.TestCase):
         """
         # preparation
         helpers.gennest(testdir)
-        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'call': 'nest.manager.remove', 'path': testdir}])
+        runner = pake.transactions.runner.Runner(root=testdir, requests=[{'call': 'nest.manager.remove', 'params': {'path': testdir}}])
         # test logic & cleanup
         runner.run()
         self.assertNotIn('.pakenest', os.listdir(testdir))
