@@ -496,14 +496,13 @@ class NestManagerTests(unittest.TestCase):
         self.assertNotIn('.pakenest', os.listdir(testdir))
 
 
-@unittest.skip('due to major interpreter redesign')
 class NestConfigurationTests(unittest.TestCase):
     def testAddingVersions(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.versions.add', 'version': '0.0.1-alpha.1'},
-                {'call': 'nest.config.versions.add', 'version': '0.0.1-beta.1'},
-                {'call': 'nest.config.versions.add', 'version': '0.0.1-rc.1'},
-                {'call': 'nest.config.versions.add', 'version': '0.0.1'},
+        reqs = [{'call': 'nest.config.versions.add', 'params': {'version': '0.0.1-alpha.1'}},
+                {'call': 'nest.config.versions.add', 'params': {'version': '0.0.1-beta.1'}},
+                {'call': 'nest.config.versions.add', 'params': {'version': '0.0.1-rc.1'}},
+                {'call': 'nest.config.versions.add', 'params': {'version': '0.0.1'}},
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -514,15 +513,15 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingVersionsButCheckingIfItsNotLowerThanTheLastOne(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.versions.add', 'version': '0.0.1-beta.1'},
-                {'call': 'nest.config.versions.add', 'version': '0.0.1-alpha.17', 'check': True}
+        reqs = [{'call': 'nest.config.versions.add', 'params': {'version': '0.0.1-beta.1'}},
+                {'call': 'nest.config.versions.add', 'params': {'version': '0.0.1-alpha.17', 'check': True}},
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         self.assertRaises(ValueError, runner.run)
         # assertNotRaises -- just run it; if no exception is raise everything's fine
-        reqs = [{'call': 'nest.config.versions.add', 'version': '0.0.1-beta.1'},
-                {'call': 'nest.config.versions.add', 'version': '0.0.1', 'check': True}
+        reqs = [{'call': 'nest.config.versions.add', 'params': {'version': '0.0.1-beta.1'}},
+                {'call': 'nest.config.versions.add', 'params': {'version': '0.0.1', 'check': True}},
                 ]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # cleanup
@@ -530,8 +529,8 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testRemovingVersions(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.versions.add', 'version': '0.0.1-beta.1'},
-                {'call': 'nest.config.versions.remove', 'version': '0.0.1-beta.1'}
+        reqs = [{'call': 'nest.config.versions.add', 'params': {'version': '0.0.1-beta.1'}},
+                {'call': 'nest.config.versions.remove', 'params': {'version': '0.0.1-beta.1'}},
                 ]
         pake.transactions.runner.Runner(root=testdir, requests=reqs).run()
         # test logic
@@ -541,7 +540,7 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingADependency(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo'}]
+        reqs = [{'call': 'nest.config.dependencies.set', 'params': {'name': 'foo'}}]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -555,7 +554,7 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingADependencyWithSpecifiedOrigin(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com'}]
+        reqs = [{'call': 'nest.config.dependencies.set', 'params': {'name': 'foo', 'origin': 'http://pake.example.com'}}]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -569,7 +568,7 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingADependencyWithSpecifiedMinimalVersion(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo', 'min': '0.2.4'}]
+        reqs = [{'call': 'nest.config.dependencies.set', 'params': {'name': 'foo', 'min': '0.2.4'}}]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -583,7 +582,7 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingADependencyWithSpecifiedMaximalVersion(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo', 'max': '2.4.8'}]
+        reqs = [{'call': 'nest.config.dependencies.set', 'params': {'name': 'foo', 'max': '2.4.8'}}]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -597,7 +596,7 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingADependencyWithFullSpecification(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'}]
+        reqs = [{'call': 'nest.config.dependencies.set', 'params': {'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'}}]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -611,8 +610,9 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testRemovingADependency(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'},
-                {'call': 'nest.config.dependencies.remove', 'name': 'foo'}]
+        reqs = [{'call': 'nest.config.dependencies.set', 'params': {'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'}},
+                {'call': 'nest.config.dependencies.remove', 'params': {'name': 'foo'}},
+                ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -626,8 +626,9 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testRedefiningADependency(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'},
-                {'call': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.org'}]
+        reqs = [{'call': 'nest.config.dependencies.set', 'params': {'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'}},
+                {'call': 'nest.config.dependencies.set', 'params': {'name': 'foo', 'origin': 'http://pake.example.org'}},
+                ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -641,8 +642,9 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testUpdatingADependency(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'},
-                {'call': 'nest.config.dependencies.update', 'name': 'foo', 'origin': 'http://pake.example.org'}]
+        reqs = [{'call': 'nest.config.dependencies.set', 'params': {'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'}},
+                {'call': 'nest.config.dependencies.update', 'params': {'name': 'foo', 'origin': 'http://pake.example.org'}},
+                ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -656,8 +658,8 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testGettingDependencyData(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'},
-                {'call': 'nest.config.dependencies.get', 'name': 'foo'}
+        reqs = [{'call': 'nest.config.dependencies.set', 'params': {'name': 'foo', 'origin': 'http://pake.example.com', 'min': '0.2.4', 'max': '2.4.8'}},
+                {'call': 'nest.config.dependencies.get', 'params': {'name': 'foo'}},
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -671,9 +673,9 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testListingDependenciesNames(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo'},
-                {'call': 'nest.config.dependencies.set', 'name': 'bar'},
-                {'call': 'nest.config.dependencies.set', 'name': 'baz'},
+        reqs = [{'call': 'nest.config.dependencies.set', 'params': {'name': 'foo'}},
+                {'call': 'nest.config.dependencies.set', 'params': {'name': 'bar'}},
+                {'call': 'nest.config.dependencies.set', 'params': {'name': 'baz'}},
                 {'call': 'nest.config.dependencies.getnames'}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
@@ -688,9 +690,9 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testListingDependenciesDetails(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.dependencies.set', 'name': 'foo'},
-                {'call': 'nest.config.dependencies.set', 'name': 'bar', 'origin': 'http://pake.example.com'},
-                {'call': 'nest.config.dependencies.set', 'name': 'baz', 'origin': 'http://pake.example.net', 'min': '0.2.4'},
+        reqs = [{'call': 'nest.config.dependencies.set', 'params': {'name': 'foo'}},
+                {'call': 'nest.config.dependencies.set', 'params': {'name': 'bar', 'origin': 'http://pake.example.com'}},
+                {'call': 'nest.config.dependencies.set', 'params': {'name': 'baz', 'origin': 'http://pake.example.net', 'min': '0.2.4'}},
                 {'call': 'nest.config.dependencies.list'}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
@@ -705,7 +707,8 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingFile(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.files.add', 'path': './pake/__init__.py'}]
+        reqs = [{'call': 'nest.config.files.add', 'params': {'path': './pake/__init__.py'}},
+                ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -719,7 +722,9 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testRemovingFile(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.files.add', 'path': './pake/__init__.py'}, {'call': 'nest.config.files.remove', 'path': './pake/__init__.py'}]
+        reqs = [{'call': 'nest.config.files.add', 'params': {'path': './pake/__init__.py'}},
+                {'call': 'nest.config.files.remove', 'params': {'path': './pake/__init__.py'}},
+                ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         runner.run()
@@ -732,8 +737,8 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingFileFailsIfFileHasAlreadyBeenAdded(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.files.add', 'path': './pake/__init__.py'},
-                {'call': 'nest.config.files.add', 'path': './pake/__init__.py'}
+        reqs = [{'call': 'nest.config.files.add', 'params': {'path': './pake/__init__.py'}},
+                {'call': 'nest.config.files.add', 'params': {'path': './pake/__init__.py'}},
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -743,7 +748,8 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testAddingFileFailsIfPathIsNotAFile(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.files.add', 'path': './this_file_does_not.exist'}]
+        reqs = [{'call': 'nest.config.files.add', 'params': {'path': './this_file_does_not.exist'}},
+                ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
         self.assertRaises(pake.errors.NotAFileError, runner.run)
@@ -752,8 +758,8 @@ class NestConfigurationTests(unittest.TestCase):
 
     def testListingFiles(self):
         helpers.gennest(testdir)
-        reqs = [{'call': 'nest.config.files.add', 'path': './pake/__init__.py'},
-                {'call': 'nest.config.files.add', 'path': './pake/shared.py'},
+        reqs = [{'call': 'nest.config.files.add', 'params': {'path': './pake/__init__.py'}},
+                {'call': 'nest.config.files.add', 'params': {'path': './pake/shared.py'}},
                 {'call': 'nest.config.files.list'}
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
@@ -765,13 +771,12 @@ class NestConfigurationTests(unittest.TestCase):
         helpers.rmnest(testdir)
 
 
-@unittest.skip('due to major interpreter redesign')
 class NestReleaseBuildingTests(unittest.TestCase):
     def testPackageBuildCreatesAllNecessaryFiles(self):
         helpers.gennest(testdir)
         version = '0.2.4.8'
-        reqs = [{'call': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
-                {'call': 'nest.build', 'version': version}
+        reqs = [{'call': 'nest.config.meta.set', 'params': {'key': 'name', 'value': 'test'}},
+                {'call': 'nest.build', 'params': {'version': version}},
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
@@ -788,10 +793,10 @@ class NestReleaseBuildingTests(unittest.TestCase):
         helpers.gennest(testdir)
         desired = ['./pake/__init__.py', './pake/shared.py']
         version = '0.2.4.8'
-        reqs = [{'call': 'nest.config.meta.set', 'key': 'name', 'value': 'test'},
-                {'call': 'nest.config.files.add', 'path': './pake/__init__.py'},
-                {'call': 'nest.config.files.add', 'path': './pake/shared.py'},
-                {'call': 'nest.build', 'version': version}
+        reqs = [{'call': 'nest.config.meta.set', 'params': {'key': 'name', 'value': 'test'}},
+                {'call': 'nest.config.files.add', 'params': {'path': './pake/__init__.py'}},
+                {'call': 'nest.config.files.add', 'params': {'path': './pake/shared.py'}},
+                {'call': 'nest.build', 'params': {'version': version}},
                 ]
         runner = pake.transactions.runner.Runner(root=testdir, requests=reqs)
         # test logic
