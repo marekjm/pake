@@ -3,6 +3,7 @@
 """This is used to tokenize Metal source files.
 """
 
+
 from . import errors, shared
 
 
@@ -30,6 +31,29 @@ def candequote(s):
     try: dequote(s)
     except SyntaxError: result = False
     finally: return result
+
+
+def decomment(tokens):
+    """Removes comments from tokens.
+    This should be handled by translator but now it's here so that the code doesn't get bloated.
+    It will be integrated into translator after a good design way is found.
+    """
+    decommented = []
+    i = 0
+    appending = True
+    # comment can be:
+    #   0   - no comment, append normally
+    #   1   - single line, stop appending until next newline
+    #   2   - block comment, stop appending until closing block comment
+    comment = 0
+    while i < len(tokens):
+        line, tok = tokens[i]
+        if comment == 0 and tok == '//': comment = 1
+        elif comment == 0 and tok == '/*': comment = 2
+        if comment == 0: decommented.append((line, tok))
+        if (comment == 1 and tok == '\n') or (comment == 2 and tok == '*/'): comment = 0
+        i += 1
+    return decommented
 
 
 def strip(tokens):
@@ -95,9 +119,9 @@ def tokenize(string):
         elif char == " " and word and (word[0] in ['"', "'"] or word[:2] == '//'):
             # don't finish word on whitespace if in string or comment
             word += char
-        elif char == '/' and ((i < len(string)-1 and string[i+1] == '/') or (word and word[0] == '/')):
-            # support for inline comments
-            word += char
+        #elif char == '/' and ((i < len(string)-1 and string[i+1] == '/') or (word and word[0] == '/')):
+        #    # support for inline comments
+        #    word += char
         elif char in grammar_chars and word and (word[0] in ['"', "'"] or word[:2] == '//'):
             # don't finish word on grammar characters if in string or comment
             word += char

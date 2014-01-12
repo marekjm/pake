@@ -20,6 +20,7 @@
     "function",
     "namespace",
     "class",
+
     "this",
     "public",
     "private",
@@ -53,5 +54,6 @@
     "as",
     "in",
 
-    "assert"
+    "assert",
+    "include"
 ]

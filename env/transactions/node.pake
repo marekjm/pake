@@ -2,10 +2,11 @@ function void node_manager_init(string path);
 function void node_manager_reinit(string path);
 function void node_manager_remove(string path);
 
-function void node_config_meta_set();
-function undefined node_config_meta_get();
+function void node_config_meta_set(string key, undefined value="");
+function undefined node_config_meta_get(string key);
+
 function void node_config_meta_remove();
-function vector node_config_meta_getkeys();
+function undefined node_config_meta_getkeys();
 function void node_config_meta_reset();
 
 function void node_config_mirrors_set();
@@ -17,7 +18,7 @@ function void node_config_mirrors_genlist();
 function void node_config_nests_register();
 function void node_config_nests_remove();
 function string node_config_nests_get();
-function vector node_config_nests_getpaths();
+function undefined node_config_nests_getpaths();
 
 function void node_packages_genlist();
 

@@ -86,6 +86,28 @@ def _joinequals(tokens, with_lines):
     return joined
 
 
+def _joincomments(tokens, with_lines):
+    """Joins comment tokens.
+    """
+    joined = []
+    i = 0
+    source = tokens
+    while i < len(tokens):
+        line, token = tokens[i]
+        if token == '/' and i < len(tokens)-1 and tokens[i+1][1] == '/':
+            token = '//'
+            i += 1
+        elif token == '/' and i < len(tokens)-1 and tokens[i+1][1] == '*':
+            token = '/*'
+            i += 1
+        elif token == '*' and i < len(tokens)-1 and tokens[i+1][1] == '/':
+            token = '*/'
+            i += 1
+        i += 1
+        joined.append((line, token))
+    return joined
+
+
 def join(tokens):
     """Returns list of tokens after joining process.
     Joining involves joining several tokens together when they make sense this way, e.g.
@@ -95,8 +117,9 @@ def join(tokens):
     joined = []
     if type(tokens[0]) == tuple: with_lines = True
     else: with_lines=False
-    # list of joining functions
-    joining = [_joinfloats, _joinincrement, _joindecrement, _joinequals]
+    # list of joining functions (use first variant when support for these features will arrive)
+    #joining = [_joincomments, _joinfloats, _joinincrement, _joindecrement, _joinequals]
+    joining = [_joincomments]
     for func in joining:
         while True:
             joined = func(tokens, with_lines=with_lines)

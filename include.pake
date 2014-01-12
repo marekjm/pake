@@ -1,0 +1,3 @@
+include "./env/transactions/node.pake";
+
+node_manager_init();
