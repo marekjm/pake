@@ -47,7 +47,7 @@ class TokenizerTests(unittest.TestCase):
         self.assertEqual(got, desired)
 
 
-class TranslatorTests(unittest.TestCase):
+class TranslatorFunctionSupportTests(unittest.TestCase):
     def testTranslatingFunctionDeclaration(self):
         src = 'function void foo(x, y="", z=0);'
         desired = {'name': 'foo',
@@ -99,6 +99,17 @@ class TranslatorTests(unittest.TestCase):
         src = 'foo(x="stuff", answer=42);'
         translator = compiler.translator.Translator().take(src)
         self.assertRaises(compiler.errors.UndeclaredReferenceError, translator.translate)
+
+
+class TranslatorNamespaceSupportTests(unittest.TestCase):
+    def testTranslatingEmptyNamespace(self):
+        src = 'namespace Foo {;'
+        translator = compiler.translator.Translator().take(src).translate()
+        self.assertEqual({}, translator._namespaces['Foo']['function'])
+        self.assertEqual({}, translator._namespaces['Foo']['var'])
+        self.assertEqual({}, translator._namespaces['Foo']['const'])
+        self.assertEqual({}, translator._namespaces['Foo']['class'])
+        self.assertEqual({}, translator._namespaces['Foo']['namespace'])
 
 
 if __name__ == '__main__':
