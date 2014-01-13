@@ -98,7 +98,6 @@ def _functiondeclarationparams(tokens, src):
             i += 1
             break
         else:
-            print(step)
             raise errors.CompilationError('line {0}: "{1}": token: {2}'.format(l+1, tokenizer.rebuild(l, src), tok))
         i += 1
     if param != {'name': None, 'type': 'undefined', 'default': None}:
@@ -168,17 +167,18 @@ class Translator():
                  '[': ']',
                  '<': '>',
                  }
-        found = False
+        left = 1
         n = (start + 1)
         while n < len(self._tokens):
-            if found: break
-            if self._tokens[n][1] == match[bracket]: found = True
+            if left == 0: break
+            if self._tokens[n][1] == match[bracket]: left -= 1
+            if self._tokens[n][1] == bracket: left += 1
             n += 1
-        if not found:
+        if not (left == 0):
             line = self._tokens[start][0]
             msg = 'line {0}: "{1}": did not found matching pair for opening bracket: {2}'.format(line, tokenizer.rebuild(line, self._src), bracket)
             raise errors.CompilationError(msg)
-        return n
+        return (n-start)
 
     def _compilekw_include(self, index):
         try:
@@ -205,17 +205,22 @@ class Translator():
         return leap
 
     def _compilekw_namespace(self, index):
-        ns = {'var': {}, 'const': {}, 'function': {}, 'class': {}, 'namespace': {}}
         name = self._tokens[index+1][1]
+        nstokens = []
+        nstokens.append(self._tokens[index])
+        nstokens.append(self._tokens[index+1])
         leap = 2
-        if self._tokens[index+leap][1] == ';': pass
+        if self._tokens[index+leap][1] == ';':
+            nstokens.append(self._tokens[index+leap])
         elif self._tokens[index+leap][1] == '{':
             jump = self._matchbracket(bracket='{', start=index+leap)
+            nstokens.extend(self._tokens[index+leap:index+leap+jump])
             leap += jump
         else:
             line = self._tokens[index][0]
             tok = self._tokens[index][1]
             raise errors.CompilationError('line {0}: "{1}": token: {2}'.format(line, tokenizer.rebuild(line, self._src), tok))
+        ns = NamespaceTranslator(nstokens[3:-1], self._src).translate()
         self._namespaces[name] = ns
         return leap
 
@@ -260,3 +265,128 @@ class Translator():
     
     def getcalls(self):
         return self._calls
+
+
+class NamespaceTranslator():
+    def __init__(self, tokens, source):
+        self._tokens = tokens
+        self._source = source
+        self._function = {}
+        self._var = {}
+        self._const = {}
+        self._class = {}
+        self._namespace = {}
+
+    def _matchbracket(self, start, bracket):
+        match = {'{': '}',
+                 '(': ')',
+                 '[': ']',
+                 '<': '>',
+                 }
+        left = 1
+        n = (start + 1)
+        while n < len(self._tokens):
+            if left == 0: break
+            if self._tokens[n][1] == match[bracket]: left -= 1
+            if self._tokens[n][1] == bracket: left += 1
+            n += 1
+        if not (left == 0):
+            line = self._tokens[start][0]
+            msg = 'line {0}: "{1}": did not found matching pair for opening bracket: {2}'.format(line, tokenizer.rebuild(line, self._source), bracket)
+            raise errors.CompilationError(msg)
+        return (n-start)
+
+    def _compilekw_include(self, index):
+        try:
+            path = tokenizer.dequote(self._tokens[index+1][1])
+            ifstream = open(path)
+            source = ifstream.read()
+            ifstream.close()
+            trans = Translator().take(source).translate()
+            funcs = trans.getfunctions()
+            for f in funcs:
+                if f not in self._functions:
+                    self._functions[f] = funcs[f]
+            error = None
+        except (Exception) as e:
+            error = e
+        finally:
+            pass
+        if error is not None:
+            msg = ('line {0}: "{1}": token: {2}\ncaused by error in included file "{3}":\n{4}: {5}'
+                   .format(line+1, tokenizer.rebuild(line, self._source), tok, path, type(error), error))
+            raise errors.CompilationError(msg)
+        else:
+            leap = 2
+        return leap
+
+    def _compilekw_namespace(self, index):
+        name = self._tokens[index+1][1]
+        nstokens = []
+        nstokens.append(self._tokens[index])
+        nstokens.append(self._tokens[index+1])
+        leap = 2
+        if self._tokens[index+leap][1] == ';':
+            nstokens.append(self._tokens[index+leap])
+        elif self._tokens[index+leap][1] == '{':
+            jump = self._matchbracket(bracket='{', start=index+leap)
+            nstokens.extend(self._tokens[index+leap:index+leap+jump])
+            leap += jump
+        else:
+            line = self._tokens[index][0]
+            tok = self._tokens[index][1]
+            raise errors.CompilationError('line {0}: "{1}": token: {2}'.format(line, tokenizer.rebuild(line, self._source), tok))
+        ns = NamespaceTranslator(nstokens[3:-1], self._source).translate()
+        self._namespace[name] = ns
+        return leap
+
+    def _compilekeyword(self, index):
+        line, tok = self._tokens[index]
+        if tok == 'include':
+            leap = self._compilekw_include(index)
+        elif tok == 'namespace':
+            leap = self._compilekw_namespace(index)
+        else:
+            msg = 'line {0}: "{1}": keyword not yet implemented: {2}'.format(line+1, tokenizer.rebuild(line, self._source), tok)
+            raise errors.CompilationError(msg)
+        return leap
+
+    def _compile(self, index):
+        l, tok = self._tokens[index]
+        if tok == 'function':
+            func, leap = functiondeclaration(self._tokens, (index+1), self._source)
+            self._function[func['name']] = func
+        elif tok in self._function:
+            call, leap = functioncall(self._tokens, index, self._source)
+            self._calls.append(call)
+        elif tok == ';':
+            leap = 1
+        elif tok in shared.getkeywords():
+            leap = self._compilekeyword(index)
+        elif shared.isvalidname(tok):
+            raise errors.UndeclaredReferenceError('line {0}: "{1}": undeclared reference: "{2}"'.format(l+1, tokenizer.rebuild(l, self._source), tok))
+        else:
+            raise errors.CompilationError('line {0}: "{1}": token: {2}'.format(l+1, tokenizer.rebuild(l, self._source), tok))
+        return leap
+
+    def translate(self):
+        i = 0
+        while i < len(self._tokens):
+            l, tok = self._tokens[i]
+            i += self._compile(i)
+        return self
+
+    def functions(self):
+        return self._function
+
+    def vars(self):
+        return self._var
+
+    def constants(self):
+        return self._const
+
+    def classes(self):
+        return self._class
+
+    def namespaces(self):
+        return self._namespace

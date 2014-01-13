@@ -115,6 +115,7 @@ def join(tokens):
     formed from more than one grammar character.
     """
     joined = []
+    if len(tokens) == 0: return tokens
     if type(tokens[0]) == tuple: with_lines = True
     else: with_lines=False
     # list of joining functions (use first variant when support for these features will arrive)

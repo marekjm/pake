@@ -103,13 +103,21 @@ class TranslatorFunctionSupportTests(unittest.TestCase):
 
 class TranslatorNamespaceSupportTests(unittest.TestCase):
     def testTranslatingEmptyNamespace(self):
-        src = 'namespace Foo {;'
+        src = 'namespace Foo {}; namespace Bar {}; namespace Baz {};'
         translator = compiler.translator.Translator().take(src).translate()
-        self.assertEqual({}, translator._namespaces['Foo']['function'])
-        self.assertEqual({}, translator._namespaces['Foo']['var'])
-        self.assertEqual({}, translator._namespaces['Foo']['const'])
-        self.assertEqual({}, translator._namespaces['Foo']['class'])
-        self.assertEqual({}, translator._namespaces['Foo']['namespace'])
+        for n in ['Foo', 'Bar', 'Baz']:
+            self.assertEqual({}, translator._namespaces[n].functions())
+            self.assertEqual({}, translator._namespaces[n].vars())
+            self.assertEqual({}, translator._namespaces[n].constants())
+            self.assertEqual({}, translator._namespaces[n].classes())
+            self.assertEqual({}, translator._namespaces[n].namespaces())
+
+    def testTranslatingNestedNamespaces(self):
+        src = 'namespace Foo { namespace Bar { namespace Baz { namespace Bay {}; }; }; };'
+        translator = compiler.translator.Translator().take(src).translate()
+        self.assertEqual(list(translator._namespaces['Foo'].namespaces().keys()), ['Bar'])
+        self.assertEqual(list(translator._namespaces['Foo'].namespaces()['Bar'].namespaces().keys()), ['Baz'])
+        self.assertEqual(list(translator._namespaces['Foo'].namespaces()['Bar'].namespaces()['Baz'].namespaces().keys()), ['Bay'])
 
 
 if __name__ == '__main__':
