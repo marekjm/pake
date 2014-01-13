@@ -151,6 +151,9 @@ class Translator():
         self._tokens = []
         self._ns = None
 
+    def __getitem__(self, access):
+        return self._ns[access]
+
     def take(self, source):
         """Takes :source as string.
         """
@@ -164,7 +167,7 @@ class Translator():
         return self
 
     def getfunctions(self):
-        return self._ns._functions
+        return self._ns._function
     
     def getcalls(self):
         return self._ns._calls
@@ -182,7 +185,13 @@ class NamespaceTranslator():
         self._calls = []
 
     def __getitem__(self, access):
-        return {}
+        item = None
+        if access in self._function: item = self._function[access]
+        elif access in self._var: item = self._var[access]
+        elif access in self._const: item = self._const[access]
+        elif access in self._class: item = self._class[access]
+        elif access in self._namespace: item = self._namespace[access]
+        return item
 
     def _matchbracket(self, start, bracket):
         match = {'{': '}',
