@@ -293,10 +293,7 @@ class NamespaceTranslator():
 
     def _compile(self, index):
         l, tok = self._tokens[index]
-        if tok in self._function:
-            call, leap = functioncall(self._tokens, index, self._source)
-            self._calls.append(call)
-        elif tok == ';':
+        if tok == ';':
             leap = 1
         elif tok in shared.getkeywords():
             leap = self._compilekeyword(index)
@@ -305,6 +302,10 @@ class NamespaceTranslator():
             reference = ''.join([tok for l, tok in access])
             if reference not in self:
                 raise errors.UndeclaredReferenceError('line {0}: "{1}": undeclared reference: "{2}"'.format(l+1, tokenizer.rebuild(l, self._source), reference))
+            if self._tokens[index+leap][1] == '(':
+                call, call_leap = functioncall(self._tokens, index, self._source)
+                self._calls.append(call)
+                leap += call_leap
         elif shared.isvalidname(tok):
             raise errors.UndeclaredReferenceError('line {0}: "{1}": undeclared reference: "{2}"'.format(l+1, tokenizer.rebuild(l, self._source), tok))
         else:
