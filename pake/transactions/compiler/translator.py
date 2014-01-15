@@ -283,6 +283,9 @@ class NamespaceTranslator():
             leap = self._compilekw_include(index)
         elif tok == 'namespace':
             leap = self._compilekw_namespace(index)
+        elif tok == 'function':
+            func, leap = functiondeclaration(self._tokens, (index+1), self._source)
+            self._function[func['name']] = func
         else:
             msg = 'line {0}: "{1}": keyword not yet implemented: {2}'.format(line+1, tokenizer.rebuild(line, self._source), tok)
             raise errors.CompilationError(msg)
@@ -290,10 +293,7 @@ class NamespaceTranslator():
 
     def _compile(self, index):
         l, tok = self._tokens[index]
-        if tok == 'function':
-            func, leap = functiondeclaration(self._tokens, (index+1), self._source)
-            self._function[func['name']] = func
-        elif tok in self._function:
+        if tok in self._function:
             call, leap = functioncall(self._tokens, index, self._source)
             self._calls.append(call)
         elif tok == ';':
