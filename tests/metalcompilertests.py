@@ -63,9 +63,9 @@ class TranslatorFunctionSupportTests(unittest.TestCase):
         self.assertEqual(desired, got)
 
     def testTranslatingMultipleFunctionDeclarations(self):
-        src = 'function void _set(string key, undefined value="");\nfunction undefined _get(string key);'
-        desired = {'_set': {
-                        'name': '_set',
+        src = 'function void set(string key, undefined value="");\nfunction undefined get(string key);'
+        desired = {'set': {
+                        'name': 'set',
                         'return': 'void',
                         'params': {
                             'key': {'type': 'string', 'default': None},
@@ -74,8 +74,8 @@ class TranslatorFunctionSupportTests(unittest.TestCase):
                         'param_order': ['key', 'value'],
                         'body': None
                     },
-                    '_get': {
-                         'name': '_get',
+                    'get': {
+                         'name': 'get',
                          'return': 'undefined',
                          'params': {'key': {'type': 'string', 'default': None}},
                          'param_order': ['key'],
@@ -118,9 +118,48 @@ class TranslatorNamespaceSupportTests(unittest.TestCase):
         self.assertEqual(list(translator['Foo'].namespaces().keys()), ['Bar'])
         self.assertEqual(list(translator['Foo'].namespaces()['Bar'].namespaces().keys()), ['Baz'])
         self.assertEqual(list(translator['Foo'].namespaces()['Bar'].namespaces()['Baz'].namespaces().keys()), ['Bay'])
-        self.assertEqual(list(translator['Foo']['Bar'].namespaces().keys()), ['Baz'])
-        self.assertEqual(list(translator['Foo']['Bar']['Baz'].namespaces().keys()), ['Bay'])
-        self.assertEqual(translator['Foo']['Bar']['Baz']['Bay'].namespaces(), {})
+
+    def testUsingDotAsAccessOperator(self):
+        src = 'namespace Foo { namespace Bar { namespace Baz { namespace Bay {}; }; }; };'
+        translator = compiler.translator.Translator().take(src).translate()
+        self.assertEqual(list(translator['Foo.Bar'].namespaces().keys()), ['Baz'])
+        self.assertEqual(list(translator['Foo.Bar.Baz'].namespaces().keys()), ['Bay'])
+        self.assertEqual(translator['Foo.Bar.Baz.Bay'].namespaces(), {})
+
+    def testAccessingNestedNamespacesFromSource(self):
+        src = '''namespace Foo {
+            namespace Bar {
+                namespace Baz {
+                    namespace Bay {};
+                };
+            };
+        };
+        Foo.Bar.
+        Baz.Bay;'''
+        translator = compiler.translator.Translator().take(src).translate()
+
+    def testAccessingNestedNamespacesFromSourceFailsWithTwoDotsInARow(self):
+        src = '''namespace Foo {
+            namespace Bar {
+                namespace Baz {
+                    namespace Bay {};
+                };
+            };
+        };
+        Foo.Bar.
+        .Baz.Bay;'''
+        self.assertRaises(compiler.errors.CompilationError, compiler.translator.Translator().take(src).translate)
+
+    def testAccessingNestedNamespacesFromSourceFailsWhenElementDoesNotExist(self):
+        src = '''namespace Foo {
+            namespace Bar {
+                namespace Baz {
+                    namespace Bay {};
+                };
+            };
+        };
+        Foo.Bar.Baz.Bay.Bax;'''
+        self.assertRaises(compiler.errors.UndeclaredReferenceError, compiler.translator.Translator().take(src).translate)
 
     def testTranslatingFunctionsInNamespaces(self):
         src = 'namespace Foo { function void bar(); };'

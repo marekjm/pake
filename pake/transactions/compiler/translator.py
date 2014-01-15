@@ -186,12 +186,20 @@ class NamespaceTranslator():
 
     def __getitem__(self, access):
         item = None
-        if access in self._function: item = self._function[access]
-        elif access in self._var: item = self._var[access]
-        elif access in self._const: item = self._const[access]
-        elif access in self._class: item = self._class[access]
-        elif access in self._namespace: item = self._namespace[access]
+        parts = access.split('.')
+        if len(parts) == 1:
+            if access in self._function: item = self._function[access]
+            elif access in self._var: item = self._var[access]
+            elif access in self._const: item = self._const[access]
+            elif access in self._class: item = self._class[access]
+            elif access in self._namespace: item = self._namespace[access]
+        else:
+            ns = parts[0]
+            if ns in self._namespace: item = self._namespace[ns]['.'.join(parts[1:])]
         return item
+
+    def __contains__(self, item):
+        return (self.__getitem__(item) is not None)
 
     def _matchbracket(self, start, bracket):
         match = {'{': '}',
@@ -211,6 +219,19 @@ class NamespaceTranslator():
             msg = 'line {0}: "{1}": did not found matching pair for opening bracket: {2}'.format(line, tokenizer.rebuild(line, self._source), bracket)
             raise errors.CompilationError(msg)
         return (n-start)
+
+    def _getreferencetokens(self, start):
+        n, tokens = (0, [])
+        l, tok = self._tokens[start]
+        while shared.isvalidname(tok) or tok == '.':
+            if (n % 2 == 0) and tok == '.':
+                raise errors.CompilationError('line {0}: "{1}": invalid reference starting on line {2}: "{3}"'
+                                              .format(l+1, tokenizer.rebuild(l, self._source),
+                                                      (self._tokens[start][0]+1), tokenizer.rebuild(self._tokens[start][0], self._source)))
+            tokens.append((l, tok))
+            n += 1
+            l, tok = self._tokens[start+n]
+        return (n, tokens)
 
     def _compilekw_include(self, index):
         try:
@@ -279,6 +300,11 @@ class NamespaceTranslator():
             leap = 1
         elif tok in shared.getkeywords():
             leap = self._compilekeyword(index)
+        elif shared.isvalidname(tok) and (tok in self):
+            leap, access = self._getreferencetokens(index)
+            reference = ''.join([tok for l, tok in access])
+            if reference not in self:
+                raise errors.UndeclaredReferenceError('line {0}: "{1}": undeclared reference: "{2}"'.format(l+1, tokenizer.rebuild(l, self._source), reference))
         elif shared.isvalidname(tok):
             raise errors.UndeclaredReferenceError('line {0}: "{1}": undeclared reference: "{2}"'.format(l+1, tokenizer.rebuild(l, self._source), tok))
         else:
