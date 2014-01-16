@@ -100,6 +100,21 @@ class TranslatorFunctionSupportTests(unittest.TestCase):
         translator = compiler.translator.Translator().take(src)
         self.assertRaises(compiler.errors.UndeclaredReferenceError, translator.translate)
 
+    def testTranslatingCallToFunctionInsideANamespace(self):
+        src = '''namespace Foo {
+            function void foo();
+            function void bar();
+        };
+        Foo.foo();
+        Foo.bar();
+        '''
+        translator = compiler.translator.Translator().take(src).translate()
+        print(translator.getcalls())
+        desired = [{'call': 'Foo.foo', 'params': {}},
+                   {'call': 'Foo.bar', 'params': {}}
+                   ]
+        self.assertEqual(desired, translator.getcalls())
+
 
 class TranslatorNamespaceSupportTests(unittest.TestCase):
     def testTranslatingEmptyNamespace(self):

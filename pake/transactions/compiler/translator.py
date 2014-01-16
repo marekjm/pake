@@ -43,28 +43,7 @@ def _functioncallparams(tokens, src):
         i += 1
     if param != {'name': None, 'value': None}:
         params[param['name']] = param['value']
-    return (params, i)
-
-
-def functioncall(tokens, n, src):
-    """Translates tokens into function call.
-    """
-    ex = {'call': '', 'params': {}}
-    param_list_start, param_list_end = 0, 0
-    leap = 0
-    i = n
-    while i < len(tokens):
-        l, tok = tokens[i]
-        if tok == '(':
-            param_list_start = i+1
-            break
-        i += 1
-        leap += 1
-    leap += 2
-    ex['call'] = tokens[n][1]
-    ex['params'], i = _functioncallparams(tokens[param_list_start:], src)
-    leap += i
-    return (ex, leap)
+    return params
 
 
 def _functiondeclarationparams(tokens, src):
@@ -291,6 +270,14 @@ class NamespaceTranslator():
             raise errors.CompilationError(msg)
         return leap
 
+    def _compilefunctioncall(self, index, reference):
+        call = {'call': reference, 'params': {}}
+        leap = self._matchbracket(start=index, bracket='(')
+        param_tokens = self._tokens[index:index+leap]
+        params = _functioncallparams(param_tokens[1:], self._source)
+        call['params'] = params
+        return (call, leap)
+
     def _compile(self, index):
         l, tok = self._tokens[index]
         if tok == ';':
@@ -303,7 +290,7 @@ class NamespaceTranslator():
             if reference not in self:
                 raise errors.UndeclaredReferenceError('line {0}: "{1}": undeclared reference: "{2}"'.format(l+1, tokenizer.rebuild(l, self._source), reference))
             if self._tokens[index+leap][1] == '(':
-                call, call_leap = functioncall(self._tokens, index, self._source)
+                call, call_leap = self._compilefunctioncall(index+leap, reference)
                 self._calls.append(call)
                 leap += call_leap
         elif shared.isvalidname(tok):
