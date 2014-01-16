@@ -333,7 +333,6 @@ class NamespaceTranslator():
         call = {'call': reference, 'params': {}}
         leap = self._matchbracket(start=index, bracket='(')
         param_tokens = self._tokens[index:index+leap][1:-1]
-        #params = _functioncallparams(param_tokens, self._source)
         params = dict(self._functioncallparams(param_tokens))
         call['params'] = params
         function = self[reference]

@@ -1,7 +1,8 @@
 ## Networking and data distribution
 
 0.  management of aliens should be moved to `network` part of backend before creating a set of requests in transaction runner,
-1.  implement dot as access operator in Akemetal compiler,
+1.  implement `const` keyword support (definitions) in Akemetal,
+1.  implement `const` referencing in Akemetal,
 
 ----
 
