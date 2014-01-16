@@ -13,20 +13,18 @@ class MetalError(Exception):
 
 
 class UndeclaredReferenceError(MetalError):
-    """Raised when a reference to an undeclared name if found.
-    """
     pass
 
 
 class UndefinedConstantError(MetalError):
-    """Raised e.g. when const is compiled with undefined reference.
-    """
     pass
 
 
 class ConstantRedefinitionError(MetalError):
-    """Raised when redefinition of a const value is found.
-    """
+    pass
+
+
+class InvalidCallError(MetalError):
     pass
 
 

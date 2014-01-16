@@ -2,7 +2,8 @@
 
 import unittest
 
-from pake.transactions import compiler
+from pake.transactions import compiler, runner
+from pake import errors as pakeerrors
 
 
 class TokenizerTests(unittest.TestCase):
@@ -102,18 +103,28 @@ class TranslatorFunctionSupportTests(unittest.TestCase):
 
     def testTranslatingCallToFunctionInsideANamespace(self):
         src = '''namespace Foo {
-            function void foo();
+            function void foo(x);
             function void bar();
         };
-        Foo.foo();
+        Foo.foo(x="y");
         Foo.bar();
         '''
         translator = compiler.translator.Translator().take(src).translate()
-        print(translator.getcalls())
-        desired = [{'call': 'Foo.foo', 'params': {}},
+        desired = [{'call': 'Foo.foo', 'params': {'x': '"y"'}},
                    {'call': 'Foo.bar', 'params': {}}
                    ]
         self.assertEqual(desired, translator.getcalls())
+
+    def testTranslatingFunctionCallWhenReferenceIsNotCallable(self):
+        src = '''namespace Foo {
+            namespace Bar {};
+            function void bar();
+        };
+        Foo.bar();
+        Foo.Bar();
+        '''
+        translator = compiler.translator.Translator().take(src)
+        self.assertRaises(compiler.errors.InvalidCallError, translator.translate)
 
 
 class TranslatorNamespaceSupportTests(unittest.TestCase):
@@ -179,6 +190,24 @@ class TranslatorNamespaceSupportTests(unittest.TestCase):
     def testTranslatingFunctionsInNamespaces(self):
         src = 'namespace Foo { function void bar(); };'
         translator = compiler.translator.Translator().take(src).translate()
+
+
+class RunnerTests(unittest.TestCase):
+    def testFunctionCalling(self):
+        src = 'function void foo(); foo();'
+        translator = compiler.translator.Translator().take(src).translate()
+        exe = runner.Runner(root='.', requests=translator.getcalls())
+        self.assertRaises(pakeerrors.UnknownRequestError, exe.run, fatalwarns=True)
+
+    def testCallingFunctionLocatedInsideANamespace(self):
+        src = '''namespace Foo {
+            function void foo();
+        };
+        Foo.foo();
+        '''
+        translator = compiler.translator.Translator().take(src).translate()
+        exe = runner.Runner(root='.', requests=translator.getcalls())
+        self.assertRaises(pakeerrors.UnknownRequestError, exe.run, fatalwarns=True)
 
 
 if __name__ == '__main__':

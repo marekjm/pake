@@ -25,11 +25,6 @@ class Runner():
         self._reqs = requests
         self._stack = []
 
-    def finalize(self):
-        """Finalize data in the transaction e.g. fill missing data.
-        """
-        return self
-
     def _issueunknown(self, action, fatalwarns):
         """Deals with unknown action.
         """
@@ -182,7 +177,7 @@ class Runner():
     def run(self, fatalwarns=False):
         """Call this method to run the transaction.
         """
-        for req in self._reqs: self.execute(req)
+        for req in self._reqs: self.execute(req, fatalwarns)
         return self
 
     def getstack(self):

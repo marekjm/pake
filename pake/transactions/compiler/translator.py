@@ -276,6 +276,11 @@ class NamespaceTranslator():
         param_tokens = self._tokens[index:index+leap]
         params = _functioncallparams(param_tokens[1:], self._source)
         call['params'] = params
+        function = self[reference]
+        function = ('return' in function and 'body' in function and 'params' in function and 'param_order' in function)
+        if not function:
+            line = self._tokens[index][0]
+            raise errors.InvalidCallError('line {0}: "{1}": {2} is not callable'.format(line, tokenizer.rebuild(line, self._source), reference))
         return (call, leap)
 
     def _compile(self, index):
