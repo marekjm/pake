@@ -12,21 +12,22 @@ class MetalError(Exception):
     pass
 
 
-class UndeclaredReferenceError(MetalError):
-    pass
-
-
-class UndefinedConstantError(MetalError):
-    pass
-
-
-class ConstantRedefinitionError(MetalError):
-    pass
-
-
-class InvalidCallError(MetalError):
-    pass
-
-
 class CompilationError(MetalError):
     pass
+
+
+class UndeclaredReferenceError(CompilationError):
+    pass
+
+
+class UndefinedConstantError(CompilationError):
+    pass
+
+
+class ConstantRedefinitionError(CompilationError):
+    pass
+
+
+class InvalidCallError(CompilationError):
+    pass
+

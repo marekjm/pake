@@ -126,6 +126,28 @@ class TranslatorFunctionSupportTests(unittest.TestCase):
         translator = compiler.translator.Translator().take(src)
         self.assertRaises(compiler.errors.InvalidCallError, translator.translate)
 
+    def testTranslatingFunctionCallFailsWhenRequiredParameterIsNotGiven(self):
+        src = 'function void foo(x); foo();'
+        translator = compiler.translator.Translator().take(src)
+        self.assertRaises(compiler.errors.InvalidCallError, translator.translate)
+
+    def testTranslatingFunctionCallFailsWhenMultipleValuesForAnArgumentAreGiven(self):
+        src0 = 'function void foo(x); foo(0, x=0);'
+        src1 = 'function void foo(x); foo(x=0, x=0);'
+        for src in [src0, src1]:
+            translator = compiler.translator.Translator().take(src)
+            self.assertRaises(compiler.errors.InvalidCallError, translator.translate)
+
+    def testTranslatingFunctionCallFailsWhenGivenTooManyArguments(self):
+        src = 'function void foo(x); foo(0, 1, 2);'
+        translator = compiler.translator.Translator().take(src)
+        self.assertRaises(compiler.errors.InvalidCallError, translator.translate)
+
+    def testTranslatingFunctionCallFailsWhenUnnamedArgumentAppearsAfterNamedArgument(self):
+        src = 'function void foo(x, y); foo(x=0, 1);'
+        translator = compiler.translator.Translator().take(src)
+        self.assertRaises(compiler.errors.InvalidCallError, translator.translate)
+
 
 class TranslatorNamespaceSupportTests(unittest.TestCase):
     def testTranslatingEmptyNamespace(self):

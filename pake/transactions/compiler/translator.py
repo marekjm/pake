@@ -180,6 +180,9 @@ class NamespaceTranslator():
     def __contains__(self, item):
         return (self.__getitem__(item) is not None)
 
+    def _throw(self, err, line, message):
+        raise err('line {0}: "{1}": {2}'.format(line+1, tokenizer.rebuild(line, self._source), message))
+
     def _matchbracket(self, start, bracket):
         match = {'{': '}',
                  '(': ')',
@@ -212,7 +215,63 @@ class NamespaceTranslator():
             l, tok = self._tokens[start+n]
         return (n, tokens)
 
-    def _compilekw_include(self, index):
+    def _functioncallparams(self, tokens):
+        params = []
+        step = 0
+        i = 0
+        name, value = '', None
+        while i < len(tokens):
+            l, tok = tokens[i]
+            if shared.isvalidname(tok) and step == 0:
+                name = tok
+                step = 1
+            elif tok == '=' and step == 1:
+                step = 2
+            elif tok == ',' and (step == 0 or step == 3):
+                step = 0
+                params.append((name, value))
+                name, value = '', None
+            elif step == 0:
+                value = tok
+            elif step == 2:
+                value = tok
+                step = 3
+            else:
+                raise errors.CompilationError('line {0}: "{1}"'.format(l+1, tokenizer.rebuild(l, self._source)))
+            i += 1
+        if value is not None: params.append((name, value))
+        return params
+
+    def _verifycall(self, index, tokens, reference):
+        function = self[reference]
+        required = [k for k in function['params'] if (function['params'][k] is not None)]
+        rawparams = self._functioncallparams(tokens)
+        params = {}
+        wasnamed = False
+        for name, v in rawparams:
+            if name != '': wasnamed = True
+            if name == '' and wasnamed:
+                line = self._tokens[index][0]
+                raise self._throw(errors.InvalidCallError, line, 'unnamed argument appeared after named argument'.format(name))
+        for i, param in enumerate(rawparams):
+            name, value = param
+            if name == '':
+                maximum = len(function['param_order'])
+                if i >= maximum:
+                    line = self._tokens[index][0]
+                    raise self._throw(errors.InvalidCallError, line, 'got too many arguments, expected at most {0}: {1}'.format(maximum, len(rawparams)))
+                name = function['param_order'][i]
+            if name in params:
+                line = self._tokens[index][0]
+                raise self._throw(errors.InvalidCallError, line, 'got multiple values for argument: {0}'.format(name))
+            params[name] = value
+        for param in required:
+            if param not in params:
+                line = self._tokens[index][0]
+                msg = 'missing required parameter for function "{0}": {1}'.format(reference, param)
+                raise self._throw(errors.InvalidCallError, line, msg)
+
+    def _compilekw_import(self, index):
         try:
             path = tokenizer.dequote(self._tokens[index+1][1])
             ifstream = open(path)
@@ -229,7 +288,7 @@ class NamespaceTranslator():
         finally:
             pass
         if error is not None:
-            msg = ('line {0}: "{1}": token: {2}\ncaused by error in included file "{3}":\n{4}: {5}'
+            msg = ('line {0}: "{1}": token: {2}\ncaused by error in imported file "{3}":\n{4}: {5}'
                    .format(line+1, tokenizer.rebuild(line, self._source), tok, path, type(error), error))
             raise errors.CompilationError(msg)
         else:
@@ -258,8 +317,8 @@ class NamespaceTranslator():
 
     def _compilekeyword(self, index):
         line, tok = self._tokens[index]
-        if tok == 'include':
-            leap = self._compilekw_include(index)
+        if tok == 'import':
+            leap = self._compilekw_import(index)
         elif tok == 'namespace':
             leap = self._compilekw_namespace(index)
         elif tok == 'function':
@@ -273,14 +332,16 @@ class NamespaceTranslator():
     def _compilefunctioncall(self, index, reference):
         call = {'call': reference, 'params': {}}
         leap = self._matchbracket(start=index, bracket='(')
-        param_tokens = self._tokens[index:index+leap]
-        params = _functioncallparams(param_tokens[1:], self._source)
+        param_tokens = self._tokens[index:index+leap][1:-1]
+        #params = _functioncallparams(param_tokens, self._source)
+        params = dict(self._functioncallparams(param_tokens))
         call['params'] = params
         function = self[reference]
         function = ('return' in function and 'body' in function and 'params' in function and 'param_order' in function)
         if not function:
             line = self._tokens[index][0]
             raise errors.InvalidCallError('line {0}: "{1}": {2} is not callable'.format(line, tokenizer.rebuild(line, self._source), reference))
+        self._verifycall(index=index, tokens=param_tokens, reference=reference)
         return (call, leap)
 
     def _compile(self, index):
