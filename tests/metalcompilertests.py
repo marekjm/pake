@@ -48,6 +48,117 @@ class TokenizerTests(unittest.TestCase):
         self.assertEqual(got, desired)
 
 
+class TranslatorNamespaceSupportTests(unittest.TestCase):
+    def testTranslatingEmptyNamespace(self):
+        src = 'namespace Foo {}; namespace Bar {}; namespace Baz {};'
+        translator = compiler.translator.Translator().take(src).translate()
+        for n in ['Foo', 'Bar', 'Baz']:
+            self.assertEqual({}, translator[n].functions())
+            self.assertEqual({}, translator[n].vars())
+            self.assertEqual({}, translator[n].constants())
+            self.assertEqual({}, translator[n].classes())
+            self.assertEqual({}, translator[n].namespaces())
+
+    def testTranslatingNestedNamespaces(self):
+        src = 'namespace Foo { namespace Bar { namespace Baz { namespace Bay {}; }; }; };'
+        translator = compiler.translator.Translator().take(src).translate()
+        self.assertEqual(list(translator['Foo'].namespaces().keys()), ['Bar'])
+        self.assertEqual(list(translator['Foo'].namespaces()['Bar'].namespaces().keys()), ['Baz'])
+        self.assertEqual(list(translator['Foo'].namespaces()['Bar'].namespaces()['Baz'].namespaces().keys()), ['Bay'])
+
+    def testUsingDotAsAccessOperator(self):
+        src = 'namespace Foo { namespace Bar { namespace Baz { namespace Bay {}; }; }; };'
+        translator = compiler.translator.Translator().take(src).translate()
+        self.assertEqual(list(translator['Foo.Bar'].namespaces().keys()), ['Baz'])
+        self.assertEqual(list(translator['Foo.Bar.Baz'].namespaces().keys()), ['Bay'])
+        self.assertEqual(translator['Foo.Bar.Baz.Bay'].namespaces(), {})
+
+    def testAccessingNestedNamespacesFromSource(self):
+        src = '''namespace Foo {
+            namespace Bar {
+                namespace Baz {
+                    namespace Bay {};
+                };
+            };
+        };
+        Foo.Bar.
+        Baz.Bay;'''
+        translator = compiler.translator.Translator().take(src).translate()
+
+    def testAccessingNestedNamespacesFromSourceFailsWithTwoDotsInARow(self):
+        src = '''namespace Foo {
+            namespace Bar {
+                namespace Baz {
+                    namespace Bay {};
+                };
+            };
+        };
+        Foo.Bar.
+        .Baz.Bay;'''
+        self.assertRaises(compiler.errors.CompilationError, compiler.translator.Translator().take(src).translate)
+
+    def testAccessingNestedNamespacesFromSourceFailsWhenElementDoesNotExist(self):
+        src = '''namespace Foo {
+            namespace Bar {
+                namespace Baz {
+                    namespace Bay {};
+                };
+            };
+        };
+        Foo.Bar.Baz.Bay.Bax;'''
+        self.assertRaises(compiler.errors.UndeclaredReferenceError, compiler.translator.Translator().take(src).translate)
+
+    def testTranslatingFunctionsInNamespaces(self):
+        src = 'namespace Foo { function void bar(); };'
+        translator = compiler.translator.Translator().take(src).translate()
+
+
+@unittest.skip('')
+class TranslatorConstantsTests(unittest.TestCase):
+    def testTranslatingConstDefinitionWithDeclaredType(self):
+        src = 'const string foo = "foo";'
+        translator = compiler.translator.Translator().take(src).translate()
+        self.assertEqual({'foo': {'type': 'string', 'value': '"foo"'}}, translator._ns.constants())
+
+    def testTranslatingConstDefinitionWithUndeclaredType(self):
+        src = 'const foo = "foo";'
+        translator = compiler.translator.Translator().take(src).translate()
+        self.assertEqual({'foo': {'type': 'undefined', 'value': '"foo"'}}, translator._ns.constants())
+
+
+class TranslatorVariablesTests(unittest.TestCase):
+    def testTranslatingVariableDeclarationWithUnspecifiedType(self):
+        src = 'var foo;'
+        translator = compiler.translator.Translator().take(src).translate()
+        self.assertEqual({'foo': {'type': 'undefined', 'value': None}}, translator._ns.vars())
+        self.assertEqual({'type': 'undefined', 'value': None}, translator['foo'])
+
+    def testTranslatingVariableDeclarationWithSpecifiedType(self):
+        src = 'var string foo;'
+        translator = compiler.translator.Translator().take(src).translate()
+        self.assertEqual({'foo': {'type': 'string', 'value': None}}, translator._ns.vars())
+        self.assertEqual({'type': 'string', 'value': None}, translator['foo'])
+
+    def testTranslatingVarDefinitionWithUnspecifiedType(self):
+        src = 'var foo = "foo";'
+        translator = compiler.translator.Translator().take(src).translate()
+        self.assertEqual({'foo': {'type': 'undefined', 'value': '"foo"'}}, translator._ns.vars())
+        self.assertEqual({'type': 'undefined', 'value': '"foo"'}, translator['foo'])
+
+    def testTranslatingVarDefinitionWithDeclaredType(self):
+        src = 'var string foo = "foo";'
+        translator = compiler.translator.Translator().take(src).translate()
+        self.assertEqual({'foo': {'type': 'string', 'value': '"foo"'}}, translator._ns.vars())
+        self.assertEqual({'type': 'string', 'value': '"foo"'}, translator['foo'])
+
+    def testTranslatingVarDefinitionFailsWhenNoNameIsGiven(self):
+        src0 = 'var = "foo";'
+        src1 = 'var string = "foo";'
+        for src in [src0, src1]:
+            translator = compiler.translator.Translator().take(src)
+            self.assertRaises(compiler.errors.CompilationError, translator.translate)
+
+
 class TranslatorFunctionSupportTests(unittest.TestCase):
     def testTranslatingFunctionDeclaration(self):
         src = 'function void foo(x, y="", z=0);'
@@ -147,71 +258,6 @@ class TranslatorFunctionSupportTests(unittest.TestCase):
         src = 'function void foo(x, y); foo(x=0, 1);'
         translator = compiler.translator.Translator().take(src)
         self.assertRaises(compiler.errors.InvalidCallError, translator.translate)
-
-
-class TranslatorNamespaceSupportTests(unittest.TestCase):
-    def testTranslatingEmptyNamespace(self):
-        src = 'namespace Foo {}; namespace Bar {}; namespace Baz {};'
-        translator = compiler.translator.Translator().take(src).translate()
-        for n in ['Foo', 'Bar', 'Baz']:
-            self.assertEqual({}, translator[n].functions())
-            self.assertEqual({}, translator[n].vars())
-            self.assertEqual({}, translator[n].constants())
-            self.assertEqual({}, translator[n].classes())
-            self.assertEqual({}, translator[n].namespaces())
-
-    def testTranslatingNestedNamespaces(self):
-        src = 'namespace Foo { namespace Bar { namespace Baz { namespace Bay {}; }; }; };'
-        translator = compiler.translator.Translator().take(src).translate()
-        self.assertEqual(list(translator['Foo'].namespaces().keys()), ['Bar'])
-        self.assertEqual(list(translator['Foo'].namespaces()['Bar'].namespaces().keys()), ['Baz'])
-        self.assertEqual(list(translator['Foo'].namespaces()['Bar'].namespaces()['Baz'].namespaces().keys()), ['Bay'])
-
-    def testUsingDotAsAccessOperator(self):
-        src = 'namespace Foo { namespace Bar { namespace Baz { namespace Bay {}; }; }; };'
-        translator = compiler.translator.Translator().take(src).translate()
-        self.assertEqual(list(translator['Foo.Bar'].namespaces().keys()), ['Baz'])
-        self.assertEqual(list(translator['Foo.Bar.Baz'].namespaces().keys()), ['Bay'])
-        self.assertEqual(translator['Foo.Bar.Baz.Bay'].namespaces(), {})
-
-    def testAccessingNestedNamespacesFromSource(self):
-        src = '''namespace Foo {
-            namespace Bar {
-                namespace Baz {
-                    namespace Bay {};
-                };
-            };
-        };
-        Foo.Bar.
-        Baz.Bay;'''
-        translator = compiler.translator.Translator().take(src).translate()
-
-    def testAccessingNestedNamespacesFromSourceFailsWithTwoDotsInARow(self):
-        src = '''namespace Foo {
-            namespace Bar {
-                namespace Baz {
-                    namespace Bay {};
-                };
-            };
-        };
-        Foo.Bar.
-        .Baz.Bay;'''
-        self.assertRaises(compiler.errors.CompilationError, compiler.translator.Translator().take(src).translate)
-
-    def testAccessingNestedNamespacesFromSourceFailsWhenElementDoesNotExist(self):
-        src = '''namespace Foo {
-            namespace Bar {
-                namespace Baz {
-                    namespace Bay {};
-                };
-            };
-        };
-        Foo.Bar.Baz.Bay.Bax;'''
-        self.assertRaises(compiler.errors.UndeclaredReferenceError, compiler.translator.Translator().take(src).translate)
-
-    def testTranslatingFunctionsInNamespaces(self):
-        src = 'namespace Foo { function void bar(); };'
-        translator = compiler.translator.Translator().take(src).translate()
 
 
 class RunnerTests(unittest.TestCase):

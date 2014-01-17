@@ -153,9 +153,10 @@ class Translator():
 
 
 class NamespaceTranslator():
-    def __init__(self, tokens, source):
+    def __init__(self, tokens, source, parenttypes=[]):
         self._tokens = tokens
         self._source = source
+        self._parenttypes = parenttypes
         self._function = {}
         self._var = {}
         self._const = {}
@@ -181,7 +182,7 @@ class NamespaceTranslator():
         return (self.__getitem__(item) is not None)
 
     def _throw(self, err, line, message):
-        raise err('line {0}: "{1}": {2}'.format(line+1, tokenizer.rebuild(line, self._source), message))
+        raise err('line {0}: {1}: {2}'.format(line+1, tokenizer.rebuild(line, self._source), message))
 
     def _matchbracket(self, start, bracket):
         match = {'{': '}',
@@ -202,10 +203,19 @@ class NamespaceTranslator():
             raise errors.CompilationError(msg)
         return (n-start)
 
+    def _matchlogicalend(self, start):
+        n = (start+1)
+        while n < len(self._tokens):
+            if self._tokens[n][1] == ';': break
+            n += 1
+        return (n-start)
+
     def _getreferencetokens(self, start):
         n, tokens = (0, [])
         l, tok = self._tokens[start]
         while shared.isvalidname(tok) or tok == '.':
+            if (n % 2 == 1) and tok != '.':
+                break
             if (n % 2 == 0) and tok == '.':
                 raise errors.CompilationError('line {0}: "{1}": invalid reference starting on line {2}: "{3}"'
                                               .format(l+1, tokenizer.rebuild(l, self._source),
@@ -288,9 +298,9 @@ class NamespaceTranslator():
         finally:
             pass
         if error is not None:
-            msg = ('line {0}: "{1}": token: {2}\ncaused by error in imported file "{3}":\n{4}: {5}'
-                   .format(line+1, tokenizer.rebuild(line, self._source), tok, path, type(error), error))
-            raise errors.CompilationError(msg)
+            line = self._tokens[index][0]
+            msg = 'caused by error in imported file "{0}":\n{1}: {2}'.format(path, type(error), error)
+            raise self._throw(errors.CompilationError, line, msg)
         else:
             leap = 2
         return leap
@@ -311,8 +321,59 @@ class NamespaceTranslator():
             line = self._tokens[index][0]
             tok = self._tokens[index][1]
             raise errors.CompilationError('line {0}: "{1}": token: {2}'.format(line, tokenizer.rebuild(line, self._source), tok))
-        ns = NamespaceTranslator(nstokens[3:-1], self._source).translate()
+        ns = NamespaceTranslator(nstokens[3:-1], self._source, self.hastypes()).translate()
         self._namespace[name] = ns
+        return leap
+
+    def _compilekw_const(self, index):
+        leap = self._matchlogicalend(start=index)
+        tokens = self._tokens[index+1:index+leap]
+        const = {'type': 'undefinded',
+                 'value': None
+                 }
+        const['type'] = tokens[0][1]
+        name = tokens[1][1]
+        const['value'] = tokens[3][1]
+        self._const[name] = const
+        return leap
+
+    def _compiledatapiece(self, index, allow_declarations=True):
+        leap = self._matchlogicalend(start=index)
+        tokens = self._tokens[index+1:index+leap]
+        words = [tok for l, tok in tokens]
+        piece = {'type': 'undefined',
+                 'value': None,
+                 'name': None
+                 }
+        is_declaration = not ('=' in words)
+        if is_declaration and not allow_declarations: self._throw(errors.CompilationError, tokens[0][0], 'declarations are not allowed')
+        if is_declaration:
+            declaration = words
+            definition = []
+        else:
+            eq = words.index('=')
+            declaration = words[:eq]
+            definition = words[eq+1:]
+        if len(declaration) == 1 and shared.isvalidname(declaration[0]) and declaration[0] not in self.hastypes():
+            piece['name'] = declaration[0]
+        elif len(declaration) > 1:
+            n, piecetypetokens = self._getreferencetokens(index+1)
+            if n == len(declaration)-1:
+                piecetype = '.'.join(declaration[:-1])
+                piecename = declaration[-1]
+            if piecetype in self.hastypes() and shared.isvalidname(piecename):
+                piece['type'] = piecetype
+                piece['name'] = piecename
+        if piece['name'] is None: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition')
+        piecevalue = '.'.join(definition)
+        if piecevalue: piece['value'] = piecevalue
+        return (leap, piece)
+
+    def _compilekw_var(self, index):
+        leap, piece = self._compiledatapiece(index)
+        name = piece['name']
+        del piece['name']
+        self._var[name] = piece
         return leap
 
     def _compilekeyword(self, index):
@@ -321,6 +382,10 @@ class NamespaceTranslator():
             leap = self._compilekw_import(index)
         elif tok == 'namespace':
             leap = self._compilekw_namespace(index)
+        elif tok == 'const':
+            leap = self._compilekw_const(index)
+        elif tok == 'var':
+            leap = self._compilekw_var(index)
         elif tok == 'function':
             func, leap = functiondeclaration(self._tokens, (index+1), self._source)
             self._function[func['name']] = func
@@ -379,6 +444,12 @@ class NamespaceTranslator():
 
     def constants(self):
         return self._const
+
+    def hastypes(self):
+        hastypes = types
+        hastypes.extend(self._parenttypes)
+        hastypes.extend([k for k in self.classes()])
+        return hastypes
 
     def classes(self):
         return self._class
