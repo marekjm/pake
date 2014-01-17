@@ -326,15 +326,10 @@ class NamespaceTranslator():
         return leap
 
     def _compilekw_const(self, index):
-        leap = self._matchlogicalend(start=index)
-        tokens = self._tokens[index+1:index+leap]
-        const = {'type': 'undefinded',
-                 'value': None
-                 }
-        const['type'] = tokens[0][1]
-        name = tokens[1][1]
-        const['value'] = tokens[3][1]
-        self._const[name] = const
+        leap, piece = self._compiledatapiece(index, allow_declarations=False)
+        name = piece['name']
+        del piece['name']
+        self._const[name] = piece
         return leap
 
     def _compiledatapiece(self, index, allow_declarations=True):

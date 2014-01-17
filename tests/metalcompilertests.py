@@ -113,17 +113,27 @@ class TranslatorNamespaceSupportTests(unittest.TestCase):
         translator = compiler.translator.Translator().take(src).translate()
 
 
-@unittest.skip('')
 class TranslatorConstantsTests(unittest.TestCase):
-    def testTranslatingConstDefinitionWithDeclaredType(self):
-        src = 'const string foo = "foo";'
-        translator = compiler.translator.Translator().take(src).translate()
-        self.assertEqual({'foo': {'type': 'string', 'value': '"foo"'}}, translator._ns.constants())
-
-    def testTranslatingConstDefinitionWithUndeclaredType(self):
+    def testTranslatingDefinitionWithUnspecifiedType(self):
         src = 'const foo = "foo";'
         translator = compiler.translator.Translator().take(src).translate()
         self.assertEqual({'foo': {'type': 'undefined', 'value': '"foo"'}}, translator._ns.constants())
+        self.assertEqual({'type': 'undefined', 'value': '"foo"'}, translator['foo'])
+
+    def testTranslatingDefinitionWithDeclaredType(self):
+        src = 'const string foo = "foo";'
+        translator = compiler.translator.Translator().take(src).translate()
+        self.assertEqual({'foo': {'type': 'string', 'value': '"foo"'}}, translator._ns.constants())
+        self.assertEqual({'type': 'string', 'value': '"foo"'}, translator['foo'])
+
+    def testTranslatingDefinitionFails(self):
+        src0 = 'const = "foo";'
+        src1 = 'const string = "foo";'
+        src1 = 'const foo;'
+        src1 = 'const string foo;'
+        for src in [src0, src1]:
+            translator = compiler.translator.Translator().take(src)
+            self.assertRaises(compiler.errors.CompilationError, translator.translate)
 
 
 class TranslatorVariablesTests(unittest.TestCase):
