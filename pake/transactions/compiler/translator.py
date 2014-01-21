@@ -5,6 +5,10 @@ executable form.
 """
 
 
+# Flags
+DEBUG = False
+
+
 from . import tokenizer, joiner, shared, errors
 
 
@@ -145,6 +149,9 @@ class Translator():
         self._ns = NamespaceTranslator(self._tokens, self._src).translate()
         return self
 
+    def constants(self):
+        return self._ns.constants()
+
     def getfunctions(self):
         return self._ns._function
     
@@ -153,10 +160,12 @@ class Translator():
 
 
 class NamespaceTranslator():
-    def __init__(self, tokens, source, parenttypes=[]):
+    def __init__(self, tokens, source, name='', parenttypes=[], parentnames=[]):
         self._tokens = tokens
         self._source = source
+        self._name = name
         self._parenttypes = parenttypes
+        self._parentnames = parentnames
         self._function = {}
         self._var = {}
         self._const = {}
@@ -321,8 +330,9 @@ class NamespaceTranslator():
             line = self._tokens[index][0]
             tok = self._tokens[index][1]
             raise errors.CompilationError('line {0}: "{1}": token: {2}'.format(line, tokenizer.rebuild(line, self._source), tok))
-        ns = NamespaceTranslator(nstokens[3:-1], self._source, self.hastypes()).translate()
-        self._namespace[name] = ns
+        ns = NamespaceTranslator(tokens=nstokens[3:-1], source=self._source, name=name,
+                                 parenttypes=self.hastypes(), parentnames=self.names())
+        self._namespace[name] = ns.translate()
         return leap
 
     def _compilekw_const(self, index):
@@ -362,6 +372,7 @@ class NamespaceTranslator():
         if piece['name'] is None: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition')
         piecevalue = '.'.join(definition)
         if piecevalue: piece['value'] = piecevalue
+        if not is_declaration and piece['value'] is None: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition')
         return (leap, piece)
 
     def _compilekw_var(self, index):
@@ -377,13 +388,13 @@ class NamespaceTranslator():
             leap = self._compilekw_import(index)
         elif tok == 'namespace':
             leap = self._compilekw_namespace(index)
+        elif tok == 'function':
+            func, leap = functiondeclaration(self._tokens, (index+1), self._source)
+            self._function[func['name']] = func
         elif tok == 'const':
             leap = self._compilekw_const(index)
         elif tok == 'var':
             leap = self._compilekw_var(index)
-        elif tok == 'function':
-            func, leap = functiondeclaration(self._tokens, (index+1), self._source)
-            self._function[func['name']] = func
         else:
             msg = 'line {0}: "{1}": keyword not yet implemented: {2}'.format(line+1, tokenizer.rebuild(line, self._source), tok)
             raise errors.CompilationError(msg)
@@ -409,10 +420,10 @@ class NamespaceTranslator():
             leap = 1
         elif tok in shared.getkeywords():
             leap = self._compilekeyword(index)
-        elif shared.isvalidname(tok) and (tok in self):
+        elif shared.isvalidname(tok) and ((tok in self) or (tok in self._parentnames)):
             leap, access = self._getreferencetokens(index)
             reference = ''.join([tok for l, tok in access])
-            if reference not in self:
+            if reference not in self and reference not in self._parentnames:
                 raise errors.UndeclaredReferenceError('line {0}: "{1}": undeclared reference: "{2}"'.format(l+1, tokenizer.rebuild(l, self._source), reference))
             if self._tokens[index+leap][1] == '(':
                 call, call_leap = self._compilefunctioncall(index+leap, reference)
@@ -425,6 +436,8 @@ class NamespaceTranslator():
         return leap
 
     def translate(self):
+        if DEBUG: print('parent names:', self._parentnames)
+        if DEBUG: print('local names:', self.names())
         i = 0
         while i < len(self._tokens):
             l, tok = self._tokens[i]
@@ -434,20 +447,36 @@ class NamespaceTranslator():
     def functions(self):
         return self._function
 
-    def vars(self):
-        return self._var
-
-    def constants(self):
-        return self._const
-
     def hastypes(self):
         hastypes = types
         hastypes.extend(self._parenttypes)
-        hastypes.extend([k for k in self.classes()])
+        hasclasses = [k for k in self.classes()]
+        if self._name: hasclasses = ['.'.join(self._name, c) for c in hasclasses]
+        hastypes.extend(hasclasses)
         return hastypes
+
+    def names(self):
+        names = []
+        for i in [self._var, self._const, self._function]:
+            names.extend(list(i.keys()))
+        for pref in self._class:
+            names.append(pref)
+            c = self._class[pref]
+            for name in c: names.append('.'.join([pref, name]))
+        for pref in self._namespace:
+            names.append(pref)
+            c = self._namespace[pref]
+            names.extend(['.'.join([pref, name]) for name in c.names()])
+        return names
 
     def classes(self):
         return self._class
 
     def namespaces(self):
         return self._namespace
+
+    def vars(self):
+        return self._var
+
+    def constants(self):
+        return self._const

@@ -113,60 +113,34 @@ class TranslatorNamespaceSupportTests(unittest.TestCase):
         translator = compiler.translator.Translator().take(src).translate()
 
 
-class TranslatorConstantsTests(unittest.TestCase):
-    def testTranslatingDefinitionWithUnspecifiedType(self):
-        src = 'const foo = "foo";'
+class TranslatorNamesTests(unittest.TestCase):
+    def testGettingNames(self):
+        src = '''const string foo = "foo";
+        var string bar = "bar";
+        namespace Baz {};
+        '''
+        desired = ['foo', 'bar', 'Baz']
         translator = compiler.translator.Translator().take(src).translate()
-        self.assertEqual({'foo': {'type': 'undefined', 'value': '"foo"'}}, translator._ns.constants())
-        self.assertEqual({'type': 'undefined', 'value': '"foo"'}, translator['foo'])
+        self.assertEqual(sorted(desired), sorted(translator._ns.names()))
 
-    def testTranslatingDefinitionWithDeclaredType(self):
-        src = 'const string foo = "foo";'
+    def testGettingNamesWithNamespacePrefix(self):
+        src = '''const string foo = "foo";
+        var string bar = "bar";
+        namespace Baz {
+            const string baz = "baz";
+
+            namespace Bay {
+                const string bay = "bay";
+
+                namespace Bax {
+                    const string bax = "bax";
+                };
+            };
+        };
+        '''
+        desired = ['foo', 'bar', 'Baz', 'Baz.baz', 'Baz.Bay', 'Baz.Bay.bay', 'Baz.Bay.Bax', 'Baz.Bay.Bax.bax']
         translator = compiler.translator.Translator().take(src).translate()
-        self.assertEqual({'foo': {'type': 'string', 'value': '"foo"'}}, translator._ns.constants())
-        self.assertEqual({'type': 'string', 'value': '"foo"'}, translator['foo'])
-
-    def testTranslatingDefinitionFails(self):
-        src0 = 'const = "foo";'
-        src1 = 'const string = "foo";'
-        src1 = 'const foo;'
-        src1 = 'const string foo;'
-        for src in [src0, src1]:
-            translator = compiler.translator.Translator().take(src)
-            self.assertRaises(compiler.errors.CompilationError, translator.translate)
-
-
-class TranslatorVariablesTests(unittest.TestCase):
-    def testTranslatingVariableDeclarationWithUnspecifiedType(self):
-        src = 'var foo;'
-        translator = compiler.translator.Translator().take(src).translate()
-        self.assertEqual({'foo': {'type': 'undefined', 'value': None}}, translator._ns.vars())
-        self.assertEqual({'type': 'undefined', 'value': None}, translator['foo'])
-
-    def testTranslatingVariableDeclarationWithSpecifiedType(self):
-        src = 'var string foo;'
-        translator = compiler.translator.Translator().take(src).translate()
-        self.assertEqual({'foo': {'type': 'string', 'value': None}}, translator._ns.vars())
-        self.assertEqual({'type': 'string', 'value': None}, translator['foo'])
-
-    def testTranslatingVarDefinitionWithUnspecifiedType(self):
-        src = 'var foo = "foo";'
-        translator = compiler.translator.Translator().take(src).translate()
-        self.assertEqual({'foo': {'type': 'undefined', 'value': '"foo"'}}, translator._ns.vars())
-        self.assertEqual({'type': 'undefined', 'value': '"foo"'}, translator['foo'])
-
-    def testTranslatingVarDefinitionWithDeclaredType(self):
-        src = 'var string foo = "foo";'
-        translator = compiler.translator.Translator().take(src).translate()
-        self.assertEqual({'foo': {'type': 'string', 'value': '"foo"'}}, translator._ns.vars())
-        self.assertEqual({'type': 'string', 'value': '"foo"'}, translator['foo'])
-
-    def testTranslatingVarDefinitionFailsWhenNoNameIsGiven(self):
-        src0 = 'var = "foo";'
-        src1 = 'var string = "foo";'
-        for src in [src0, src1]:
-            translator = compiler.translator.Translator().take(src)
-            self.assertRaises(compiler.errors.CompilationError, translator.translate)
+        self.assertEqual(sorted(desired), sorted(translator._ns.names()))
 
 
 class TranslatorFunctionSupportTests(unittest.TestCase):

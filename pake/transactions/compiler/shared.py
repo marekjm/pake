@@ -18,6 +18,15 @@ def isvalidname(name):
     return valid_name_re.match(name) is not None
 
 
+def isvalidreference(s):
+    parts = s.split('.')
+    ok = True
+    for part in parts:
+        ok = isvalidname(part)
+        if not ok: break
+    return ok
+
+
 def getkeywords():
     """Returns list of reserved keywords.
     """

@@ -16,13 +16,14 @@ class Runner():
     requests - request is a middle-form of a single line of
     transaction file.
     """
-    def __init__(self, root, requests=[]):
+    def __init__(self, root, requests=[], compiled=None):
         """
         :param root: directory that transactions are run in
         :param requests: list of requests
         """
         self._root = root
         self._reqs = requests
+        self._compiled = compiled
         self._stack = []
 
     def _issueunknown(self, action, fatalwarns):
@@ -161,6 +162,15 @@ class Runner():
             pake.config.network.Aliens(os.path.join(root, '.pakenode')).remove(**req).write()
         else:
             self._issueunknown(action, fatalwarns)
+
+    def finalize(self):
+        for req in self._reqs:
+            params = req['params']
+            for p in params:
+                if pake.transactions.compiler.shared.isvalidreference(p['value']):
+                    reference = p['value']
+                    p['value'] = self._compiled[reference]['value']
+        return self
 
     def execute(self, req, fatalwarns=False):
         """This is used to execute single requests.
