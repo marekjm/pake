@@ -12,7 +12,7 @@ DEBUG = False
 from . import tokenizer, joiner, shared, errors
 
 
-types = ['int', 'float', 'string', 'undefined', 'void']
+types = ['int', 'float', 'string', 'bool', 'undefined', 'void']
 
 
 def _functioncallparams(tokens, src):
@@ -81,7 +81,7 @@ def _functiondeclarationparams(tokens, src):
             i += 1
             break
         else:
-            raise errors.CompilationError('line {0}: "{1}": token: {2}'.format(l+1, tokenizer.rebuild(l, src), tok))
+            raise errors.CompilationError('line {0}: "{1}": in function declaration: {2}'.format(l+1, tokenizer.rebuild(l, src), tok))
         i += 1
     if param != {'name': None, 'type': 'undefined', 'default': None}:
         params.append(param)
@@ -90,6 +90,7 @@ def _functiondeclarationparams(tokens, src):
 
 
 def functiondeclaration(tokens, n, src):
+    if DEBUG: print(n, tokens[n])
     ex = {'name': None,
           'params': {},
           'param_order': [],
@@ -98,6 +99,7 @@ def functiondeclaration(tokens, n, src):
           }
     ex['return'] = tokens[n][1]
     ex['name'] = tokens[n+1][1]
+    if DEBUG: print(n, tokens[n])
     param_list_start, param_list_end = 0, 0
     i = 2
     for l, tok in tokens[n+2:]:
@@ -113,7 +115,13 @@ def functiondeclaration(tokens, n, src):
         l = tokens[n+leap][0]
         if not src: src = tokens
         raise errors.CompilationError('line {0}: "{1}"'.format(l+1, tokenizer.rebuild(l, src)))
+    param_tokens = tokens[n+param_list_start:n+param_list_end+1]
+    if DEBUG: print()
+    if DEBUG: print('total number of compilable tokens:', len(tokens))
+    if DEBUG: print(tokens)
+    if DEBUG: print(n+param_list_start, n+param_list_end, param_tokens)
     param_tokens = tokens[param_list_start:param_list_end+1]
+    if DEBUG: print(param_list_start, param_list_end, param_tokens)
     params, ex['param_order'] = _functiondeclarationparams(param_tokens[1:-1], src)
     for p in params:
         ex['params'][p['name']] = {}
@@ -190,8 +198,10 @@ class NamespaceTranslator():
     def __contains__(self, item):
         return (self.__getitem__(item) is not None)
 
-    def _throw(self, err, line, message):
-        raise err('line {0}: {1}: {2}'.format(line+1, tokenizer.rebuild(line, self._source), message))
+    def _throw(self, err, line, message=''):
+        report = 'line {0}: {1}'.format(line+1, tokenizer.rebuild(line, self._source))
+        if message: report = '{0}: {1}'.format(report, message)
+        raise err(report)
 
     def _matchbracket(self, start, bracket):
         match = {'{': '}',
@@ -233,6 +243,41 @@ class NamespaceTranslator():
             n += 1
             l, tok = self._tokens[start+n]
         return (n, tokens)
+
+    def _extractfunction(self, index):
+        n = index+1
+        extracted = {'type': None,
+                     'name': None,
+                     'params': None,
+                     'body': None,
+                     }
+        extracted['type'] = self._tokens[n][1]
+        if DEBUG: print(n, self._tokens[n], extracted['type'])
+        n += 1
+
+        extracted['name'] = self._tokens[n][1]
+        if DEBUG: print(n, self._tokens[n], extracted['name'])
+        n += 1
+
+        if self._tokens[n][1] == '(':
+            forward = self._matchbracket(start=n, bracket='(')
+            if DEBUG: print(forward)
+            extracted['params'] = self._tokens[n:n+forward]
+            n += forward
+        else:
+            self._throw(errors.CompilationError, self._tokens[n][0])
+
+        if self._tokens[n][1] == '{':
+            forward = self._matchbracket(start=n, bracket='{')
+            if DEBUG: print(forward)
+            extracted['body'] = self._tokens[n:n+forward]
+            n += forward
+
+        if self._tokens[n][1] != ';': self._throw(errors.CompilationError, self._tokens[n][0])
+        n += 1
+        leap = (n-index)
+
+        return (leap, extracted)
 
     def _functioncallparams(self, tokens):
         params = []
@@ -389,6 +434,7 @@ class NamespaceTranslator():
         elif tok == 'namespace':
             leap = self._compilekw_namespace(index)
         elif tok == 'function':
+            print(self._name, line, tok, '({0})'.format(index))
             func, leap = functiondeclaration(self._tokens, (index+1), self._source)
             self._function[func['name']] = func
         elif tok == 'const':
@@ -480,3 +526,247 @@ class NamespaceTranslator():
 
     def constants(self):
         return self._const
+
+
+class NamespaceTranslator2():
+    def __init__(self, tokens, source, name='', parenttypes=[], parentnames=[]):
+        self._tokens = tokens
+        self._source = source
+        self._name = name
+        self._parenttypes = parenttypes
+        self._parentnames = parentnames
+        self._function = {}
+        self._var = {}
+        self._const = {}
+        self._class = {}
+        self._namespace = {}
+        self._calls = []
+        self._imported = {}
+
+    def __getitem__(self, access):
+        item = None
+        parts = access.split('.')
+        if len(parts) == 1:
+            if access in self._function: item = self._function[access]
+            elif access in self._var: item = self._var[access]
+            elif access in self._const: item = self._const[access]
+            elif access in self._class: item = self._class[access]
+            elif access in self._namespace: item = self._namespace[access]
+        else:
+            ns = parts[0]
+            if ns in self._namespace: item = self._namespace[ns]['.'.join(parts[1:])]
+        return item
+
+    def __contains__(self, item):
+        return (self.__getitem__(item) is not None)
+
+    def _throw(self, err, line, message=''):
+        report = 'line {0}: {1}'.format(line+1, tokenizer.rebuild(line, self._source))
+        if message: report = '{0}: {1}'.format(report, message)
+        raise err(report)
+
+    def _matchbracket(self, start, bracket):
+        match = {'{': '}',
+                 '(': ')',
+                 '[': ']',
+                 '<': '>',
+                 }
+        left = 1
+        n = (start + 1)
+        while n < len(self._tokens):
+            if left == 0: break
+            if self._tokens[n][1] == match[bracket]: left -= 1
+            if self._tokens[n][1] == bracket: left += 1
+            n += 1
+        if not (left == 0):
+            line = self._tokens[start][0]
+            msg = 'line {0}: "{1}": did not found matching pair for opening bracket: {2}'.format(line, tokenizer.rebuild(line, self._source), bracket)
+            raise errors.CompilationError(msg)
+        return (n-start)
+
+    def _matchlogicalend(self, start):
+        n = (start+1)
+        while n < len(self._tokens):
+            if self._tokens[n][1] == ';': break
+            n += 1
+        return (n-start)
+
+    def _getreferencetokens(self, start, use=[]):
+        n, tokens = (0, [])
+        if not use: use = self._tokens
+        l, tok = use[start]
+        while shared.isvalidname(tok) or tok == '.':
+            if (n % 2 == 1) and tok != '.':
+                break
+            if (n % 2 == 0) and tok == '.':
+                self._throw(errors.CompilationError, use[start][0], 'invalid reference')
+            tokens.append((l, tok))
+            n += 1
+            if (start+n) >= len(use): break
+            l, tok = use[start+n]
+        return (n, tokens)
+
+    def _extractfunction(self, index):
+        n = index+1
+        extracted = {'type': None,
+                     'name': None,
+                     'params': None,
+                     'body': None,
+                     }
+        extracted['type'] = self._tokens[n][1]
+        if DEBUG: print(n, self._tokens[n], extracted['type'])
+        n += 1
+        extracted['name'] = self._tokens[n][1]
+        if DEBUG: print(n, self._tokens[n], extracted['name'])
+        n += 1
+        if self._tokens[n][1] == '(':
+            forward = self._matchbracket(start=n, bracket='(')
+            if DEBUG: print(forward)
+            extracted['params'] = self._tokens[n:n+forward]
+            n += forward
+        else:
+            self._throw(errors.CompilationError, self._tokens[n][0])
+        if self._tokens[n][1] == '{':
+            forward = self._matchbracket(start=n, bracket='{')
+            if DEBUG: print(forward)
+            extracted['body'] = self._tokens[n:n+forward]
+            n += forward
+        if self._tokens[n][1] != ';': self._throw(errors.CompilationError, self._tokens[n][0])
+        n += 1
+        leap = (n-index)
+        return (leap, extracted)
+
+    def _extractimport(self, index):
+        n = index+1
+        forward = self._matchlogicalend(start=n)
+        extracted = self._tokens[n:n+forward]
+        n += forward
+        n += 1
+        leap = (n-index)
+        return (leap, extracted)
+
+    def _extractnamespace(self, index):
+        n = index+1
+        extracted = {'name': None,
+                     'body': None,
+                     }
+        extracted['name'] = self._tokens[n][1]
+        if DEBUG: print(n, self._tokens[n], extracted['name'])
+        n += 1
+        if self._tokens[n][1] == '{':
+            forward = self._matchbracket(start=n, bracket='{')
+            if DEBUG: print(forward)
+            extracted['body'] = self._tokens[n:n+forward]
+            n += forward
+        if self._tokens[n][1] != ';': self._throw(errors.CompilationError, self._tokens[n][0])
+        n += 1
+        leap = (n-index)
+        return (leap, extracted)
+
+    def _compilekwFunction(self, code):
+        function = {'name': None,
+                    'type': 'undefined',
+                    'params': {},
+                    'param_order': [],
+                    'body': None,
+                    }
+        for key in ['name', 'type']: function[key] = code[key]
+        function['params'], function['param_order'] = _functiondeclarationparams(code['params'][1:-1], self._source)
+        function['body'] = code['body']
+        if function['body'] is not None: function['body'] = function['body'][1:-1]
+        return function
+
+    def _compilekwImport(self, code):
+        srcpath = tokenizer.dequote(code[0][1])
+        if srcpath in self._imported:
+            if DEBUG: print('reusing previously compiled import file: {0}'.format(srcpath))
+            imported = self._imported[srcpath]
+        else:
+            if DEBUG: print('importing file: {0}'.format(srcpath))
+            ifstream = open(srcpath)
+            source = ifstream.read()
+            ifstream.close()
+            source = tokenizer.tokenize(source)
+            tokens = tokenizer.strip(tokenizer.decomment(joiner.join(source)))
+            if DEBUG: print('  * compiling...')
+            imported = NamespaceTranslator2(tokens=tokens, source=source).translate()
+            if DEBUG: print('  * saving for later reuse...')
+            self._imported[srcpath] = imported
+        if len(code) == 1:
+            for ns in imported.getnamspaces():
+                self._namespace[ns] = imported[ns]
+            for f in imported.getfunctions():
+                self._function[f] = imported[f]
+        else:
+            where = code[1][1]
+            path = code[2][1]
+            what = imported[path]
+            path = path.split('.')[-1]
+            if where == 'namespace':
+                self._namespace[path] = what
+            elif where == 'function':
+                self._function[path] = what
+            else:
+                self._throw(errors.CompilationError, code[0][0], 'bad import')
+
+    def _translate(self, index):
+        line, token = self._tokens[index]
+        if token == 'namespace':
+            leap, code = self._extractnamespace(index)
+            ns = NamespaceTranslator2(tokens=code['body'][1:-1],
+                                      source=self._source,
+                                      name=code['name'],
+                                      )
+            self._namespace[code['name']] = ns.translate()
+        elif token == 'function':
+            leap, code = self._extractfunction(index)
+            self._function[code['name']] = self._compilekwFunction(code)
+        elif token == 'import':
+            leap, code = self._extractimport(index)
+            self._compilekwImport(code)
+        elif token == ';':
+            leap = 1
+        elif shared.isvalidreference(token) and ((token in self) or (token in self._parentnames)):
+            leap = 1
+            if self._tokens[index+leap][1] == '(':
+                forward = self._matchbracket(start=(index+leap), bracket='(')
+                params = self._tokens[index+leap:index+leap+forward]
+                self._calls.append({'call': token, 'params': params})
+                leap += forward
+        elif shared.isvalidreference(token):
+            self._throw(errors.CompilationError, line, 'undeclared reference: {0}'.format(token))
+        else:
+            self._throw(errors.CompilationError, line, 'unexpected token found: {0}'.format(token))
+        return leap
+
+    def _joinreferencetokens(self):
+        joined = []
+        i = 0
+        while i < len(self._tokens):
+            line, token = self._tokens[i]
+            if shared.isvalidname(token):
+                forward, refs = self._getreferencetokens(start=i)
+                token = ''.join([tok for l, tok in refs])
+                i += forward
+            else:
+                i += 1
+            joined.append((line, token))
+        self._tokens = joined
+
+    def finalize(self):
+        self._joinreferencetokens()
+        return self
+
+    def translate(self):
+        i = 0
+        while i < len(self._tokens): i += self._translate(i)
+        return self
+
+    def getnamspaces(self):
+        return self._namespace
+
+    def getfunctions(self):
+        return self._function
+
+    def getcalls(self):
+        return self._calls

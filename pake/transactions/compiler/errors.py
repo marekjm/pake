@@ -30,4 +30,3 @@ class ConstantRedefinitionError(CompilationError):
 
 class InvalidCallError(CompilationError):
     pass
-

@@ -1,0 +1,134 @@
+/*  Ths file must be `import`-ed into every Grass script that is writte for PAKE.
+ *  It contains a declaration of full PAKE API; both network-related and
+ *  local-system-oriented.
+ *
+ *  Note that Grass is a very primitive, simple language and, as such, does not support various features
+ *  that are common in other languages, e.g. loops, if-else statements etc.
+ *  Support for these will be successively added to Grass after it have been extracted into external library and
+ *  incorporated to PAKE as such (to avoid bloating PAKE's original code).
+ *
+ *
+ *  FAQ:
+ *
+ *  Q:  How to import this file into scripts?
+ *  A:  With Grass `import` statement: `import "env/transactions/pake.grass";`
+ *      Compiler will search for the file in all known import-locations and
+ *      import the file from the first found location.
+ *
+ *  Q:  Why do all functions return `void` type?
+ *  A:  Because returning is not yet implemnted in Grass. Whole PAKE API is very passive
+ *      at the moment, even though it exposes PAKE internals fully.
+ *      However, the real implementations of the functions *may* in fact return something;
+ *      in such cases the value is placed on the stack of returned values.
+ *      This is used by PAKE UI to get data from config files, network etc.
+ *
+ *  Q:  So, can I use these returned values?
+ *  A:  In theory you could but you would have to hack around the Runner object used by PAKE UI to
+ *      execute scripts and use its `getstack()` method. If you want to do so - you will be also interested in
+ *      files inside `pake/transactions/compiler/` directory.
+ *
+ *  Q:  What is the best way to write scripts for PAKE then?
+ *  A:  Treat Grass as a nice but declarative language that will just execute calls it finds one after the other, and
+ *      nothing more. I'm sorry but this is the current state of things.
+ *
+ *
+ *
+ *  Copyright (c) 2014 Marek Marecki
+ *
+ *  This file is licensed under the same license as whole PAKE program. See LICENSE file for details.
+ */
+
+
+namespace pake {
+    namespace node {
+        namespace manager {
+            function void init();
+            function void reinit();
+            function void remove();
+        };
+
+        namespace config {
+            namespace meta {
+                function void set();
+                function void get();
+                function void remove();
+                function void getkeys();
+                function void reset();
+            };
+
+            namespace mirrors {
+                function void set();
+                function void get();
+                function void remove();
+                function void geturls();
+                function void genlist();
+            };
+
+            namespace nests {
+                function void register();
+                function void remove();
+                function void get();
+                function void getpaths();
+            };
+        };
+
+        namespace packages {
+            function void genlist();
+        };
+
+        function void push();
+    };
+
+    namespace nest {
+        namespace manager {
+            function void init();
+            function void remove();
+        };
+
+        namespace config {
+            namespace meta {
+                function void set();
+                function void get();
+                function void remove();
+                function void reset();
+            };
+
+            namespace versions {
+                function void add();
+                function void remove();
+                function void getlist();
+            };
+
+            namespace dependencies {
+                function void set();
+                function void update();
+                function void get();
+                function void remove();
+                function void getnames();
+                function void getlist();
+            };
+
+            namespace files {
+                function void add();
+                function void remove();
+                function void getlist();
+            };
+        };
+
+        function void build();
+    };
+
+    namespace network {
+        namespace aliens {
+            function void set();
+            function void get();
+            function void remove();
+            function void geturls();
+            function void getall();
+        };
+    };
+
+    function void setwd(string path);
+};
+
+function void x(string path, bool check=true);

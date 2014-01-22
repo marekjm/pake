@@ -1,9 +1,0 @@
-/* TODO: implement const keyword
-const string include = "./env/transactions/node.pake";
-
-import include;
-*/
-
-import "./env/transactions/node.pake";
-
-node_manager_init();
