@@ -123,9 +123,6 @@ def tokenize(string):
         elif char == " " and word and (word[0] in ['"', "'"] or word[:2] == '//'):
             # don't finish word on whitespace if in string or comment
             word += char
-        #elif char == '/' and ((i < len(string)-1 and string[i+1] == '/') or (word and word[0] == '/')):
-        #    # support for inline comments
-        #    word += char
         elif char in grammar_chars and word and (word[0] in ['"', "'"] or word[:2] == '//'):
             # don't finish word on grammar characters if in string or comment
             word += char
