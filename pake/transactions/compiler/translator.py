@@ -729,9 +729,7 @@ class NamespaceTranslator2():
                 name, value = '', None
             elif tok == ',' and not (step == 0 or step == 3):
                 self._throw(errors.CompilationError, l, 'expected value after = operator')
-            elif step == 0:
-                value = tok
-            elif step == 2:
+            elif step == 0 or step == 2:
                 value = tok
                 step = 3
             else:
