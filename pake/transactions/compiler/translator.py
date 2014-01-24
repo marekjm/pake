@@ -746,11 +746,10 @@ class NamespaceTranslator2():
 
     def _verifycall(self, index, reference, rawparams):
         function = self[reference]
-        required = [k for k in function['params'] if (k['default'] is not None)]
+        required = [k['name'] for k in function['params'] if (k['default'] is None)]
         params = {}
         wasnamed = False
         for name, v in rawparams:
-            #print(name, v)
             if name != '': wasnamed = True
             if name == '' and wasnamed:
                 line = self._tokens[index][0]
@@ -765,12 +764,12 @@ class NamespaceTranslator2():
                 name = function['param_order'][i]
             if name in params:
                 line = self._tokens[index][0]
-                raise self._throw(errors.InvalidCallError, line, 'got multiple values for argument: {0}'.format(name))
+                raise self._throw(errors.InvalidCallError, line, 'got multiple values for argument `{0}` (check function declaration)'.format(name))
             params[name] = value
         for param in required:
             if param not in params:
                 line = self._tokens[index][0]
-                msg = 'missing required parameter for function "{0}": {1}'.format(reference, param)
+                msg = 'missing required parameter "{1}" for function "{0}"'.format(reference, param)
                 raise self._throw(errors.InvalidCallError, line, msg)
         return params
 
@@ -796,11 +795,8 @@ class NamespaceTranslator2():
             if self._tokens[index+leap][1] == '(':
                 forward = self._matchbracket(start=(index+leap), bracket='(')
                 params = self._tokens[index+leap:index+leap+forward]
-                print(params, end=' => ')
                 params = self._functioncallparams(params[1:-1])
-                print(params, end=' => ')
                 params = self._verifycall(index=index, reference=token, rawparams=params)
-                print(params)
                 self._calls.append({'call': token, 'params': params})
                 leap += forward
         elif shared.isvalidreference(token):
