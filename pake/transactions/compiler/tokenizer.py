@@ -116,6 +116,10 @@ def tokenize(string):
             token = (line, word)
             tokens.append(token)
             word = ""
+        elif (char == '"' and word and word[0] not in ['"', "'"]) or (char == "'" and word and word[0] not in ['"', "'"]):
+            token = (line, word)
+            tokens.append(token)
+            word = char
         elif char == " " and word and (word[0] in ['"', "'"] or word[:2] == '//'):
             # don't finish word on whitespace if in string or comment
             word += char
