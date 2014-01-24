@@ -562,7 +562,7 @@ class NamespaceTranslator2():
 
     def _throw(self, err, line, message=''):
         report = 'line {0}: {1}'.format(line+1, tokenizer.rebuild(line, self._source))
-        if message: report = '{0}: {1}'.format(report, message)
+        if message: report = '{0}: {1}'.format(message, report)
         raise err(report)
 
     def _matchbracket(self, start, bracket):
@@ -709,6 +709,66 @@ class NamespaceTranslator2():
             else:
                 self._throw(errors.CompilationError, code[0][0], 'bad import')
 
+    def _functioncallparams(self, tokens):
+        params = []
+        step = 0
+        i = 0
+        name, value = '', None
+        while i < len(tokens):
+            l, tok = tokens[i]
+            if shared.isvalidname(tok) and step == 0:
+                name = tok
+                step = 1
+            elif tok == '=' and step == 1:
+                step = 2
+            elif tok == ',' and (step == 0 or step == 3):
+                step = 0
+                params.append((name, value))
+                name, value = '', None
+            elif step == 0:
+                value = tok
+            elif step == 2:
+                value = tok
+                step = 3
+            else:
+                msg = 'error during step {0} of function call parameters compilation'.format(step)
+                if step == 1: msg = 'expected = operator after parameter name'
+                self._throw(errors.CompilationError, l, msg)
+            i += 1
+        if name != '' and value is None: self._throw(errors.CompilationError, l, 'expected value after = operator')
+        if name == '' and value is not None: self._throw(errors.CompilationError, l, 'expected parameter name before = operator')
+        if value is not None and name != '': params.append((name, value))
+        return params
+
+    def _verifycall(self, index, reference, rawparams):
+        function = self[reference]
+        required = [k for k in function['params'] if (k['default'] is not None)]
+        params = {}
+        wasnamed = False
+        for name, v in rawparams:
+            #print(name, v)
+            if name != '': wasnamed = True
+            if name == '' and wasnamed:
+                line = self._tokens[index][0]
+                raise self._throw(errors.InvalidCallError, line, 'unnamed argument appeared after named argument'.format(name))
+        for i, param in enumerate(rawparams):
+            name, value = param
+            if name == '':
+                maximum = len(function['param_order'])
+                if i >= maximum:
+                    line = self._tokens[index][0]
+                    raise self._throw(errors.InvalidCallError, line, 'got too many arguments, expected at most {0}: {1}'.format(maximum, len(rawparams)))
+                name = function['param_order'][i]
+            if name in params:
+                line = self._tokens[index][0]
+                raise self._throw(errors.InvalidCallError, line, 'got multiple values for argument: {0}'.format(name))
+            params[name] = value
+        for param in required:
+            if param not in params:
+                line = self._tokens[index][0]
+                msg = 'missing required parameter for function "{0}": {1}'.format(reference, param)
+                raise self._throw(errors.InvalidCallError, line, msg)
+
     def _translate(self, index):
         line, token = self._tokens[index]
         if token == 'namespace':
@@ -731,6 +791,10 @@ class NamespaceTranslator2():
             if self._tokens[index+leap][1] == '(':
                 forward = self._matchbracket(start=(index+leap), bracket='(')
                 params = self._tokens[index+leap:index+leap+forward]
+                print(params, end=' => ')
+                params = self._functioncallparams(params[1:-1])
+                print(params)
+                self._verifycall(index=index, reference=token, rawparams=params)
                 self._calls.append({'call': token, 'params': params})
                 leap += forward
         elif shared.isvalidreference(token):
