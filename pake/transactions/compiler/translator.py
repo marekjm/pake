@@ -719,25 +719,29 @@ class NamespaceTranslator2():
             if shared.isvalidname(tok) and step == 0:
                 name = tok
                 step = 1
+            elif tok == '=' and step == 0:
+                self._throw(errors.CompilationError, l, 'expected parameter name before = operator')
             elif tok == '=' and step == 1:
                 step = 2
             elif tok == ',' and (step == 0 or step == 3):
                 step = 0
                 params.append((name, value))
                 name, value = '', None
+            elif tok == ',' and not (step == 0 or step == 3):
+                self._throw(errors.CompilationError, l, 'expected value after = operator')
             elif step == 0:
                 value = tok
             elif step == 2:
                 value = tok
                 step = 3
             else:
-                msg = 'error during step {0} of function call parameters compilation'.format(step)
+                msg = 'error during step {0} of function call parameters compilation: ({1}, `{2}`)'.format(step, name, value)
                 if step == 1: msg = 'expected = operator after parameter name'
                 self._throw(errors.CompilationError, l, msg)
             i += 1
-        if name != '' and value is None: self._throw(errors.CompilationError, l, 'expected value after = operator')
-        if name == '' and value is not None: self._throw(errors.CompilationError, l, 'expected parameter name before = operator')
-        if value is not None and name != '': params.append((name, value))
+        if name and value is None:
+            self._throw(errors.CompilationError, l, 'expected value after = operator')
+        if value is not None: params.append((name, value))
         return params
 
     def _verifycall(self, index, reference, rawparams):
@@ -757,7 +761,7 @@ class NamespaceTranslator2():
                 maximum = len(function['param_order'])
                 if i >= maximum:
                     line = self._tokens[index][0]
-                    raise self._throw(errors.InvalidCallError, line, 'got too many arguments, expected at most {0}: {1}'.format(maximum, len(rawparams)))
+                    raise self._throw(errors.InvalidCallError, line, 'got too many arguments, expected at most {0} but got {1}'.format(maximum, len(rawparams)))
                 name = function['param_order'][i]
             if name in params:
                 line = self._tokens[index][0]
@@ -768,6 +772,7 @@ class NamespaceTranslator2():
                 line = self._tokens[index][0]
                 msg = 'missing required parameter for function "{0}": {1}'.format(reference, param)
                 raise self._throw(errors.InvalidCallError, line, msg)
+        return params
 
     def _translate(self, index):
         line, token = self._tokens[index]
@@ -793,8 +798,9 @@ class NamespaceTranslator2():
                 params = self._tokens[index+leap:index+leap+forward]
                 print(params, end=' => ')
                 params = self._functioncallparams(params[1:-1])
+                print(params, end=' => ')
+                params = self._verifycall(index=index, reference=token, rawparams=params)
                 print(params)
-                self._verifycall(index=index, reference=token, rawparams=params)
                 self._calls.append({'call': token, 'params': params})
                 leap += forward
         elif shared.isvalidreference(token):
