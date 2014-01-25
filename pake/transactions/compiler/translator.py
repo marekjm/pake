@@ -580,8 +580,8 @@ class NamespaceTranslator2():
             n += 1
         if not (left == 0):
             line = self._tokens[start][0]
-            msg = 'line {0}: "{1}": did not found matching pair for opening bracket: {2}'.format(line, tokenizer.rebuild(line, self._source), bracket)
-            raise errors.CompilationError(msg)
+            msg = 'did not found matching pair for opening bracket: {0}'.format(bracket)
+            self._throw(errors.CompilationError, line, msg)
         return (n-start)
 
     def _matchlogicalend(self, start):
@@ -663,6 +663,12 @@ class NamespaceTranslator2():
         leap = (n-index)
         return (leap, extracted)
 
+    def _typeof(self, what, reference=True):
+        if reference: what = self[what]
+        type = 'undefined'
+        if tokenizer.candequote(what): type = 'string'
+        return type
+
     def _compilekwFunction(self, code):
         function = {'name': None,
                     'type': 'undefined',
@@ -711,6 +717,12 @@ class NamespaceTranslator2():
 
     def _functioncallparams(self, tokens):
         params = []
+        if tokens and tokens[-1][1] != ',':
+            # this if block can be removed after var/const reference resolving is implemented
+            # for now it's here to make translator think that everything that looks like valid name
+            # is a parameter name
+            l = tokens[-1][0]
+            tokens.append((l, ','))
         step = 0
         i = 0
         name, value = '', None
@@ -727,7 +739,7 @@ class NamespaceTranslator2():
                 step = 0
                 params.append((name, value))
                 name, value = '', None
-            elif tok == ',' and not (step == 0 or step == 3):
+            elif tok == ',' and step == 2:
                 self._throw(errors.CompilationError, l, 'expected value after = operator')
             elif step == 0 or step == 2:
                 value = tok
@@ -737,7 +749,10 @@ class NamespaceTranslator2():
                 if step == 1: msg = 'expected = operator after parameter name'
                 self._throw(errors.CompilationError, l, msg)
             i += 1
-        if name and value is None:
+        if name and value is None and step != 2:
+            value = name
+            name = ''
+        if name and value is None and step == 2:
             self._throw(errors.CompilationError, l, 'expected value after = operator')
         if value is not None: params.append((name, value))
         return params
@@ -769,6 +784,13 @@ class NamespaceTranslator2():
                 line = self._tokens[index][0]
                 msg = 'missing required parameter "{1}" for function "{0}"'.format(reference, param)
                 raise self._throw(errors.InvalidCallError, line, msg)
+        for key in params:
+            value = params[key]
+            typeof = self._typeof(value, reference=False)
+            expected = [k for k in function['params'] if (k['name'] == key)][0]['type']
+            print('typeof {0} == {1}'.format(key, typeof))
+            if typeof != expected and expected != 'undefined':
+                self._throw(errors.InvalidCallError, self._tokens[index][0], 'invalid type of argument given to parameter "{0}", expected "{1}" but got "{2}"'.format(key, expected, typeof))
         return params
 
     def _translate(self, index):
@@ -797,6 +819,8 @@ class NamespaceTranslator2():
                 params = self._verifycall(index=index, reference=token, rawparams=params)
                 self._calls.append({'call': token, 'params': params})
                 leap += forward
+        elif token in shared.getkeywords():
+            self._throw(errors.CompilationError, line, 'keyword not implemented: {0}'.format(token))
         elif shared.isvalidreference(token):
             self._throw(errors.CompilationError, line, 'undeclared reference: {0}'.format(token))
         else:

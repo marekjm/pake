@@ -13,13 +13,11 @@ grammar_chars = shared.getgrammarchars()
 
 def dequote(s):
     """Remove quotes from string ends.
-    If string is empty - returns empty string.
-    If string has length equal to 1 - return this string without dequoting.
     """
     if type(s) is not str: raise TypeError('expected string but got {0}'.format(type(s)))
     if len(s) >= 2 and s[0] == '"' and s[-1] == '"': s = s[1:-1]
     elif len(s) >= 2 and s[0] == "'" and s[-1] == "'": s = s[1:-1]
-    else: raise errors.MetalSyntaxError('unable to dequote string: {0}'.format(repr(s)))
+    else: raise SyntaxError('unable to dequote string: {0}'.format(repr(s)))
     return s
 
 
@@ -29,7 +27,7 @@ def candequote(s):
     """
     result = True
     try: dequote(s)
-    except SyntaxError: result = False
+    except (Exception): result = False
     finally: return result
 
 
