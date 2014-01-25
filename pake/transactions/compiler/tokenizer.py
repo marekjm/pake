@@ -110,7 +110,6 @@ def tokenize(string):
     for i in range(len(string)):
         char = string[i]
 
-        if ((char == '"' and word and word[0] == '"') or (char == "'" and word and word[0] == "'")) and (word and word[-1] == '\\'): print(word[-1])
         if ((char == '"' and word and word[0] == '"') or (char == "'" and word and word[0] == "'")) and (word and word[-1] != '\\'):
             # support for strings
             word += char
