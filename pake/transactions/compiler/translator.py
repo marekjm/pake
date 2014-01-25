@@ -788,7 +788,6 @@ class NamespaceTranslator2():
             value = params[key]
             typeof = self._typeof(value, reference=False)
             expected = [k for k in function['params'] if (k['name'] == key)][0]['type']
-            print('typeof {0} == {1}'.format(key, typeof))
             if typeof != expected and expected != 'undefined':
                 self._throw(errors.InvalidCallError, self._tokens[index][0], 'invalid type of argument given to parameter "{0}", expected "{1}" but got "{2}"'.format(key, expected, typeof))
         return params

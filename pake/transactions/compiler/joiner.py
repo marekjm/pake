@@ -117,10 +117,14 @@ def _joinstrings(tokens):
     while i < len(tokens):
         line, token = tokens[i]
         if tokenizer.candequote(token):
-            if (i+1) < len(tokens) and tokenizer.candequote(tokens[i+1]):
+            if (i+1) < len(tokens) and tokenizer.candequote(tokens[i+1][1]):
                 quote = token[0]
                 token = token[:-1] + tokens[i+1][1][1:-1] + quote
                 i += 1
+            if (i+2) < len(tokens) and tokenizer.candequote(tokens[i+2][1]) and tokens[i+1][1] == '\n':
+                quote = token[0]
+                token = token[:-1] + tokens[i+2][1][1:-1] + quote
+                i += 2
         i += 1
         joined.append((line, token))
     return joined
