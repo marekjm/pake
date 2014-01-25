@@ -42,16 +42,16 @@
 namespace pake {
     namespace node {
         namespace manager {
-            function void init();
-            function void reinit();
-            function void remove();
+            function void init(string path);
+            function void reinit(string path);
+            function void remove(string path);
         };
 
         namespace config {
             namespace meta {
-                function void set();
-                function void get();
-                function void remove();
+                function void set(string key, string value);
+                function void get(string key);
+                function void remove(string key);
                 function void getkeys();
                 function void reset();
             };
@@ -130,5 +130,3 @@ namespace pake {
 
     function void setwd(string path);
 };
-
-function void x(string path, bool check=true);
