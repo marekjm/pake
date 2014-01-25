@@ -100,22 +100,22 @@ namespace pake {
             };
 
             namespace dependencies {
-                function void set();
-                function void update();
-                function void get();
-                function void remove();
+                function void set(string name, string origin='', string min='', string max='');
+                function void update(string name, string origin='', string min='', string max='');
+                function void get(string name);
+                function void remove(string name);
                 function void getnames();
                 function void getlist();
             };
 
             namespace files {
-                function void add();
-                function void remove();
+                function void add(string path);
+                function void remove(string path);
                 function void getlist();
             };
         };
 
-        function void build();
+        function void build(string version);
     };
 
     namespace network {
