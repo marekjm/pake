@@ -110,7 +110,8 @@ def tokenize(string):
     for i in range(len(string)):
         char = string[i]
 
-        if (char == '"' and word and word[0] == '"') or (char == "'" and word and word[0] == "'"):
+        if ((char == '"' and word and word[0] == '"') or (char == "'" and word and word[0] == "'")) and (word and word[-1] == '\\'): print(word[-1])
+        if ((char == '"' and word and word[0] == '"') or (char == "'" and word and word[0] == "'")) and (word and word[-1] != '\\'):
             # support for strings
             word += char
             token = (line, word)
@@ -139,6 +140,8 @@ def tokenize(string):
             if word: tokens.append(token)
             token = (line, char)
             tokens.append(token)
+            if word and ((word[0] == '"' and word[-1] != '"') or (word[0] == "'" and word[0] != "'")):
+                raise errors.CompilationError('strings cannot be broken by newlines: line {0}: {1}'.format(line, rebuild(line, tokens)))
             line += 1
             word = ''
         else:
