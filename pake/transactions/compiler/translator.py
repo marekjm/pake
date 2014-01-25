@@ -157,7 +157,12 @@ class NamespaceTranslator2():
             if DEBUG: print(forward)
             extracted['body'] = self._tokens[n:n+forward]
             n += forward
-        if self._tokens[n][1] != ';': self._throw(errors.CompilationError, self._tokens[n][0])
+        if self._tokens[n][1] != ';':
+            msg = 'missing semicolon after function '
+            if extracted['body'] is None: msg += 'declaration'
+            else: msg += 'definition'
+            msg += ' starting on line {0}'.format(self._tokens[index+1][0]+1)
+            self._throw(errors.CompilationError, self._tokens[n-1][0], msg)
         n += 1
         leap = (n-index)
         return (leap, extracted)
