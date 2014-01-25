@@ -203,6 +203,7 @@ class NamespaceTranslator2():
         if reference: what = self[what]
         type = 'undefined'
         if tokenizer.candequote(what): type = 'string'
+        elif what in ['true', 'false']: type = 'bool'
         return type
 
     def _compilekw_const(self, index):
