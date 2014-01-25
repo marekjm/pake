@@ -15,7 +15,7 @@ valid_name_re = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*$')
 
 
 def isvalidname(name):
-    return valid_name_re.match(name) is not None
+    return valid_name_re.match(name) is not None and name not in getkeywords()
 
 
 def isvalidreference(s):

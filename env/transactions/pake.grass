@@ -81,21 +81,21 @@ namespace pake {
 
     namespace nest {
         namespace manager {
-            function void init();
-            function void remove();
+            function void init(string path);
+            function void remove(string path);
         };
 
         namespace config {
             namespace meta {
-                function void set();
-                function void get();
-                function void remove();
+                function void set(string key, string value);
+                function void get(string key);
+                function void remove(string key);
                 function void reset();
             };
 
             namespace versions {
-                function void add();
-                function void remove();
+                function void add(string version, bool check=false, bool strict=false);
+                function void remove(string version);
                 function void getlist();
             };
 

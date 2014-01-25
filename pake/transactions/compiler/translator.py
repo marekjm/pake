@@ -390,6 +390,8 @@ class NamespaceTranslator2():
             self._namespace[code['name']] = ns.translate()
         elif token == 'function':
             leap, code = self._extractfunction(index)
+            if not shared.isvalidname(code['name']):
+                self._throw(errors.CompilationError, line, 'invalid function name')
             self._function[code['name']] = self._compilekwFunction(code)
         elif token == 'import':
             leap, code = self._extractimport(index)
