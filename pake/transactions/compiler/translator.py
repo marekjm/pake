@@ -343,6 +343,7 @@ class NamespaceTranslator2():
     def _verifycall(self, index, reference, rawparams):
         function = self[reference]
         required = [k['name'] for k in function['params'] if (k['default'] is None)]
+        known = [k['name'] for k in function['params']]
         params = {}
         wasnamed = False
         for name, v in rawparams:
@@ -361,6 +362,9 @@ class NamespaceTranslator2():
             if name in params:
                 line = self._tokens[index][0]
                 raise self._throw(errors.InvalidCallError, line, 'got multiple values for argument `{0}`'.format(name))
+            if name not in known:
+                line = self._tokens[index][0]
+                raise self._throw(errors.InvalidCallError, line, 'got unknown parameter: `{0}`'.format(name))
             params[name] = value
         for param in required:
             if param not in params:
