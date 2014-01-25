@@ -57,17 +57,17 @@ namespace pake {
             };
 
             namespace mirrors {
-                function void set();
-                function void get();
-                function void remove();
+                function void set(string url, string host, string cwd);
+                function void get(string url);
+                function void remove(string url);
                 function void geturls();
                 function void genlist();
             };
 
             namespace nests {
-                function void register();
-                function void remove();
-                function void get();
+                function void register(string path);
+                function void remove(string name);
+                function void get(string name);
                 function void getpaths();
             };
         };
@@ -76,7 +76,7 @@ namespace pake {
             function void genlist();
         };
 
-        function void push();
+        function void push(string url, string username, string password);
     };
 
     namespace nest {
