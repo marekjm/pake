@@ -91,6 +91,11 @@ class NamespaceTranslator2():
         if message: report = '{0}: {1}'.format(message, report)
         raise err(report)
 
+    def _warn(self, line, message=''):
+        report = 'line {0}: {1}'.format(line+1, tokenizer.rebuild(line, self._source))
+        if message: report = '{0}: {1}'.format(message, report)
+        print('warning: {0}'.format(report))
+
     def _matchbracket(self, start, bracket):
         match = {'{': '}',
                  '(': ')',
@@ -355,7 +360,7 @@ class NamespaceTranslator2():
                 name = function['param_order'][i]
             if name in params:
                 line = self._tokens[index][0]
-                raise self._throw(errors.InvalidCallError, line, 'got multiple values for argument `{0}` (check function declaration)'.format(name))
+                raise self._throw(errors.InvalidCallError, line, 'got multiple values for argument `{0}`'.format(name))
             params[name] = value
         for param in required:
             if param not in params:
@@ -391,6 +396,8 @@ class NamespaceTranslator2():
             leap = 1
             if self._tokens[index+leap][1] == '(':
                 forward = self._matchbracket(start=(index+leap), bracket='(')
+                look = (index+leap+forward)
+                if self._tokens[look][1] != ';': self._warn(self._tokens[look-1][0], 'missing semicolon after function call')
                 params = self._tokens[index+leap:index+leap+forward]
                 params = self._functioncallparams(params[1:-1])
                 params = self._verifycall(index=index, reference=token, rawparams=params)
