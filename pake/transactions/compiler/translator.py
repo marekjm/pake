@@ -279,7 +279,7 @@ class NamespaceTranslator2():
         name = piece['name']
         del piece['name']
         thisis = self._whatis(name)
-        if thisis is None or thisis == 'const':
+        if thisis is None:
             self._const[name] = piece
         else:
             self._throw(errors.CompilationError, self._tokens[index][0], 'cannot declare const with name `{0}`: {1} with this name exists'.format(name, thisis))
