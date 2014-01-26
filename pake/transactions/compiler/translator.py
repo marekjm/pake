@@ -230,6 +230,23 @@ class NamespaceTranslator2():
             if ns in self._namespace: what = self._namespace[ns]._whatis('.'.join(parts[1:]))
         return what
 
+    def _delete(self, reference):
+        parts = reference.split('.')
+        what = parts[0]
+        if len(parts) == 1:
+            opts = [self._var,
+                    self._const,
+                    self._function,
+                    self._class,
+                    self._namespace
+                    ]
+            for opt in opts:
+                if what in opt:
+                    del opt[what]
+        else:
+            ns = parts[0]
+            if ns in self._namespace: self._namespace[ns]._delete('.'.join(parts[1:]))
+
     def _containstypes(self):
         return []
 
@@ -238,6 +255,14 @@ class NamespaceTranslator2():
 
     def _eval(self, tokens):
         return '.'.join(tokens)
+
+    def _compilekwDelete(self, index):
+        leap = self._matchlogicalend(start=index)
+        ref = self._tokens[index+1][1]
+        if self[ref] is None:
+            self._throw(errors.CompilationError, self._tokens[index][0], 'undeclared reference: {0}'.format(ref))
+        self._delete(ref)
+        return leap
 
     def _compiledatapiece(self, index, allow_declarations=True):
         leap = self._matchlogicalend(start=index)
@@ -256,12 +281,12 @@ class NamespaceTranslator2():
             eq = words.index('=')
             declaration = words[:eq]
             definition = words[eq+1:]
-        if len(declaration) == 1 and shared.isvalidname(declaration[0]):
+        if len(declaration) == 1:
             piecetype = 'undefined'
             piecename = declaration[0]
-        elif len(declaration) > 1:
-            piecetype = declaration[0]
-            piecename = declaration[1]
+        else:
+            piecetype = declaration[-2]
+            piecename = declaration[-1]
         if self._isvalidtype(piecetype): piece['type'] = piecetype
         else: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition: invalid type: `{0}`'.format(piecetype))
         if shared.isvalidname(piecename): piece['name'] = piecename
@@ -444,6 +469,8 @@ class NamespaceTranslator2():
             leap = self._compilekwConst(index)
         elif token == 'var':
             leap = self._compilekwVar(index)
+        elif token == 'delete':
+            leap = self._compilekwDelete(index)
         elif token == ';':
             leap = 1
         elif shared.isvalidreference(token) and ((token in self) or (token in self._parentnames)):
