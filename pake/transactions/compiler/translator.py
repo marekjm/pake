@@ -448,7 +448,7 @@ class NamespaceTranslator2():
             if shared.isvalidreference(value) and self._whatis(value) is None:
                 self._throw(errors.CompilationError, self._tokens[index][0], 'undeclared reference passed as an argument in parameter `{0}`'.format(key))
             if shared.isvalidreference(value) and self[value]['value'] is None:
-                self._throw(errors.CompilationError, self._tokens[index][0], 'void (probably not initialized as type is matching) reference passed as an argument in parameter `{0}`'.format(key))
+                self._throw(errors.CompilationError, self._tokens[index][0], 'void reference passed as an argument in parameter `{0}`'.format(key))
             typeof = self._typeof(value)
             expected = [k for k in function['params'] if (k['name'] == key)][0]['type']
             if typeof != expected and expected != 'undefined':
