@@ -296,7 +296,10 @@ class NamespaceTranslator2():
         if not is_declaration and piece['type'] != valuetype and piece['type'] != 'undefined':
             self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition: mismatched types: declared was "{0}" but got "{1}"'.format(piece['type'], valuetype))
         if not is_declaration and piecevalue is None: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition')
-        if piecevalue is not None: piece['value'] = piecevalue
+        if shared.isvalidreference(piecevalue):
+            ref = piecevalue
+            piecevalue = self[ref]
+        if not is_declaration: piece['value'] = piecevalue
         return (leap, piece)
 
     def _compilekwConst(self, index):
@@ -442,10 +445,23 @@ class NamespaceTranslator2():
                 raise self._throw(errors.InvalidCallError, line, msg)
         for key in params:
             value = params[key]
+            if shared.isvalidreference(value) and self._whatis(value) is None:
+                self._throw(errors.CompilationError, self._tokens[index][0], 'undeclared reference passed as an argument in parameter `{0}`'.format(key))
+            if shared.isvalidreference(value) and self[value]['value'] is None:
+                self._throw(errors.CompilationError, self._tokens[index][0], 'void (probably not initialized as type is matching) reference passed as an argument in parameter `{0}`'.format(key))
             typeof = self._typeof(value)
             expected = [k for k in function['params'] if (k['name'] == key)][0]['type']
             if typeof != expected and expected != 'undefined':
                 self._throw(errors.InvalidCallError, self._tokens[index][0], 'invalid type of argument given to parameter "{0}", expected "{1}" but got "{2}"'.format(key, expected, typeof))
+        return params
+
+    def _finalizecall(self, line, reference, params):
+        for key, value in params.items():
+            if shared.isvalidreference(value): value = self[value]['value']
+            params[key] = value
+        for param in self[reference]['params']:
+            key, value = param['name'], param['default']
+            if key not in params: params[key] = value
         return params
 
     def _translate(self, index):
@@ -482,6 +498,7 @@ class NamespaceTranslator2():
                 params = self._tokens[index+leap:index+leap+forward]
                 params = self._functioncallparams(params[1:-1])
                 params = self._verifycall(index=index, reference=token, rawparams=params)
+                params = self._finalizecall(line=line, reference=token, params=params)
                 self._calls.append({'call': token, 'params': params})
                 leap += forward
             elif self._tokens[index+leap][1] == '=':
@@ -493,6 +510,11 @@ class NamespaceTranslator2():
                     piecetype = self._typeof(self._tokens[index][1])
                     if piecetype != valuetype and piecetype != 'undefined':
                         self._throw(errors.CompilationError, line, 'invalid declaration/definition: mismatched types: declared was "{0}" but got "{1}"'.format(piecetype, valuetype))
+                    if shared.isvalidreference(piecevalue):
+                        if self[piecevalue] is None:
+                            self._throw(errors.CompilationError, line, 'undeclared reference: {0}'.format(piecevalue))
+                        else:
+                            piecevalue = self[piecevalue]['value']
                     self._var[token]['value'] = piecevalue
                     leap += forward
                 else:
