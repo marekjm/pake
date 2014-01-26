@@ -199,25 +199,32 @@ class NamespaceTranslator2():
         leap = (n-index)
         return (leap, extracted)
 
-    def _typeof(self, what, reference=True):
-        if reference: what = self[what]
-        type = 'undefined'
-        if tokenizer.candequote(what): type = 'string'
-        elif what in ['true', 'false']: type = 'bool'
+    def _typeof(self, what):
+        reference = shared.isvalidreference(what)
+        if reference:
+            type = self[what]['type']
+        elif tokenizer.candequote(what):
+            type = 'string'
+        elif what in ['true', 'false']:
+            type = 'bool'
+        else:
+            type = None
         return type
 
-    def _compilekw_const(self, index):
-        leap, piece = self._compiledatapiece(index, allow_declarations=False)
-        name = piece['name']
-        del piece['name']
-        self._const[name] = piece
-        return leap
+    def _containstypes(self):
+        return []
+
+    def _isvalidtype(self, reference):
+        return reference in types or reference in self._containstypes()
+
+    def _eval(self, tokens):
+        return '.'.join(tokens)
 
     def _compiledatapiece(self, index, allow_declarations=True):
         leap = self._matchlogicalend(start=index)
         tokens = self._tokens[index+1:index+leap]
         words = [tok for l, tok in tokens]
-        piece = {'type': 'undefined',
+        piece = {'type': None,
                  'value': None,
                  'name': None
                  }
@@ -230,23 +237,32 @@ class NamespaceTranslator2():
             eq = words.index('=')
             declaration = words[:eq]
             definition = words[eq+1:]
-        if len(declaration) == 1 and shared.isvalidname(declaration[0]) and declaration[0] not in self.hastypes():
+        if len(declaration) == 1 and shared.isvalidname(declaration[0]):
+            piece['type'] = 'undefined'
             piece['name'] = declaration[0]
         elif len(declaration) > 1:
-            n, piecetypetokens = self._getreferencetokens(index+1)
-            if n == len(declaration)-1:
-                piecetype = '.'.join(declaration[:-1])
-                piecename = declaration[-1]
-            if piecetype in self.hastypes() and shared.isvalidname(piecename):
-                piece['type'] = piecetype
-                piece['name'] = piecename
-        if piece['name'] is None: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition')
-        piecevalue = '.'.join(definition)
+            piecetype = declaration[0]
+            piecename = declaration[1]
+            if self._isvalidtype(piecetype): piece['type'] = piecetype
+            else: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition: invalid type: `{0}`'.format(piecetype))
+            if shared.isvalidname(piecename): piece['name'] = piecename
+            else: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition: invalid name: `{0}`'.format(piecename))
+        piecevalue = self._eval(definition)
+        valuetype = self._typeof(piecevalue)
+        if piece['type'] != valuetype and piece['type'] != 'undefined':
+            self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition: mismatched types: declared was "{0}" but got "{1}"'.format(piece['type'], valuetype))
         if piecevalue: piece['value'] = piecevalue
         if not is_declaration and piece['value'] is None: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition')
         return (leap, piece)
 
-    def _compilekw_var(self, index):
+    def _compilekwConst(self, index):
+        leap, piece = self._compiledatapiece(index, allow_declarations=False)
+        name = piece['name']
+        del piece['name']
+        self._const[name] = piece
+        return leap
+
+    def _compilekwVar(self, index):
         leap, piece = self._compiledatapiece(index)
         name = piece['name']
         del piece['name']
@@ -374,7 +390,7 @@ class NamespaceTranslator2():
                 raise self._throw(errors.InvalidCallError, line, msg)
         for key in params:
             value = params[key]
-            typeof = self._typeof(value, reference=False)
+            typeof = self._typeof(value)
             expected = [k for k in function['params'] if (k['name'] == key)][0]['type']
             if typeof != expected and expected != 'undefined':
                 self._throw(errors.InvalidCallError, self._tokens[index][0], 'invalid type of argument given to parameter "{0}", expected "{1}" but got "{2}"'.format(key, expected, typeof))
@@ -397,6 +413,10 @@ class NamespaceTranslator2():
         elif token == 'import':
             leap, code = self._extractimport(index)
             self._compilekwImport(code)
+        elif token == 'const':
+            leap = self._compilekwConst(index)
+        elif token == 'var':
+            leap = self._compilekwVar(index)
         elif token == ';':
             leap = 1
         elif shared.isvalidreference(token) and ((token in self) or (token in self._parentnames)):
@@ -404,7 +424,7 @@ class NamespaceTranslator2():
             if self._tokens[index+leap][1] == '(':
                 forward = self._matchbracket(start=(index+leap), bracket='(')
                 look = (index+leap+forward)
-                if self._tokens[look][1] != ';': self._warn(self._tokens[look-1][0], 'missing semicolon after function call')
+                if look >= len(self._tokens) or self._tokens[look][1] != ';': self._warn(self._tokens[look-1][0], 'missing semicolon after function call')
                 params = self._tokens[index+leap:index+leap+forward]
                 params = self._functioncallparams(params[1:-1])
                 params = self._verifycall(index=index, reference=token, rawparams=params)
