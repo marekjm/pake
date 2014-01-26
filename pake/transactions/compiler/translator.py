@@ -211,6 +211,25 @@ class NamespaceTranslator2():
             type = None
         return type
 
+    def _whatis(self, reference):
+        parts = reference.split('.')
+        what = None
+        if len(parts) == 1:
+            opts = [(self._var, 'var'),
+                    (self._const, 'const'),
+                    (self._function, 'function'),
+                    (self._class, 'class'),
+                    (self._namespace, 'namespace')
+                    ]
+            for opt, keyword in opts:
+                if parts[0] in opt:
+                    what = keyword
+                    break
+        else:
+            ns = parts[0]
+            if ns in self._namespace: what = self._namespace[ns]._whatis('.'.join(parts[1:]))
+        return what
+
     def _containstypes(self):
         return []
 
@@ -430,6 +449,14 @@ class NamespaceTranslator2():
                 params = self._verifycall(index=index, reference=token, rawparams=params)
                 self._calls.append({'call': token, 'params': params})
                 leap += forward
+            elif self._tokens[index+leap][1] == '=':
+                thisis = self._whatis(token)
+                if thisis == 'var':
+                    forward = self._matchlogicalend(start=index)
+                    print('variable redefinition...')
+                    leap += forward
+                else:
+                    self._throw(errors.CompilationError, line, 'invalid redefinition attempt for `{0}`'.format(thisis))
         elif token in shared.getkeywords():
             self._throw(errors.CompilationError, line, 'keyword not implemented: {0}'.format(token))
         elif shared.isvalidreference(token):
