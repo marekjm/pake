@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 
-"""Part of Akemetal responsible for translating tokens into
+"""Part of Grass responsible for translating tokens into
 executable form.
 """
+
+import warnings
+from . import tokenizer, joiner, shared, errors
 
 
 # Flags
 DEBUG = False
-
-
-from . import tokenizer, joiner, shared, errors
 
 
 types = ['int', 'float', 'string', 'bool', 'undefined', 'void']
@@ -265,6 +265,7 @@ class NamespaceTranslator2():
         return leap
 
     def _compiledatapiece(self, index, allow_declarations=True):
+        warnings.warn('refactor datapiece compilation ASAP')
         leap = self._matchlogicalend(start=index)
         tokens = self._tokens[index+1:index+leap]
         words = [tok for l, tok in tokens]
@@ -502,6 +503,7 @@ class NamespaceTranslator2():
                 self._calls.append({'call': token, 'params': params})
                 leap += forward
             elif self._tokens[index+leap][1] == '=':
+                warnings.warn('refactor datapiece compilation ASAP')
                 thisis = self._whatis(token)
                 if thisis == 'var':
                     forward = self._matchlogicalend(start=index)
