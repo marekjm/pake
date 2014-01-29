@@ -87,7 +87,7 @@ var foo;
 foo = "foo";        // legal: undefined-type name can take a value of any type
 
 var bool bar;
-bar = "bar";        /* illegal, will throw compilaeion error:
+bar = "bar";        /* illegal, will throw compilation error:
                      * cannot assign value with type `string` to name with declared type `bool`
                      */
 
@@ -129,6 +129,83 @@ var string foo;         // type: string, value: none (redeclarations drop values
 foo = "foo";
 var string foo;         // type: string, value: none (redeclarations drop values even if redeclaed to the same type)
 var bool foo = true;    // type: bool, value: true (instant definitions are possible with redeclarations)
+```
+
+
+### Modifiers
+
+Modifiers are inserted between the defining keyword and type declaration inside declaration of a name.
+Here is a list of all modifiers available in Grass (NI means it is not yet implemented, i.e. will be accepted but
+will not affect behaviour of the compiler):
+
+* `guard` (NI): prevent name from being deleted,
+* `hard` (NI): applies only to variables, make the type stronger - prevents redeclarations,
+* `infer` (NI): applies only to variables, make the variable switch types dynamically - changing its type to the type of the value it holds in given moment,
+
+The `infer` and `string` modifiers do not make sense when passed togeher and
+translator should throw a compilation error when they both are given to one name.
+
+**Syntax when using modifiers**
+
+The syntax is more restrictive when modifiers are used, i.e. type declaration CANNOT be omitted.
+To give the example: `var foo = true;` is legal syntax but `var infer foo = true;` is not.
+This is due to the internal working of the compiler.
+
+Lets say there is a need to create a variable that will hold `string` and then a `bool` value.
+This can be achieved oth with redeclarations aor `infer` modifier.
+
+*With redeclarations:*
+
+```
+var string foo;
+foo = "this is true";   // type: string
+
+/* some code */
+
+var bool foo;   // redeclaration to change type to bool, `foo = true;` would be illegal
+foo = true;     // type: bool
+```
+
+*With `infer` modifier:*
+
+```
+var infer string foo;
+foo = "this is true";       // legal, types match
+
+/* some code */
+
+foo = true;  // also legal, because of the `infer` modifier
+```
+
+**Modifiers can be removed by redeclaring the variable without them.**
+Note, however, hat `strong` modifier prevents redeclarations so in this case a variable must be `delete`-ed first.
+
+
+*Creating a datapiece name which value and type cannot be changed, and which cannot be deleted*
+
+```
+const guard bool truth = true;
+```
+
+*Creating a datapiece name which type cannot be changed, and which cannot be deleted*
+
+```
+var guard hard bool spam = "with eggs";
+
+spam = 'with ham';  // OK, it's a variable - value still can be changed
+var spam;           // compilation error: `strong` prevents redeclarations
+delete spam;        // compilation error: `guard` prevents from being deleted
+```
+
+*Creating a datapiece name that adjusts its type dynamically*
+
+The `infer` modifer allows for changing type of the variable without redeclaring it.
+
+```
+var infer something;    // type: undefined or void
+
+something = true;   // type: bool
+something = "spam"; // type: string
 ```
 
 
