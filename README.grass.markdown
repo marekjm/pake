@@ -8,6 +8,9 @@ separate fast-changing, alpha-state internals from mostly solid UI.
 
 ## Features
 
+Here are described current features of the Grass metalanguage.
+
+----
 
 ### Comments
 
@@ -25,6 +28,7 @@ function void foo(string s /* this is typed parameter */, undefined u /* and thi
 This will not throw errors during compilation as
 translator MUST strip comments and whitespace before it starts compilation.
 
+---
 
 ### Constants
 
@@ -51,6 +55,7 @@ truth = false;              // illegal, will throw compilation error
 const string truth = "ultimate";    // illegal, will throw compilation error
 ```
 
+----
 
 ### Variables
 
@@ -131,6 +136,7 @@ var string foo;         // type: string, value: none (redeclarations drop values
 var bool foo = true;    // type: bool, value: true (instant definitions are possible with redeclarations)
 ```
 
+----
 
 ### Modifiers
 
@@ -208,6 +214,7 @@ something = true;   // type: bool
 something = "spam"; // type: string
 ```
 
+----
 
 ### Functions
 
@@ -242,6 +249,7 @@ names with undefined type accept value of any type.
 However, a parameter with defined type will not accept value with undefined type.
 Parameter can be set as accepting arguments with undefined type by omitting type declaration or explicitly defining type as `undefined`.
 
+----
 
 ### Function calls
 
@@ -317,6 +325,7 @@ foo(truth="true");      // invalid type
 foo(spam="with eggs");  // unknown parameter
 ```
 
+----
 
 ### Namespaces
 
@@ -353,6 +362,7 @@ namespace Foo {
 };
 ```
 
+----
 
 ### Deleting names
 
@@ -370,6 +380,7 @@ delete foo;                 // free the name
 const bool foo = true;      // redeclare `foo` as constant bool
 ```
 
+----
 
 ### Importing
 
@@ -419,3 +430,11 @@ Type checking can be disabled in function declarations by specifying parameter t
 It is sometimes useful to disable type-checking in functions but is mostly useless
 when declaring variables and constants -- references with undefined type are usually rejected
 and giving such datapiece a value does not override it's type declaration.
+
+
+&nbsp;
+
+----
+
+Copyright (c) 2014 Marek Marecki  
+Grass is licensed under GNU GPL v2, v3 or any later version of this license.
