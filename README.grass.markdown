@@ -9,6 +9,23 @@ separate fast-changing, alpha-state internals from mostly solid UI.
 ## Features
 
 
+### Comments
+
+Grass supports two types of comments:
+
+* inline: starting with `//` token and going until first newline `\n` is found,
+* block: starting with `/*` token and going until `*/` closing token is found,
+
+Block comments can be inserted in very strange places like function parameters list:
+
+```
+function void foo(string s /* this is typed parameter */, undefined u /* and this is untyped parameter */);
+```
+
+This will not throw errors during compilation as
+translator MUST strip comments and whitespace before it starts compilation.
+
+
 ### Constants
 
 Keyword: `const`  
@@ -70,7 +87,9 @@ var foo;
 foo = "foo";        // legal: undefined-type name can take a value of any type
 
 var bool bar;
-bar = "bar";        // illegal, will throw compilation error: cannot assign value with type `string` to name with declared type `bool`
+bar = "bar";        /* illegal, will throw compilaeion error:
+                     * cannot assign value with type `string` to name with declared type `bool`
+                     */
 
 var string s;
 s = "something";    // legal: value's type matches declared type of the name
@@ -113,15 +132,122 @@ var bool foo = true;    // type: bool, value: true (instant definitions are poss
 ```
 
 
+### Functions
+
+Keyword: `function`  
+Syntax: `function [modifiers...] name ( [[type] parameter,]... ) [{}] ;`
+
+Given the fact that Grass doesn't currently (2014-01-28) have any concpet of flow-control structures function body is not compiled and
+thus not used.
+Functions in Grass act as a way of exposing other program's internals - and to act as a separation layer and API.
+Actual implementations of declared functions are written in real language (e.g. Python) for which a Grass bridge exists.
+
+However, Grass will perform all necessary type-checking and parameter/arguments validation so if the API is properly exposed,
+Grass output can be usually executed by runner without further validation (apart from necessary conversion between Grass datatype representations and
+the target language datatype representations).
+
+*Various ways of declaring functions:*
+
+```
+function void foo ();           // no parameters
+
+function void foo (x);          // one parameter with undefined type and no default value
+
+function void foo (string x);   // one parameter with defined type and no default value
+
+function void foo (x="");       // one parameter with undefined type and set default value
+
+function void foo (string x="");    // one parameter with defined type and set default value   
+```
+
+When function parameter is declared with an undefined type, type-checking can be *considered disabled* for this parameter as
+names with undefined type accept value of any type.
+However, a parameter with defined type will not accept value with undefined type.
+Parameter can be set as accepting arguments with undefined type by omitting type declaration or explicitly defining type as `undefined`.
+
+
+### Function calls
+
+One of the most important features of Grass.
+After compilatio, function calls are executed by runner written in target language.
+
+**Passing parameters**
+
+When calling a function parameters can be passed to it in several ways.
+The way of passing a parameter does not affect type checking mechanism.
+
+*Unnamed*
+
+Parameter names are resolved based on he parameter name order.
+
+```
+function void f(x, y, z);
+
+f(0, 1, 2);  // x: 0, y: 1, z: 2
+```
+
+*Named*
+
+Parameter names are taken from the call tokens.
+
+```
+function void f(x, y, z);
+
+f(x=0, y=1, z=2);
+```
+
+*Mixed*
+
+Parameter names are resolved based on the parameter order set by the declaration, and partially taken from call toknes.
+One restriction of this style of calling is that unnamed parameter MUST NOT appear after named parameter (as it breaks the reliablility of
+parameter order).
+
+```
+function void f(x, y, z);
+
+f(0, 1, z=2);   // legal
+f(0, y=1, z=2); // legal
+f(x=0, 1, z=2); // illegal
+```
+
+**Default parameters**
+
+Parameters may be ommited in call when they have default value set (it's in such cases assumed that this
+parameter takes default value set in declaration).
+
+```
+function void f(bool truth = true);
+
+f();  // legal, `truth` is assumed to be `true`
+```
+
+**Invalid calls**
+
+Invalid calls are caught at compile time which ensures validity and safety of the generated pseudo-executable code (list of calls).
+There are several reasons which make a call invalid.
+
+* too many parameters: when an unexpected number of parameters is passed to a function,
+* missing parameters: when a parameter is left without value,
+* unknown parameters: when a function gets a parameter with unknown name (usually caused by typos),
+* invalid parameter types: most obvious error - when a type of given value does not match declared type of a parameter,
+
+```
+function void foo(bool truth, string answer = "");
+
+foo(true, "", 0);       // too much parameters
+foo();                  // missing (without value) parameter: truth
+foo(truth="true");      // invalid type
+foo(spam="with eggs");  // unknown parameter
+```
+
 
 ### Namespaces
 
-Grass understands the concept of namespace.
-Namespaces are created using `namespace` keyword and can be nested.
-Maximal nest level is undefined.
+Keyword: `namespace`  
+Syntax: `namespace [modifiers...] name { ... };`
 
-Namespace begins with `namespace` keyword, followed by name, followed by body enclosed in
-curly braces, and ends with a semicolon.
+Grass understands the concept of namespace.
+Namespaces can be nested and maximal nest level is undefined.
 
 Global file is compile as a top-level namespace.
 
@@ -151,71 +277,68 @@ namespace Foo {
 ```
 
 
-### Type system
+### Deleting names
+
+Keyword: `delete`  
+Syntax: `delete reference;`
+
+This keyword is used to delete previously declared names.
+There are currenlty no restrictions on what can be deleted (even whole namespaces) as long as `delete` points to valid reference.
+
+It is possible to redeclare constants using `delete` keyword:
+
+```
+const string foo = "foo";   // declare `foo` as a constant string
+delete foo;                 // free the name
+const bool foo = true;      // redeclare `foo` as constant bool
+```
+
+
+### Importing
+
+Keyword: `import`  
+Syntax: `import "path";`
+
+The `"path"` is a string containing path to the file which should be imported.
+Importing means:
+
+* read the file the path points to,
+* compile it,
+* cache compiled result in case next import points to the same file,
+* copy requested elements from imported file to the one being compiled,
+
+Import can go two ways: either importing everyhting or just specific element of the imported file.
+
+Importing *everything* means copying every variable, constant, function etc. from the imported file to the one being compiled. 
+Syntax for such import is very straightforward:
+
+```
+import "path/to/source/file.grass";
+```
+
+Importing specific elements requires additional code:
+
+```
+import "path/to/source/file.grass" namespace Foo;   // import only namespace `Foo`
+
+
+import "path/to/source/file.grass" function bar;    // import only function `bar`
+import "path/to/source/file.grass" var baz;         // import only variable `baz`
+import "path/to/source/file.grass" const bax;       // import only constant `bax`
+```
+
+When importing variables, functions and constants you do not declare their type or modifiers and
+doing so result in an error.
+
+
+----
+
+## Type system
 
 Grass uses strong, static type system to verify function calls being made.
 Type checking can be disabled in function declarations by specifying parameter type as
-`undefined` or omiting type declaration.
+`undefined` or omiting type declaration (type is then assumed to be `undefined`i).
 
 It is sometimes useful to disable type-checking in functions but is mostly useless
 when declaring variables and constants -- references with undefined type are usually rejected
 and giving such datapiece a value does not override it's type declaration.
-
-**Examples:**
-
-*Creating variables with undefined type and void value:*
-
-```
-var undefined foo;
-var bar;
-```
-
-*Creating variables with undefined type and giving them a value:*
-
-```
-var undefined foo = "foo";
-var bar = "bar";
-var undefined baz;
-var bay;
-
-baz = "baz";
-bay = "bay";
-```
-
-*Changing type of a variable (a.k.a. redeclaration):*
-
-```
-var foo;        // type: undefined, value: none
-foo = "foo";    // type: undefined, value: "foo" (string)
-
-// redeclarations drops previously stored value
-var string foo; // type: string, value: none
-foo = "foo";    // type: string, value: "foo" (string)
-
-var bool foo = false;   // type: bool, value: false (bool)
-```
-
-*Changing value of a variable:*
-
-```
-var undefined foo;
-foo = "foo";    // OK, undefined type accepts everything
-foo = false;    // also legal, as the type of a variable is not overridden
-
-var string foo;
-foo = "foo";    // legal type of a value matches type of a variable
-foo = true;     // illegal, would throw compilation error as type of value doesn't match type of the variable
-
-var bool foo;
-foo = true;     // legal, because type of variable has been changed
-```
-
-*Changing types of constants:*
-
-```
-const string foo = "foo";
-const bool foo = true;      // illegal, constant with this name was already declared
-
-delete foo;     // free the name
-const bool foo = true;      // legal, as the foo has been deleted and the name was freed
-```
