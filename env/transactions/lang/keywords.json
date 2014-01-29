@@ -1,6 +1,5 @@
 [
     "var",
-    "guard",
     "const",
 
     "int",
@@ -8,12 +7,11 @@
     "string",
     "bool",
     "void",
-    "array",
     "vector",
+    "undefined",
 
     "true",
     "false",
-    "undefined",
 
     "typeof",
 
@@ -42,6 +40,7 @@
     "continue",
     "return",
 
+    "throw",
     "try",
     "catch",
     "finally",
