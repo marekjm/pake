@@ -367,17 +367,21 @@ class NamespaceTranslator2():
             where = code[1][1]
             path = code[2][1]
             what = imported[path]
-            path = path.split('.')[-1]
+            target = path.split('.')[-1]
+            if what is None:
+                self._throw(errors.CompilationError, code[0][0], 'bad import: reference does not exist: `{0}`'.format(code[2][1]))
+            if where != imported._whatis(path):
+                self._throw(errors.CompilationError, code[0][0], 'bad import: unsuitable keyword: `{0}` is `{1}` but was imported as `{2}`'.format(path, imported._whatis(path), where))
             if where == 'namespace':
-                self._namespace[path] = what
+                self._namespace[target] = what
             elif where == 'function':
-                self._function[path] = what
+                self._function[target] = what
             elif where == 'var':
-                self._var[path] = what
+                self._var[target] = what
             elif where == 'const':
-                self._const[path] = what
+                self._const[target] = what
             else:
-                self._throw(errors.CompilationError, code[0][0], 'bad import')
+                self._throw(errors.CompilationError, code[0][0], 'bad import: keyword not supported for imports: `{0}`'.format(where))
 
     def _functioncallparams(self, tokens):
         params = []
