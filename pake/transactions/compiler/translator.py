@@ -289,7 +289,7 @@ class NamespaceTranslator2():
             piecetype = declaration[-2]
             piecename = declaration[-1]
         if self._isvalidtype(piecetype): piece['type'] = piecetype
-        else: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition: invalid type: `{0}`'.format(piecetype))
+        else: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition: `{0}` is not a valid type'.format(piecetype))
         if shared.isvalidname(piecename): piece['name'] = piecename
         else: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition: invalid name: `{0}`'.format(piecename))
         piecevalue = self._eval(definition)
@@ -359,6 +359,10 @@ class NamespaceTranslator2():
                 self._namespace[ns] = imported[ns]
             for f in imported.getfunctions():
                 self._function[f] = imported[f]
+            for key, value in imported._var.items():
+                self._var[key] = value
+            for key, value in imported._const.items():
+                self._const[key] = value
         else:
             where = code[1][1]
             path = code[2][1]
@@ -368,6 +372,10 @@ class NamespaceTranslator2():
                 self._namespace[path] = what
             elif where == 'function':
                 self._function[path] = what
+            elif where == 'var':
+                self._var[path] = what
+            elif where == 'const':
+                self._const[path] = what
             else:
                 self._throw(errors.CompilationError, code[0][0], 'bad import')
 
