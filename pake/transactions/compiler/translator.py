@@ -13,6 +13,7 @@ DEBUG = False
 
 
 types = ['int', 'float', 'string', 'bool', 'undefined', 'void']
+modifiers = ['infer', 'hard', 'guard']
 
 
 def _functiondeclarationparams(tokens, src):
@@ -261,6 +262,8 @@ class NamespaceTranslator2():
         ref = self._tokens[index+1][1]
         if self[ref] is None:
             self._throw(errors.CompilationError, self._tokens[index][0], 'undeclared reference: {0}'.format(ref))
+        if self._whatis(ref) in ['var', 'const'] and 'guard' in self[ref]['modifiers']:
+            self._throw(errors.CompilationError, self._tokens[index][0], 'cannot delete `guard`ed name: {0}'.format(ref))
         self._delete(ref)
         return leap
 
@@ -271,7 +274,8 @@ class NamespaceTranslator2():
         words = [tok for l, tok in tokens]
         piece = {'type': None,
                  'value': None,
-                 'name': None
+                 'name': None,
+                 'modifiers': []
                  }
         is_declaration = not ('=' in words)
         if is_declaration and not allow_declarations: self._throw(errors.CompilationError, tokens[0][0], 'declarations without definitions are not allowed')
@@ -283,15 +287,23 @@ class NamespaceTranslator2():
             declaration = words[:eq]
             definition = words[eq+1:]
         if len(declaration) == 1:
+            piecemodifiers = []
             piecetype = 'undefined'
             piecename = declaration[0]
         else:
+            piecemodifiers = declaration[:-2]
             piecetype = declaration[-2]
             piecename = declaration[-1]
+        for mod in piecemodifiers:
+            if mod not in modifiers:
+                self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration: unknown modifier: `{0}`'.format(mod))
+        piece['modifiers'] = piecemodifiers
         if self._isvalidtype(piecetype): piece['type'] = piecetype
         else: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition: `{0}` is not a valid type'.format(piecetype))
         if shared.isvalidname(piecename): piece['name'] = piecename
         else: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition: invalid name: `{0}`'.format(piecename))
+        if 'hard' in (self[piecename]['modifiers'] if self[piecename] is not None else []):
+            self._throw(errors.CompilationError, tokens[0][0], 'invalid redeclaration attempt: cannot redeclare variable which has `hard` modifier')
         piecevalue = self._eval(definition)
         valuetype = self._typeof(piecevalue)
         if not is_declaration and piece['type'] != valuetype and piece['type'] != 'undefined':
@@ -521,6 +533,7 @@ class NamespaceTranslator2():
                     forward = self._matchlogicalend(start=index)
                     piecevalue = self._eval([tok for l, tok in self._tokens[index+2:index+forward]])
                     valuetype = self._typeof(piecevalue)
+                    if 'infer' in self[token]['modifiers']: self._var[token]['type'] = valuetype
                     piecetype = self._typeof(self._tokens[index][1])
                     if piecetype != valuetype and piecetype != 'undefined':
                         self._throw(errors.CompilationError, line, 'invalid declaration/definition: mismatched types: declared was "{0}" but got "{1}"'.format(piecetype, valuetype))
