@@ -1,0 +1,64 @@
+import "./env/transactions/pake.grass" namespace pake.node;
+import "./env/transactions/pake.grass" namespace pake.network;
+import "./env/transactions/pake.grass" function pake.nest.config.versions.add;
+
+
+node.config.meta.set(key="foo", value="bar\"baz");
+node.config.meta.getkeys();
+network.aliens.geturls();
+
+// function from pake.nest.config.versions
+add(version='0.0.1', strict=true);
+
+
+const string spam = "with ham";
+
+var undefined stuff;                // declaration (set type)
+stuff = 'with';                     // definition (set value)
+stuff = 'eggs';                     // redefinition (set new value)
+var undefined stuff = 'with eggs';  // redeclaration (set new type and value)
+
+function void do_stuff(string x="",     // parameter with defined type and default value
+                       undefined y="",  // parameter with (explicitly) undefined type and default value
+                       stuff)           // parameter with undefined (implicitly) type and without default value
+    { node.config.meta.getkeys(); network.aliens.geturls(); };
+
+/* When passing argument by name and a function has a parameter with the same name
+ * you must give it as keyworded argument - otherwise translator will throw CompileError and
+ * refuse to compile the code.
+ *
+ * This is more permissive than what, for example, C++ will let you do but
+ * less permissive than Python mechanisms.
+ * I think that the level of *permissiveness* of this solution is sufficient.
+ */
+do_stuff (stuff=stuff);
+
+
+namespace Some {
+    namespace Thing {
+        const bool laugh = false;
+
+        function void burst(string laugh);
+    };
+};
+
+var void laugh;
+
+var bool laugh;
+laugh = Some.Thing.laugh;
+
+var string laugh = "haha";
+
+do_stuff (stuff=laugh);
+
+
+function void do_stuff(string x = true, y); // FIXME: types are not checked in declarations
+//delete do_stuff;
+
+do_stuff (y="");
+
+
+var infer string truth = "true";
+// without `infer` modifier the redefinitions below would be illegal
+truth = true;
+truth = 1;
