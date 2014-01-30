@@ -4,6 +4,54 @@ Grass is a very simple and primitive language used to drive PAKE.
 Its sole purpose is to expose PAKE API to developers (including main programmer) and
 separate fast-changing, alpha-state internals from mostly solid UI.
 
+
+#### Compiled or interpreted
+
+The language is quasi-compiled. Majority of things (e.g. type checking, correctness of references etc.) is resolved during the stage of
+translation form source code to a form that can bu supplied to runner.
+The term *quasi-compiled* is used because the language is also not interpreted in a classic meaning of this term.
+
+
+#### Sources of input
+
+All input is known at the beginning of translation stage.
+There is no `cin`, `getline()`, `input()` or any other mechanism to supply data at runtime.
+This is the first major limitation of the language.
+However, it is justified when the domain of Grass is taken into account.
+
+
+#### Modularization
+
+Grass has full, and very flexible, support for modularized programs.
+However, due to the early stage of development and the design of the language
+programs which are very granular can take relatively big amounts of memory to compile.
+
+This is because all references and values are resolved immediately after they are found.
+When, for example, translator encounters function call and sees that one of the parameters is given a reference as
+an argument it immediately looks for the value of this reference (there is no *resolving* stage).
+Such behaviour means that all files that are being `import`-ed are compiled before they are put into
+main compilation trunk.
+
+0.  Grass compiles file `foo.grass`,
+0.  file `foo.grass` imports file `bar.grass` (-> compilation branch #1),
+0.  Grass stops compilation of `foo.grass` and compiles `bar.grass`,
+0.  file `bar.grass` imports file `baz.grass` (-> compilation branch #1.1),
+0.  Grass stops compilation of `bar.grass` and compiles `baz.grass`,
+0.  compilation of `bar.grass` is restored at the point where compiler encountered import of `baz.grass` (-> compilation branch #1),
+0.  compilation of `foo.grass` is restored at the point where compiler encountered import of `bar.grass` (-> compilation main trunk),
+0.  file `foo.grass` imports file `baz.grass` (-> compilation branch #2),
+0.  compilation of `foo.grass` is restored at the point where compiler encountered import of `baz.grass` (-> compilation main trunk),
+0.  compilation is finished,
+
+This approach raises two problems:
+
+* compilation units are not independent,
+* when, during one compilation, two differet files import another file this another file is compiled twice (this does not occur when file is imported twice from the same file),
+
+To solve this problems linking mechanism should be introduced, what will be possible after the method of storing compiled form of Grass source code is developed.
+This would also require separation of the resolving stage from translation stage.
+
+
 ----
 
 ## Features

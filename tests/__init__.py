@@ -1,5 +1,1 @@
-import unittest
-
-import tests.system
-import tests.systemtransactions
-import tests.networktransactions
+#!/usr/bin/env python3

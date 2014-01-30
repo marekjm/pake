@@ -15,11 +15,16 @@ manual:
 	sed -i -e s/${OLD}/${VERSION}/ manual/*.markdown
 	#pandoc -o ./manual/manual.pdf ./manual/*.markdown
 
-test:
-	python3 ./tests/ --catch --failfast --verbose
-
 clean:
 	@rm -rv ./{pake/,pake/config/,pake/node/,pake/nest/,pake/network/{aliens/,},pake/packages/,pake/transactions/,}__pycache__/
+
+
+test-networking:
+	python3 ./tests/network/networking.py --verbose --catch --failfast
+	python3 ./tests/network/networktransactions.py --verbose --catch --failfast
+	python3 ./tests/network/direct.py --verbose --catch --failfast
+	python3 ./tests/network/transactions.py --verbose --catch --failfast
+
 
 install-backend:
 	make test
