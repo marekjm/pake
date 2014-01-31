@@ -119,6 +119,11 @@ class VariableSupportTests(unittest.TestCase):
         transltr = compiler.translator.NamespaceTranslator(*compiler.translator.sourced(source=src, read=False)).finalize().translate()
         self.assertEqual(desired, transltr['bar'])
 
+    def testInstantDefinitionSupplyingValueViaReferenceFailsWhenReferenceHasNoDefinedValue(self):
+        src = 'var bool foo; var bool bar = foo;'
+        transltr = compiler.translator.NamespaceTranslator(*compiler.translator.sourced(source=src, read=False)).finalize()
+        self.assertRaises(compiler.errors.CompilationError, transltr.translate)
+
     def testInstantDefinitionFailsBecauseOfMismatchedTypes(self):
         src = 'var string foo = true;'
         transltr = compiler.translator.NamespaceTranslator(*compiler.translator.sourced(source=src, read=False)).finalize()
