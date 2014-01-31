@@ -317,15 +317,10 @@ class NamespaceTranslator():
         return piecevalue
 
     def _compiledatapiece(self, index, allow_declarations=True):
-        warnings.warn('refactor datapiece compilation ASAP')
         leap = self._matchlogicalend(start=index)
         tokens = self._tokens[index+1:index+leap]
         words = [tok for l, tok in tokens]
-        piece = {'type': None,
-                 'value': None,
-                 'name': None,
-                 'modifiers': []
-                 }
+        piece = {'type': None, 'value': None, 'name': None, 'modifiers': []}
         is_declaration = not ('=' in words)
         if is_declaration and not allow_declarations: self._throw(errors.CompilationError, tokens[0][0], 'declarations without definitions are not allowed')
         if is_declaration:
@@ -337,7 +332,6 @@ class NamespaceTranslator():
             definition = words[eq+1:]
         piece['type'], piece['name'], piece['modifiers'] = self._compiledatapieceDeclaration(declaration=declaration, line=tokens[0][0])
         if not is_declaration: piece['value'] = self._compiledatapieceDefinition(definition=definition, piece=piece, line=tokens[0][0])
-        piecevalue = self._eval(definition)
         return (leap, piece)
 
     def _compilekwConst(self, index):
@@ -552,22 +546,11 @@ class NamespaceTranslator():
                 self._calls.append({'call': token, 'params': params})
                 leap += forward
             elif self._tokens[index+leap][1] == '=':
-                warnings.warn('refactor datapiece compilation ASAP')
                 thisis = self._whatis(token)
                 if thisis == 'var':
                     forward = self._matchlogicalend(start=index)
-                    piecevalue = self._eval([tok for l, tok in self._tokens[index+2:index+forward]])
-                    valuetype = self._typeof(piecevalue)
-                    if 'infer' in self[token]['modifiers']: self._var[token]['type'] = valuetype
-                    piecetype = self._typeof(self._tokens[index][1])
-                    if piecetype != valuetype and piecetype != 'undefined':
-                        self._throw(errors.CompilationError, line, 'invalid declaration/definition: mismatched types: declared was "{0}" but got "{1}"'.format(piecetype, valuetype))
-                    if shared.isvalidreference(piecevalue):
-                        if self[piecevalue] is None:
-                            self._throw(errors.CompilationError, line, 'undeclared reference: {0}'.format(piecevalue))
-                        else:
-                            piecevalue = self[piecevalue]['value']
-                    self._var[token]['value'] = piecevalue
+                    piecevalue = [tok for l, tok in self._tokens[index+2:index+forward]]
+                    self._var[token]['value'] = self._compiledatapieceDefinition(definition=piecevalue, piece=self[token], line=line)
                     leap += forward
                 else:
                     self._throw(errors.CompilationError, line, 'invalid redefinition attempt for `{0}`'.format(thisis))
