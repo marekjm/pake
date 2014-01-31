@@ -301,6 +301,19 @@ class NamespaceTranslator():
             self._throw(errors.CompilationError, line, 'invalid redeclaration attempt: cannot redeclare variable which has `hard` modifier')
         return (piecetype, piecename, piecemodifiers)
 
+    def _compiledatapieceDefinition(self, definition, piece, line):
+        piecevalue = self._eval(definition)
+        valuetype = self._typeof(piecevalue)
+        if piece['type'] != valuetype and piece['type'] != 'undefined':
+            self._throw(errors.CompilationError, line, 'invalid declaration/definition: mismatched types: declared was "{0}" but got "{1}"'.format(piece['type'], valuetype))
+        if piecevalue is None: self._throw(errors.CompilationError, line, 'invalid declaration/definition')
+        if shared.isvalidreference(piecevalue) and self._whatis(piecevalue) not in ['var', 'const']:
+            self._throw(errors.CompilationError, line, 'invalid declaration: cannot assign `{0}` to `var` or `const`'.format(self._whatis(piecevalue)))
+        if shared.isvalidreference(piecevalue):
+            ref = piecevalue
+            piecevalue = self[ref]['value']
+        return piecevalue
+
     def _compiledatapiece(self, index, allow_declarations=True):
         warnings.warn('refactor datapiece compilation ASAP')
         leap = self._matchlogicalend(start=index)
@@ -321,17 +334,8 @@ class NamespaceTranslator():
             declaration = words[:eq]
             definition = words[eq+1:]
         piece['type'], piece['name'], piece['modifiers'] = self._compiledatapieceDeclaration(declaration=declaration, line=tokens[0][0])
+        if not is_declaration: piece['value'] = self._compiledatapieceDefinition(definition=definition, piece=piece, line=tokens[0][0])
         piecevalue = self._eval(definition)
-        valuetype = self._typeof(piecevalue)
-        if not is_declaration and piece['type'] != valuetype and piece['type'] != 'undefined':
-            self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition: mismatched types: declared was "{0}" but got "{1}"'.format(piece['type'], valuetype))
-        if not is_declaration and piecevalue is None: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition')
-        if shared.isvalidreference(piecevalue) and self._whatis(piecevalue) not in ['var', 'const']:
-            self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration: cannot assign `{0}` to `var` or `const`'.format(self._whatis(piecevalue)))
-        if shared.isvalidreference(piecevalue):
-            ref = piecevalue
-            piecevalue = self[ref]['value']
-        if not is_declaration: piece['value'] = piecevalue
         return (leap, piece)
 
     def _compilekwConst(self, index):
