@@ -49,14 +49,18 @@ This approach raises two problems:
 * when, during one compilation, two differet files import another file this another file is compiled twice (this does not occur when file is imported twice from the same file),
 
 To solve this problems linking mechanism should be introduced, what will be possible after the method of storing compiled form of Grass source code is developed.
-This would also require separation of the resolving stage from translation stage.
+This would also require separation of the resolving stage from translation stage and development of a method of tracking value progress (as variables can change value,
+names can be deleted, etc.).
+
+However, due to the fact that Grass is not a full-featured language (and at the moment there is no intention to make it one) and complexity that would be added by such mechanisms
+this task has no high priority.
 
 
 ----
 
 ## Features
 
-Here are described current features of the Grass metalanguage.
+Here are described current features of the Grass language.
 
 ----
 

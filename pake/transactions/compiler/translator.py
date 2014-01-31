@@ -13,7 +13,19 @@ DEBUG = False
 
 
 types = ['int', 'float', 'string', 'bool', 'undefined', 'void']
-modifiers = ['infer', 'hard', 'guard']
+modifiers = ['infer', 'hard', 'guard', 'extern']
+
+
+def sourced(source, read=True):
+    if read:
+        ifstream = open(source)
+        source = ifstream.read()
+        ifstream.close()
+    raw = tokenizer.tokenize(source)
+    tokens = joiner.join(raw)
+    tokens = tokenizer.decomment(tokens)
+    tokens = tokenizer.strip(tokens)
+    return (tokens, raw)
 
 
 def _functiondeclarationparams(tokens, src):
@@ -55,7 +67,7 @@ def _functiondeclarationparams(tokens, src):
     return (params, param_order)
 
 
-class NamespaceTranslator2():
+class NamespaceTranslator():
     def __init__(self, tokens, source, name='', parenttypes=[], parentnames=[]):
         self._tokens = tokens
         self._source = source
@@ -208,8 +220,10 @@ class NamespaceTranslator2():
             type = 'string'
         elif what in ['true', 'false']:
             type = 'bool'
+        elif what == 'undefined':
+            type = 'undefined'
         else:
-            type = None
+            type = 'undefined'
         return type
 
     def _whatis(self, reference):
@@ -267,6 +281,26 @@ class NamespaceTranslator2():
         self._delete(ref)
         return leap
 
+    def _compiledatapieceDeclaration(self, declaration, line):
+        if len(declaration) == 1:
+            piecemodifiers = []
+            piecetype = 'undefined'
+            piecename = declaration[0]
+        else:
+            piecemodifiers = declaration[:-2]
+            piecetype = declaration[-2]
+            piecename = declaration[-1]
+        for mod in piecemodifiers:
+            if mod not in modifiers:
+                self._throw(errors.CompilationError, line, 'invalid declaration: unknown modifier: `{0}`'.format(mod))
+        if not self._isvalidtype(piecetype):
+            self._throw(errors.CompilationError, line, 'invalid declaration/definition: `{0}` is not a valid type'.format(piecetype))
+        if not shared.isvalidname(piecename):
+            self._throw(errors.CompilationError, line, 'invalid declaration/definition: invalid name: `{0}`'.format(piecename))
+        if 'hard' in (self[piecename]['modifiers'] if self[piecename] is not None else []):
+            self._throw(errors.CompilationError, line, 'invalid redeclaration attempt: cannot redeclare variable which has `hard` modifier')
+        return (piecetype, piecename, piecemodifiers)
+
     def _compiledatapiece(self, index, allow_declarations=True):
         warnings.warn('refactor datapiece compilation ASAP')
         leap = self._matchlogicalend(start=index)
@@ -286,32 +320,17 @@ class NamespaceTranslator2():
             eq = words.index('=')
             declaration = words[:eq]
             definition = words[eq+1:]
-        if len(declaration) == 1:
-            piecemodifiers = []
-            piecetype = 'undefined'
-            piecename = declaration[0]
-        else:
-            piecemodifiers = declaration[:-2]
-            piecetype = declaration[-2]
-            piecename = declaration[-1]
-        for mod in piecemodifiers:
-            if mod not in modifiers:
-                self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration: unknown modifier: `{0}`'.format(mod))
-        piece['modifiers'] = piecemodifiers
-        if self._isvalidtype(piecetype): piece['type'] = piecetype
-        else: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition: `{0}` is not a valid type'.format(piecetype))
-        if shared.isvalidname(piecename): piece['name'] = piecename
-        else: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition: invalid name: `{0}`'.format(piecename))
-        if 'hard' in (self[piecename]['modifiers'] if self[piecename] is not None else []):
-            self._throw(errors.CompilationError, tokens[0][0], 'invalid redeclaration attempt: cannot redeclare variable which has `hard` modifier')
+        piece['type'], piece['name'], piece['modifiers'] = self._compiledatapieceDeclaration(declaration=declaration, line=tokens[0][0])
         piecevalue = self._eval(definition)
         valuetype = self._typeof(piecevalue)
         if not is_declaration and piece['type'] != valuetype and piece['type'] != 'undefined':
             self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition: mismatched types: declared was "{0}" but got "{1}"'.format(piece['type'], valuetype))
         if not is_declaration and piecevalue is None: self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration/definition')
+        if shared.isvalidreference(piecevalue) and self._whatis(piecevalue) not in ['var', 'const']:
+            self._throw(errors.CompilationError, tokens[0][0], 'invalid declaration: cannot assign `{0}` to `var` or `const`'.format(self._whatis(piecevalue)))
         if shared.isvalidreference(piecevalue):
             ref = piecevalue
-            piecevalue = self[ref]
+            piecevalue = self[ref]['value']
         if not is_declaration: piece['value'] = piecevalue
         return (leap, piece)
 

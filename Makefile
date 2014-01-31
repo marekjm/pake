@@ -19,6 +19,9 @@ clean:
 	@rm -rv ./{pake/,pake/config/,pake/node/,pake/nest/,pake/network/{aliens/,},pake/packages/,pake/transactions/,}__pycache__/
 
 
+test-grass:
+	python3 ./tests/grass/compiler.py --verbose --catch --failfast
+
 test-networking:
 	python3 ./tests/network/networking.py --verbose --catch --failfast
 	python3 ./tests/network/networktransactions.py --verbose --catch --failfast
