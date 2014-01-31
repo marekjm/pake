@@ -146,6 +146,12 @@ class VariableSupportTests(unittest.TestCase):
         transltr = compiler.translator.NamespaceTranslator(*compiler.translator.sourced(source=src, read=False)).finalize()
         self.assertRaises(compiler.errors.CompilationError, transltr.translate)
 
+    def testModifierInferWorksWithInstantDefinitions(self):
+        src = 'var infer undefined foo = "spam";'
+        desired = {'value': '"spam"', 'type': 'string', 'modifiers': ['infer']}
+        transltr = compiler.translator.NamespaceTranslator(*compiler.translator.sourced(source=src, read=False)).finalize().translate()
+        self.assertEqual(desired, transltr['foo'])
+
     def testModifierInferAdjustsTypeOfTheVariableToTypeOfAssignedValue(self):
         src = '''var infer undefined foo;
         foo = true;

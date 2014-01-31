@@ -304,6 +304,7 @@ class NamespaceTranslator():
     def _compiledatapieceDefinition(self, definition, piece, line):
         piecevalue = self._eval(definition)
         valuetype = self._typeof(piecevalue)
+        if 'infer' in piece['modifiers']: piece['type'] = valuetype
         if piece['type'] != valuetype and piece['type'] != 'undefined':
             self._throw(errors.CompilationError, line, 'invalid declaration/definition: mismatched types: declared was "{0}" but got "{1}"'.format(piece['type'], valuetype))
         if piecevalue is None: self._throw(errors.CompilationError, line, 'invalid declaration/definition')
@@ -311,6 +312,7 @@ class NamespaceTranslator():
             self._throw(errors.CompilationError, line, 'invalid declaration: cannot assign `{0}` to `var` or `const`'.format(self._whatis(piecevalue)))
         if shared.isvalidreference(piecevalue):
             ref = piecevalue
+            if self[ref]['value'] == None: self._throw(errors.CompilationError, line, 'undeclared reference: {0}'.format(piecevalue))
             piecevalue = self[ref]['value']
         return piecevalue
 
