@@ -69,18 +69,16 @@ def _functiondeclarationparams(tokens, src):
 
 class NamespaceTranslator():
     def __init__(self, tokens, source, name='', parenttypes=[], parentnames=[]):
-        self._tokens = tokens
-        self._source = source
+        self._tokens, self._source = tokens, source
         self._name = name
-        self._parenttypes = parenttypes
-        self._parentnames = parentnames
+        self._parenttypes, self._parentnames = parenttypes, parentnames
         self._function = {}
-        self._var = {}
-        self._const = {}
+        self._var, self._const = {}, {}
         self._class = {}
         self._namespace = {}
         self._calls = []
         self._imported = {}
+        self._debugging = False
 
     def __getitem__(self, access):
         item = None
@@ -580,7 +578,8 @@ class NamespaceTranslator():
         self._joinreferencetokens()
         return self
 
-    def translate(self):
+    def translate(self, debugging=False):
+        self._debugging = debugging
         i = 0
         while i < len(self._tokens): i += self._translate(i)
         return self
