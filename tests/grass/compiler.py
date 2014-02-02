@@ -65,6 +65,20 @@ class JoinerTests(unittest.TestCase):
         self.assertEqual(got, desired)
 
 
+class TranslatorMatchersTests(unittest.TestCase):
+    def testMatchingClosingBrackets(self):
+        src = '((({})[(((((<>)))<[()](())>)())])\n)'
+        transltr = compiler.translator.NamespaceTranslator(*compiler.translator.sourced(source=src, read=False)).finalize()
+        n = transltr._matchbracket(start=0, bracket='(')
+        self.assertEqual((1, ')'), transltr._tokens[n])
+
+    def testLogicalEndMatching(self):
+        src = 'function void foo() {;;;;}\n;'
+        transltr = compiler.translator.NamespaceTranslator(*compiler.translator.sourced(source=src, read=False)).finalize()
+        n = transltr._matchlogicalend(start=0)
+        self.assertEqual((1, ';'), transltr._tokens[n])
+
+
 class VariableSupportTests(unittest.TestCase):
     def testSimpleDeclaration(self):
         src = 'var foo;'
@@ -209,6 +223,13 @@ class ConstantsSupportTests(unittest.TestCase):
         src = 'const bool foo = "true";'
         transltr = compiler.translator.NamespaceTranslator(*compiler.translator.sourced(source=src, read=False)).finalize()
         self.assertRaises(compiler.errors.CompilationError, transltr.translate)
+
+
+class FunctionSupportTest(unittest.TestCase):
+    @unittest.skip('')
+    def testSimpleDeclaration(self):
+        src = 'function void;'
+        transltr = compiler.translator.NamespaceTranslator(*compiler.translator.sourced(source=src, read=False)).finalize().translate()
 
 
 if __name__ == '__main__':

@@ -114,12 +114,12 @@ class NamespaceTranslator():
                  '<': '>',
                  }
         left = 1
-        n = (start + 1)
+        n = start
         while n < len(self._tokens):
             if left == 0: break
+            n += 1
             if self._tokens[n][1] == match[bracket]: left -= 1
             if self._tokens[n][1] == bracket: left += 1
-            n += 1
         if not (left == 0):
             line = self._tokens[start][0]
             msg = 'did not found matching pair for opening bracket: {0}'.format(bracket)
@@ -129,6 +129,7 @@ class NamespaceTranslator():
     def _matchlogicalend(self, start):
         n = (start+1)
         while n < len(self._tokens):
+            if self._tokens[n][1] in ['{', '(', '[', '<']: n += self._matchbracket(start=(start+n), bracket=self._tokens[n][1])
             if self._tokens[n][1] == ';': break
             n += 1
         return (n-start)
@@ -198,11 +199,9 @@ class NamespaceTranslator():
                      'body': None,
                      }
         extracted['name'] = self._tokens[n][1]
-        if DEBUG: print(n, self._tokens[n], extracted['name'])
         n += 1
         if self._tokens[n][1] == '{':
             forward = self._matchbracket(start=n, bracket='{')
-            if DEBUG: print(forward)
             extracted['body'] = self._tokens[n:n+forward]
             n += forward
         if self._tokens[n][1] != ';': self._throw(errors.CompilationError, self._tokens[n][0])
